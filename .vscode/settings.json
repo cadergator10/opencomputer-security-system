@@ -1,0 +1,9 @@
+{
+    "Lua.diagnostics.disable": [
+        "undefined-field",
+        "undefined-global"
+    ],
+    "Lua.diagnostics.globals": [
+        "writeCardCallback"
+    ]
+}
