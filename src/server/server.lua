@@ -203,12 +203,12 @@ while true do
   end
   local thisUserName = getUserName(data)
   if command == "updatedoors" then
-     os.execute("pastebin get -f QxnRYA3B ctrl.lua")
+     os.execute("wget -f https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/singleDoor.lua ctrl.lua")
      local filetemp = ios.open("/mnt/b93/ctrl.lua","r")
      local file = filetemp:read("*a")
      data = crypt(tostring(file),cryptKey)
      modem.broadcast(198, "update", data)
-     os.execute("pastebin get -f sHfsrt2M ctrlE.lua")
+     os.execute("wget -f https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/multiDoor.lua ctrlE.lua")
      filetemp = ios.open("/mnt/b93/ctrlE.lua","r")
      file = filetemp:read("*a")
      data = crypt(tostring(file),cryptKey)
