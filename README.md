@@ -22,17 +22,19 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
 
 ----Database: This is where you edit the accounts and write the cards. There are 2 types, so make sure you choose the correct one!!! Requires a modem and card writer connected to it, and a tier 3 computer and highest specs if you can! I recommend putting MineOS one on a server rack with 4 tier 3.5 memory modules, but the OpenOS one is lighter.
 
-    OpenOS: You need to add both the openOSDatabase and the gui programs to the drive. This isn't updated much and might be broken (maybe) Name the GUI one gui.lua
+   OpenOS: You need to add both the openOSDatabase and the gui programs to the drive. This isn't updated much and might be broken (maybe) Name the GUI one gui.lua
 
-    MineOS: Much sleeker and faster and basically better in every way. The database is available in the AppStore of MineOS and installs all necessary dependencies for you, but if you do it manually, you will still have to install the serialization and the uuid library by user cadergator10 on there. Its just the OpenOS serialization and uuid libraries, but if you need it, it is available here.
+   MineOS: Much sleeker and faster and basically better in every way. The database is available in the AppStore of MineOS and installs all necessary dependencies for you, but if you do it manually, you will still have to install the serialization and the uuid library by user cadergator10 on there. Its just the OpenOS serialization and uuid libraries, but if you need it, it is available here.
 
 ----Door Control: All the doorcontrol scripts. Can be very low spec honestly, but at least one 3.5 tier ram is probably safe :) Requires a Modem, redstone tier 2 card, and internet card.
 
-    All you have to do is run the command "pastebin run X8M664ew" and follow the prompts. For multidoor, you will have to use an analyzer to copy the ids of the magstrip readers and rolldoor/doorcontrol blocks, while you dont with the single door one. However, if you want to look at the code, here are the dropbox links. HOWEVER, the programs do require a library to work, which the autorun command does for you, so I recommend just doing the above command.
+   All you have to do is run the command "pastebin run X8M664ew" and follow the prompts. For multidoor, you will have to use an analyzer to copy the ids of the magstrip readers and rolldoor/doorcontrol blocks, while you dont with the single door one. However, if you want to look at the code, here are the dropbox links. HOWEVER, the programs do require a library to work, which the autorun command does for you, so I recommend just doing the above command.
 
 ----Autoinstaller: just follow the prompts to install! It's actually that simple! PLUS, it comes with more extra features than just that. You can update the door program, wipe all files, add more doors to a multidoor, delete a door from a multidoor, change settings of doors, and more!
  
-    If you want to use pastebin run command, do pastebin run X8M664ew
+   If you want to use pastebin run command, do 
+   
+    pastebin run X8M664ew
 
 ----NOT NECESSARY FOR PROGRAM TO WORK: Diagnostic tablet: a special program that works with the new admin card to get info about a door and it's settings and if it works. It is best used with a tablet that has a tier 3 gpu, a wireless modem, and an internet card. When the admin card is scanned, it sends all the info of the computer to the tablet. It's most noteable use is with the multidoor computer, as it tells you if that magnetic card reader is connected to a door, what the key of the door is (if you want to edit door settings after first set up) and more.
 
