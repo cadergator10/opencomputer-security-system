@@ -41,3 +41,7 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
 ----ALSO NOT NECESSARY: Accelerated door setup program to put on a tablet. This helps accelerate multi-door setup time, as it is portable compared to moving back and forth between the pc and the door.
 
 If you have any questions, don't hesitate to ask!
+
+![image](https://user-images.githubusercontent.com/75097681/153966751-f94d255d-88a6-4b9a-8212-936b8a735a97.png)
+![image](https://user-images.githubusercontent.com/75097681/153966774-ddea0e15-01ef-47db-a975-8f0b3b63fed0.png)
+
