@@ -155,6 +155,7 @@ function loadTable( sfile )
 	local tables, err, _
 	-- catch marker for stringtable
 	if string.sub( sfile,-3,-1 ) == "--|" then
+---@diagnostic disable-next-line: deprecated
 		tables,err = loadstring( sfile )
 	else
 		tables,err = loadfile( sfile )
@@ -418,7 +419,7 @@ function deleteUserCallback(guiID, id)
 end
 
 function changeUUID(guiID, id)
-	local selected = gui.getSelected(myGUI, userList)
+	local selected = gui.getSelected(myGui, userList)
     userTable[selected].uuid = uuid.next()
     updateList()
     userListCallback(myGui, userList, selected)

@@ -1511,6 +1511,7 @@ function gui.loadTable( sfile )
 
 	-- catch marker for stringtable
 	if string.sub( sfile,-3,-1 ) == "--|" then
+---@diagnostic disable-next-line: deprecated
 		tables,err = loadstring( sfile )
 	else
 		tables,err = loadfile( sfile )
