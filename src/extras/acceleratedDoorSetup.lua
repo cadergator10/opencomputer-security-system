@@ -10,7 +10,9 @@ print("Enter 4 digit code")
 local text = term.read()
 local code = tonumber(text)
 modem.open(code)
-modem.broadcast(code,"link")
+--local temp = {}
+--temp["analyzer"]=component.isAvailable("barcode_reader")
+modem.broadcast(code,"link",component.isAvailable("barcode_reader"))
 print("linking...")
 local e, _, from, port, _, msg = event.pull(3, "modem_message")
 if e then

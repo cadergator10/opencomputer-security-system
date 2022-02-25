@@ -30,7 +30,7 @@ local function loadT(location)
   return ser.unserialize(tableFile:read("*all"))
 end
 
-local function runInstall(multi,num,accelerate,from2,port2)
+local function runInstall(multi,num,accelerate,from2,port2,barcode)
     local settingData = {}
     if multi == false then --single
         
@@ -188,7 +188,11 @@ local function runInstall(multi,num,accelerate,from2,port2)
             from = from2
             port = port2
             		modem.send(from,port,"print","Would you like accelerated magreader setup?")
-                    modem.send(from,port,"print","(instead of typing uuid you swipe any card in the magnetic reader)")
+                    if barcode then
+                        modem.send(from,port,"print","(instead of typing uuid you scan the devices with the tablet)")
+                    else
+                        modem.send(from,port,"print","(instead of typing uuid you swipe any card in the magnetic reader)")
+                    end
                     modem.send(from,port,"print","1 for yes, 2 for no")
                     modem.send(from,port,"getInput")
                     e, _, from, port, _, text = event.pull("modem_message")
@@ -208,12 +212,22 @@ local function runInstall(multi,num,accelerate,from2,port2)
                         	end
                     	end
                         if swipeCard == 1 then
-                            modem.send(from,port,"print","Magnetic card reader? Swipe a card in the reader of your choice.")
-                            modem.send(from,port,"write","uuid: ")
-                            _, text = event.pull("magData")
-                            modem.send(from,port,"write",text .. "\n")
-                            settingData[j] = {}
-                            settingData[j]["reader"] = text
+                            if barcode then
+                                modem.send(from,port,"print","Magnetic card reader? Scan the magnetic card reader with your tablet")
+                                modem.send(from,port,"write","uuid: ")
+                                modem.send(from,port,"analyzer")
+                                e, _, from, port, _, text = event.pull("modem_message")
+                                modem.send(from,port,"write",text .. "\n")
+                                settingData[j] = {}
+                                settingData[j]["reader"] = text
+                            else
+                                modem.send(from,port,"print","Magnetic card reader? Swipe a card in the reader of your choice.")
+                                modem.send(from,port,"write","uuid: ")
+                                _, text = event.pull("magData")
+                                modem.send(from,port,"write",text .. "\n")
+                                settingData[j] = {}
+                                settingData[j]["reader"] = text
+                            end
                         else
                             modem.send(from,port,"print","Magnetic card reader address? TEXT")
                             modem.send(from,port,"getInput")
@@ -235,10 +249,17 @@ local function runInstall(multi,num,accelerate,from2,port2)
                         else
                             modem.send(from,port,"print","No need to input anything for redColor. The setting doesnt require it :)")
                             settingData[j]["redColor"] = 0
-                            modem.send(from,port,"print","What is the address for the doorcontrol/rolldoor block? text is fine.")
-                            modem.send(from,port,"getInput")
-                    		e, _, from, port, _, text = event.pull("modem_message")
-                            settingData[j]["doorAddress"] = text:sub(1,-2)
+                            if barcode and swipeCard then
+                                modem.send(from,port,"print","What is the address for the doorcontrol/rolldoor block? Scan with tablet.")
+                                modem.send(from,port,"getInput")
+                                e, _, from, port, _, text = event.pull("modem_message")
+                                settingData[j]["doorAddress"] = text
+                            else
+                                modem.send(from,port,"print","What is the address for the doorcontrol/rolldoor block? text is fine.")
+                                modem.send(from,port,"getInput")
+                                e, _, from, port, _, text = event.pull("modem_message")
+                                settingData[j]["doorAddress"] = text:sub(1,-2)
+                            end
                         end
 						modem.send(from,port,"print","Should the door be toggleable, or not? 0 for auto close and 1 for toggleable")
                         modem.send(from,port,"getInput")
@@ -536,7 +557,7 @@ else
             modem.open(code)
             print("Code is: " .. code)
             print("Enter the code into the door setup tablet. In 60 seconds setup will cancel.")
-            local e, _, from, port, _, msg = event.pull(60, "modem_message")
+            local e, _, from, port, _, msg, barcode = event.pull(60, "modem_message")
             if e then
                 modem.send(from,port,"connected")
                 term.clear()
@@ -546,7 +567,7 @@ else
                 modem.send(from,port,"getInput")
                 e, _, from, port, _, text = event.pull("modem_message")
                 if tonumber(text) == 1 then
-                    local tempArray = runInstall(false,0,true,from,port)
+                    local tempArray = runInstall(false,0,true,from,port,barcode)
                     settingData2 = tempArray
                     save(settingData2,settingFileName)
                     --was single accelerated
@@ -561,7 +582,7 @@ else
                     modem.send(from,port,"getInput")
                     e, _, from, port, _, text = event.pull("modem_message")
                     local num = tonumber(text)
-                    local tempArray = runInstall(true,num,true,from,port)
+                    local tempArray = runInstall(true,num,true,from,port,barcode)
                     settingData2 = tempArray
                     save(settingData2,settingFileName)
                     --was multi accelerated
