@@ -30,6 +30,9 @@ if e then
             term.clear()
         elseif msg == "terminate" then
             stayIn = false
+        elseif msg == "analyzer" then
+            text = event.pull("tablet_use")
+            modem.send(from,port,text)
         end
     end
     print("Finished")
