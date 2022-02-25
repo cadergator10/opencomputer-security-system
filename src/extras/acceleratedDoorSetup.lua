@@ -45,7 +45,9 @@ else
 end
 
 --modem.send(from,port,"print","")
+--modem.send(from,port,"write","")
 --modem.send(from,port,"getInput")
 --modem.send(from,port,"clearTerm")
 --modem.send(from,port,"terminate")
+--modem.send(from,port,"analyzer")
 --e, _, from, port, _, text = event.pull("modem_message")
