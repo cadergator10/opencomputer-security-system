@@ -29,7 +29,7 @@ local userDepLabel, DepUpButton, DepDownButton, IntYesButton, StaffYesButton, li
 ----------
  
 local prgName = "Security database"
-local version = "v0.8"
+local version = "v7.0"
  
 local modem
  
@@ -382,11 +382,11 @@ function inputCallback()
 end
 
 function linkUserCallback()
-    GUI.alert("After pressing ok, you have 20 seconds to link the device you want linked. Not linking will reset the link anyway. Don't click anything else during linking")
+    local container = GUI.addBackgroundContainer(window, false, true, "You have 20 seconds to link your device now. Do not click anything")
     local selected = pageMult * listPageNumber + userList.selectedItem
     modem.open(dbPort)
-    event.pull()
     local e, _, from, port, _, msg = event.pull(20)
+    container:remove()
     if e == "modem_message" then
         local data = crypt(msg,cryptKey,true)
         userTable[selected].link = data
