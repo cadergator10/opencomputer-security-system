@@ -16,6 +16,8 @@ local version = "8.0"
 
 local redstone = {}
 
+--------Main Functions
+
 local function convert( chars, dist, inv )
   return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
 end
@@ -68,100 +70,72 @@ function loadTable( sfile )
     end
 end
 
+--------Getting tables and setting up terminal
+
+term.clear()
+local serverSettings = loadTable("serversettings.txt")
+if serverSettings == nil then
+  print("Security server requires settings to be set")
+  print("...")
+  print("Nothing is to be set yet as there is no settings currently.")
+  --TODO: add some settings
+  serverSettings = {}
+  saveTable(serverSettings,"serversettings.txt")
+end
 
 term.clear()
 gpu.setForeground(0xFFFFFF)
 print("Security server version: " .. version)
 print("---------------------------------------------------------------------------")
 
+local serverSettings = loadTable("serversettings.txt")
 local userTable = loadTable("userlist.txt")
 local doorTable = loadTable("doorlist.txt")
+local baseVariables = {"name","uuid","date","link","blocked","staff"}
 if userTable == nil then
-  userTable = {}
+  userTable = {["settings"]={["var"]="level",["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}} --sets up setting var with one setting to start with.
 end
 if doorTable == nil then
   doorTable = {}
 end
 
-function getUserName(user)
+--------account functions
+
+function getVar(var,user)
    for key, value in pairs(userTable) do
     if value.uuid == user then
-      return value.name
+      return value[var]
     end
   end
-   return "NilUser"
+   return "Nil"..var
 end
 
-function checkUser(user)
+function checkVar(var,user)
   for key, value in pairs(userTable) do
     if value.uuid == user then
-      return true, not value.blocked, tonumber(value.level), value.staff
+      return true, not value.blocked, value[var], value.staff
     end
   end
   return false
 end
 
-function checkMtf(user)
-  for key, value in pairs(userTable) do
-    if value.uuid == user then
-      return true, not value.blocked, value.mtf, value.staff
+function getDoorInfo(type,id,key)
+  if type == "multi" then
+    for i=1,#doorTable,1 do --doorTable[i] = {type="single or multi",id="computer's modem uuid",data={door's setting table}}
+      if doorTable[i].id == id then
+        if doorTable[i].data[key]~=nil then
+          return {["read"]=doorTable[i].data[key].cardRead,["level"]=doorTable[i].data[key].accessLevel}
+        end
+      end
+    end
+  else
+    for i=1,#doorTable,1 do --doorTable[i] = {type="single or multi",id="computer's modem uuid",data={door's setting table}}
+      if doorTable[i].id == id then
+        return {["read"]=doorTable[i].data.cardRead,["level"]=doorTable[i].data.accessLevel}
+      end
     end
   end
-  return false
-end
-
-function checkGoi(user)
-  for key, value in pairs(userTable) do
-    if value.uuid == user then
-      return true, not value.blocked, value.goi, value.staff
-    end
-  end
-  return false
-end
-
-function checkSec(user)
-  for key, value in pairs(userTable) do
-    if value.uuid == user then
-      return true, not value.blocked, value.sec, value.staff
-    end
-  end
-  return false
-end
-
-function checkUserA(user)
-  for key, value in pairs(userTable) do
-    if value.uuid == user then
-      return true, not value.blocked, tonumber(value.armory), value.staff
-    end
-  end
-  return false
-end
-
-function checkUserD(user)
-  for key, value in pairs(userTable) do
-    if value.uuid == user then
-      return true, not value.blocked, tonumber(value.department), value.staff
-    end
-  end
-  return false
-end
-
-function checkLevel(id)
-  for key, value in pairs(doorTable) do
-    if key == id then
-      return tonumber(value)
-    end
-  end
-  return 0
-end
-
-function checkInt(user)
-  for key, value in pairs(userTable) do
-    if value.uuid == user then
-      return true, not value.blocked, value.int, value.staff
-    end
-  end
-  return false
+  return nil
 end
 
 function checkStaff(user)
