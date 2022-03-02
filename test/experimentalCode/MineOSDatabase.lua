@@ -1,7 +1,6 @@
 local GUI = require("GUI")
 local system = require("System")
 local cryptKey = {1, 2, 3, 4, 5}
-local departments = {"SD","ScD","MD","E&T","O5"}
 local modemPort = 199
 local dbPort = 144
 
@@ -21,15 +20,22 @@ local writer
 ----------
  
 local workspace, window, menu
-local cardStatusLabel, userList, userNameText, userLevelLabel, LevelUpButton, LevelDownButton, createAdminCardButton
-local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, MTFYesButton, listPageLabel, listUpButton, listDownButton
-local GOIYesButton, SecYesButton, userArmoryLabel, ArmoryUpButton, ArmoryDownButton, userUUIDLabel
-local userDepLabel, DepUpButton, DepDownButton, IntYesButton, StaffYesButton, linkUserButton, linkUserLabel
+local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel
+local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton
  
+local baseVariables = {"name","uuid","date","link","blocked","staff"}
+local guiCalls = {}
+--[[set up on startup according to extra modifiers added by user.
+If type is string, [1] = text input.
+If type is -string, [1] = text label.
+If type is bool, [1] = toggleable button.
+If type is int, [1] = minus button, [2] = plus button, [3] = value label.
+If type is -int, [1] = minus button, [2] = plus button, [3] = value label, [4] = {array of string values}
+]]
 ----------
  
 local prgName = "Security database"
-local version = "v7.1"
+local version = "v8.0"
  
 local modem
  
@@ -115,7 +121,7 @@ function updateServer()
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end
-  modem.broadcast(modemPort, "updateuser", crypted)
+  modem.broadcast(modemPort, "updateuserlist", crypted)
 end
  
 function updateList()
@@ -207,6 +213,15 @@ function userListCallback()
   userNameText.disabled = false
 end
  
+function buttonCallback(buttonInt, callbackInt) --TODO: work on this more when user array is done
+  local selected = pageMult * listPageNumber + userList.selectedItem
+  if callbackInt > #baseVariables then
+    userTable[selected][baseVariables[callbackInt]]
+  else
+    userTable[selected][baseVariables[callbackInt]]
+  end
+end
+
 function mtfUserCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
   userTable[selected].mtf = MTFYesButton.pressed

@@ -191,7 +191,7 @@ while true do
      data = crypt(tostring(file),cryptKey)
      modem.broadcast(197, "update", data)
      term.write("Updating door command received\n")
-  elseif command == "updateuser" then
+  elseif command == "updateuserlist" then
     gpu.setForeground(0x0000C0)
     userTable = ser.unserialize(data)
     term.write("Updated userlist received\n")
