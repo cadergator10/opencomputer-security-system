@@ -5,6 +5,8 @@
 This security system was built for the <a href="https://www.technicpack.net/modpack/site-91.1622979">Site 91</a> modpack official server, but I made it public so others could enjoy it.
 I built it off of DustPuppy's system from the Open Computers official website (link above), but it is in no way the same as what it originally was.
 
+Go to bottom for a changelog, future changes, and some extra information about how to use the system
+
 In total: this is what this new system supports:
 
 <ol>
@@ -45,3 +47,19 @@ If you have any questions, don't hesitate to ask!
 ![image](https://user-images.githubusercontent.com/75097681/153966751-f94d255d-88a6-4b9a-8212-936b8a735a97.png)
 ![image](https://user-images.githubusercontent.com/75097681/153966774-ddea0e15-01ef-47db-a975-8f0b3b63fed0.png)
 
+Changelog:
+<ul>
+   <li>6.0 and before: don't have specific updates on stuff, basically everything that isn't past this.</li>
+   <li>7.0: I believe I changed the system in which users are saved on the cards. Before it split string and now it uses serialized array.</li>
+   <li>7.1: Server's text is now colored. MineOS database linking uses background container instead of an alert (linking is for Site 91)</li>
+</ul>
+
+Future updates:
+<ol>
+   <li>Modular security system (not limited to hard coded variables, but you can add your own.)</li>
+   <li>Shrink file sizes of code with new modular system</li>
+   <li>search through code to make sure every version number is up to date.</li>
+</ol>
+
+Important information:
+   The first number of a security system update is a full system update, which can possibly break previous systems. The second is a small update that doesn't involve updating every single device. Second number should be able to be mixed and matched (eg a 7.1 device works with a 7.0 server), but the first cannot (8.0 device SHOULD/WILL NOT work with a 7.0 device.)

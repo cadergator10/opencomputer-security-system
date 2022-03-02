@@ -29,7 +29,7 @@ local userDepLabel, DepUpButton, DepDownButton, IntYesButton, StaffYesButton, li
 ----------
  
 local prgName = "Security database"
-local version = "v7.0"
+local version = "v7.1"
  
 local modem
  
