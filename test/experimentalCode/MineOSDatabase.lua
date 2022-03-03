@@ -315,17 +315,15 @@ function writeAdminCardCallback()
   writer.write(crypted, "ADMIN DIAGNOSTIC CARD", false, 14)
 end
 
-function pageUpCallback()
-  if listPageNumber < #userTable/pageMult - 1 then
-    listPageNumber = listPageNumber + 1
-  end
-  updateList()
-  userListCallback()
-end
- 
-function pageDownCallback()
-  if listPageNumber > 0 then
-    listPageNumber = listPageNumber - 1
+function pageCallback(isPos)
+  if isPos then
+    if listPageNumber < #userTable/pageMult - 1 then
+      listPageNumber = listPageNumber + 1
+    end
+  else
+    if listPageNumber > 0 then
+      listPageNumber = listPageNumber - 1
+    end
   end
   updateList()
   userListCallback()
@@ -450,9 +448,9 @@ if enableLinking == true then linkUserButton.disabled = true end
 
 listPageLabel = window:addChild(GUI.label(4,38,3,3,0x165FF2,tostring(listPageNumber + 1)))
 listUpButton = window:addChild(GUI.button(8,38,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
-listUpButton.onTouch = pageUpCallback
+listUpButton.onTouch = pageCallback,true
 listDownButton = window:addChild(GUI.button(12,38,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
-listDownButton.onTouch = pageDownCallback
+listDownButton.onTouch = pageCallback,false
  
 --Line and user buttons
  
