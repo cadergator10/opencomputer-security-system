@@ -178,60 +178,54 @@ function userListCallback()
   userNameText.disabled = false
   for i=1,#userTable.settings.var,1 do
     if userTable.settings.type[i] == "bool" then
-      if userTable[selectedId][userTable.settings.var[i]] == true then
-        guiCalls[i][1].pressed = true
-      else
-        guiCalls[i][1].pressed = false
-      end
+      guiCalls[i][1].pressed = userTable[selectedId][userTable.settings.var[i]]
       guiCalls[i][1].disabled = false
     elseif userTable.settings.type[i] == "string" or userTable.settings.type[i] == "-string" then
       guiCalls[i][1].text = userTable[selectedId][userTable.settings.var[i]]
       if userTable.settings.type[i] == "string" then guiCalls[i][1].disabled = false end
-    elseif userTable.settings.type[i] == "int" then
-      
+    elseif userTable.settings.type[i] == "int" or userTable.settings.type[i] == "-int" then
+      if userTable.settings.type[i] == "-int" then
+        guiCalls[i][3].text = guiCalls[i][4][userTable[selectedId][userTable.settings.var[i]]]
+      else
+        guiCalls[i][3].text = tostring(userTable[selectedId][userTable.settings.var[i]])
+      end
+      guiCalls[i][1].disabled = false
+      guiCalls[i][2].disabled = false
     else
-
+      GUI.alert("Potential error in line 157 in function userListCallback()")
     end
   end
 end
  
-function buttonCallback(buttonInt, callbackInt) --TODO: work on this more when user array is done
+function buttonCallback(buttonInt, callbackInt, isPos) --TODO: work on this more when user array is done
   local selected = pageMult * listPageNumber + userList.selectedItem
   if callbackInt > #baseVariables then
-    userTable[selected][baseVariables[callbackInt]]
+    callbackInt = callbackInt - #baseVariables
+    if userTable.settings.type[callbackInt] == "string" then
+      userTable[selected][userTable.settings.var[callbackInt]] = guiCalls[buttonInt][1].text
+    elseif userTable.settings.type[callbackInt] == "bool" then
+      userTable[selected][userTable.settings.var[callbackInt]] = guiCalls[buttonInt][1].pressed
+    elseif userTable.settings.type[callbackInt] == "int" then
+      if isPos == true then
+        if userTable[selected][userTable.settings.var[callbackInt]] < 100 then
+          userTable[selected][userTable.settings.var[callbackInt]] = userTable[selected][userTable.settings.var[callbackInt]] + 1
+        end
+      else
+        if userTable[selected][userTable.settings.var[callbackInt]] > 0 then
+          userTable[selected][userTable.settings.var[callbackInt]] = userTable[selected][userTable.settings.var[callbackInt]] - 1
+        end
+      end
+    else
+      GUI.alert("error in button callback with button id: " .. buttonInt)
+      return
+    end
   else
     userTable[selected][baseVariables[callbackInt]]
   end
+  updateList()
+  userListCallback()
 end
 
-function mtfUserCallback()
-  local selected = pageMult * listPageNumber + userList.selectedItem
-  userTable[selected].mtf = MTFYesButton.pressed
-  updateList()
-  userListCallback()
-end
- 
-function goiUserCallback()
-  local selected = pageMult * listPageNumber + userList.selectedItem
-  userTable[selected].goi = GOIYesButton.pressed
-  updateList()
-  userListCallback()
-end
- 
-function secUserCallback()
-  local selected = pageMult * listPageNumber + userList.selectedItem
-  userTable[selected].sec = SecYesButton.pressed
-  updateList()
-  userListCallback()
-end
- 
-function intUserCallback()
-  local selected = pageMult * listPageNumber + userList.selectedItem
-  userTable[selected].int = IntYesButton.pressed
-  updateList()
-  userListCallback()
-end
- 
 function staffUserCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
   userTable[selected].staff = StaffYesButton.pressed
@@ -247,7 +241,16 @@ function blockUserCallback()
 end
  
 function newUserCallback()
-  local tmpTable = {["name"] = "new", ["blocked"] = false, ["level"] = 1, ["date"] = os.date(), ["armory"] = 0, ["mtf"] = false, ["sec"] = false, ["int"] = false, ["staff"] = false, ["goi"] = false, ["department"] = 1, ["uuid"] = uuid.next(), ["link"] = "nil"}
+  local tmpTable = {["name"] = "new", ["blocked"] = false, ["date"] = os.date(), ["staff"] = false, ["uuid"] = uuid.next(), ["link"] = "nil"}
+  for i=1,#userTable.settings.var,1 do
+    if userTable.settings.type[i] == "string" or userTable.settings.type[i] == "-string" then
+      tmpTable[userTable.settings.var[i]] = "none"
+    elseif  userTable.settings.type[i] == "bool" then
+      tmpTable[userTable.settings.var[i]] = false
+    elseif userTable.settings.type[i] == "int" or userTable.settings.type[i] == "-int" then
+      tmpTable[userTable.settings.var[i]] = 0
+    end
+  end
   table.insert(userTable, tmpTable)
   updateList()
 end
@@ -257,21 +260,22 @@ function deleteUserCallback()
   userTable[selected] = nil
   updateList()
   userNameText.text = ""
-  userLevelLabel.text = "#"
-  userArmoryLabel.text = "#"
-  userDepLabel.text = "NAN"
-  LevelUpButton.disabled = true
-  LevelDownButton.disabled = true
-  ArmoryUpButton.disabled = true
-  ArmoryDownButton.disabled = true
-  DepUpButton.disabled = true
-  DepDownButton.disabled = true
   userNameText.disabled = true
-  MTFYesButton.disabled = true
-  GOIYesButton.disabled = true
-  SecYesButton.disabled = true
-  IntYesButton.disabled = true
   StaffYesButton.disabled = true
+  for i=1,#userTable.settings.var,1 do
+    local tmp = userTable.settings.type[i]
+    if tmp == "string" or tmp == "-string" or tmp == "bool" then
+      if tmp ~= "bool" then guiCalls[i][1].text = "" end
+      if tmp ~= "-string" then guiCalls[i][1].disabled = true end
+    elseif tmp == "int" or tmp == "-int" then
+      if tmp == "-int" then
+        guiCalls[i][3] = "NAN"
+      else
+        guiCalls[i][3] = "#"
+      end
+      guiCalls[i][1].disabled = true
+      guiCalls[i][2].disabled = true
+    end
   if enableLinking == true then linkUserButton.disabled = true end
 end
 
@@ -299,60 +303,6 @@ function writeAdminCardCallback()
   local data =  adminCard
   local crypted = crypt(data, cryptKey)
   writer.write(crypted, "ADMIN DIAGNOSTIC CARD", false, 14)
-end
- 
-function levelUpCallback()
-  local selected = pageMult * listPageNumber + userList.selectedItem
-  if userTable[selected].level < 101 then
-    userTable[selected].level = userTable[selected].level + 1
-  end
-  updateList()
-  userListCallback()
-end
- 
-function levelDownCallback()
-  local selected = pageMult * listPageNumber + userList.selectedItem
-  if userTable[selected].level > 1 then
-    userTable[selected].level = userTable[selected].level - 1
-  end
-  updateList()
-  userListCallback()
-end
- 
-function armorUpCallback()
-  local selected = pageMult * listPageNumber + userList.selectedItem
-  if userTable[selected].armory < 4 then
-    userTable[selected].armory = userTable[selected].armory + 1
-  end
-  updateList()
-  userListCallback()
-end
- 
-function armorDownCallback()
-  local selected = pageMult * listPageNumber + userList.selectedItem
-  if userTable[selected].armory > 0 then
-    userTable[selected].armory = userTable[selected].armory - 1
-  end
-  updateList()
-  userListCallback()
-end
- 
-function depUpCallback()
-  local selected = pageMult * listPageNumber + userList.selectedItem
-  if userTable[selected].department < 5 then
-    userTable[selected].department = userTable[selected].department + 1
-  end
-  updateList()
-  userListCallback()
-end
- 
-function depDownCallback()
-  local selected = pageMult * listPageNumber + userList.selectedItem
-  if userTable[selected].department > 1 then
-    userTable[selected].department = userTable[selected].department - 1
-  end
-  updateList()
-  userListCallback()
 end
 
 function pageUpCallback()
@@ -419,18 +369,47 @@ end
 updateList()
  
 --user infos
-window:addChild(GUI.label(64,12,3,3,0x165FF2,"User name : "))
-userUUIDLabel = window:addChild(GUI.label(64,14,3,3,0x165FF2,"UUID      : user not selected"))
-window:addChild(GUI.label(64,16,3,3,0x165FF2,"Level     : "))
-window:addChild(GUI.label(64,18,3,3,0x165FF2,"MTF       : "))
-window:addChild(GUI.label(64,20,3,3,0x165FF2,"GOI       : "))
-window:addChild(GUI.label(64,22,3,3,0x165FF2,"Security  : "))
-window:addChild(GUI.label(64,24,3,3,0x165FF2,"Intercom  : "))
-window:addChild(GUI.label(64,26,3,3,0x165FF2,"STAFF     : "))
-window:addChild(GUI.label(64,28,3,3,0x165FF2,"ArmorLevel: "))
-window:addChild(GUI.label(64,30,3,3,0x165FF2,"Department: "))
-window:addChild(GUI.label(64,32,3,3,0x165FF2,"Blocked   : "))
-if enableLinking == true then linkUserLabel = window:addChild(GUI.label(64,34,3,3,0x165FF2,"LINK      : user not selected")) end --put at end for safe keeping CADE
+local labelSpot = 12
+window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"User name : "))
+userNameText = window:addChild(GUI.input(88,labelSpot,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "input name"))
+userNameText.onInputFinished = inputCallback
+labelSpot = labelSpot + 2
+userUUIDLabel = window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"UUID      : user not selected"))
+labelSpot = labelSpot + 2
+window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"STAFF     : "))
+labelSpot = labelSpot + 2
+window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"Blocked   : "))
+labelSpot = labelSpot + 2
+for i=1,#userTable.settings.var,1 do
+  local labelText = userTable.settings.label[i]
+  local spaceNum = 10 - #labelText
+  if spaceNum < 0 then spaceNum = 0 end
+  for j=1,spaceNum,1 do
+    labelText = labelText .. " "
+  end
+  labelText = labelText .. ": "
+  window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,labelText))
+
+  if userTable.settings.type == "string" then
+    guiCalls[i][1] = window:addChild(GUI.input(88,labelSpot,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "input text"))
+    guiCalls[i][1].onInputFinished = function()
+
+    end,
+  elseif userTable.settings.type == "-string" then
+    guiCalls[i][1] = window:addChild(GUI.label(88,labelSpot,3,3,0x165FF2,"NAN"))
+  elseif userTable.settings.type == "int" then
+
+  elseif userTable.settings.type == "-int" then
+
+  elseif userTable.settings.type == "bool" then
+    guiCalls[i][1] = window:addChild(GUI.button(88,labelSpot,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
+  end
+
+  labelSpot = labelSpot + 2
+end
+
+if enableLinking == true then linkUserLabel = window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"LINK      : user not selected")) end --put at end for safe keeping CADE
+labelSpot = labelSpot + 2
 
 listPageLabel = window:addChild(GUI.label(4,38,3,3,0x165FF2,tostring(listPageNumber + 1)))
 listUpButton = window:addChild(GUI.button(8,38,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
@@ -438,8 +417,6 @@ listUpButton.onTouch = pageUpCallback
 listDownButton = window:addChild(GUI.button(12,38,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
 listDownButton.onTouch = pageDownCallback
 
-userNameText = window:addChild(GUI.input(88,12,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "input name"))
-userNameText.onInputFinished = inputCallback
 userLevelLabel = window:addChild(GUI.label(88,16,3,3,0x165FF2,"#"))
 LevelUpButton = window:addChild(GUI.button(92,16,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
 LevelUpButton.onTouch = levelUpCallback

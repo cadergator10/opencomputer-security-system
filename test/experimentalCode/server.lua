@@ -93,7 +93,7 @@ local userTable = loadTable("userlist.txt")
 local doorTable = loadTable("doorlist.txt")
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 if userTable == nil then
-  userTable = {["settings"]={["var"]="level",["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}} --sets up setting var with one setting to start with.
+  userTable = {["settings"]={["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}} --sets up setting var with one setting to start with.
 end
 if doorTable == nil then
   doorTable = {}
