@@ -215,6 +215,16 @@ function buttonCallback(buttonInt, callbackInt, isPos) --TODO: work on this more
           userTable[selected][userTable.settings.var[callbackInt]] = userTable[selected][userTable.settings.var[callbackInt]] - 1
         end
       end
+    elseif userTable.settings.type[callbackInt] == "-int" then
+      if isPos == true then
+        if userTable[selected][userTable.settings.var[callbackInt]] < #userTable.settings.data[callbackInt] then
+          userTable[selected][userTable.settings.var[callbackInt]] = userTable[selected][userTable.settings.var[callbackInt]] + 1
+        end
+      else
+        if userTable[selected][userTable.settings.var[callbackInt]] > 0 then
+          userTable[selected][userTable.settings.var[callbackInt]] = userTable[selected][userTable.settings.var[callbackInt]] - 1
+        end
+      end
     else
       GUI.alert("error in button callback with button id: " .. buttonInt)
       return
@@ -418,7 +428,7 @@ for i=1,#userTable.settings.var,1 do
     guiCalls[i][1].onTouch = buttonCallback,i,i + #baseVariables, true
     guiCalls[i][2] = window:addChild(GUI.button(96,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
     guiCalls[i][2].onTouch = buttonCallback,i,i + #baseVariables, false
-    guiCalls[i][4] = {} --TODO: Find out a way to put the text vars in here.
+    guiCalls[i][4] = userTable.settings.data[i] --TODO: Find out a way to put the text vars in here.
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type == "bool" then
