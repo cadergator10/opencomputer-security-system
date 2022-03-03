@@ -373,12 +373,21 @@ local labelSpot = 12
 window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"User name : "))
 userNameText = window:addChild(GUI.input(88,labelSpot,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "input name"))
 userNameText.onInputFinished = inputCallback
+userNameText.disabled = true
 labelSpot = labelSpot + 2
 userUUIDLabel = window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"UUID      : user not selected"))
 labelSpot = labelSpot + 2
 window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"STAFF     : "))
+StaffYesButton = window:addChild(GUI.button(88,labelSpot,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
+StaffYesButton.switchMode = true
+StaffYesButton.onTouch = staffUserCallback
+StaffYesButton.disabled = true
 labelSpot = labelSpot + 2
 window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"Blocked   : "))
+cardBlockedYesButton = window:addChild(GUI.button(88,labelSpot,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
+cardBlockedYesButton.switchMode = true
+cardBlockedYesButton.onTouch = blockUserCallback
+cardBlockedYesButton.disabled = true
 labelSpot = labelSpot + 2
 for i=1,#userTable.settings.var,1 do
   local labelText = userTable.settings.label[i]
@@ -389,86 +398,51 @@ for i=1,#userTable.settings.var,1 do
   end
   labelText = labelText .. ": "
   window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,labelText))
-
   if userTable.settings.type == "string" then
     guiCalls[i][1] = window:addChild(GUI.input(88,labelSpot,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "input text"))
-    guiCalls[i][1].onInputFinished = function()
-
-    end,
+    guiCalls[i][1].onInputFinished = buttonCallback,i,i + #baseVariables
+    guiCalls[i][1].disabled = true
   elseif userTable.settings.type == "-string" then
     guiCalls[i][1] = window:addChild(GUI.label(88,labelSpot,3,3,0x165FF2,"NAN"))
   elseif userTable.settings.type == "int" then
-
+    guiCalls[i][3] = window:addChild(GUI.label(88,labelSpot,3,3,0x165FF2,"#"))
+    guiCalls[i][1] = window:addChild(GUI.button(92,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
+    guiCalls[i][1].onTouch = buttonCallback,i,i + #baseVariables, true
+    guiCalls[i][2] = window:addChild(GUI.button(96,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
+    guiCalls[i][2].onTouch = buttonCallback,i,i + #baseVariables, false
+    guiCalls[i][1].disabled = true
+    guiCalls[i][2].disabled = true
   elseif userTable.settings.type == "-int" then
-
+    guiCalls[i][3] = window:addChild(GUI.label(88,labelSpot,3,3,0x165FF2,"NAN"))
+    guiCalls[i][1] = window:addChild(GUI.button(92,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
+    guiCalls[i][1].onTouch = buttonCallback,i,i + #baseVariables, true
+    guiCalls[i][2] = window:addChild(GUI.button(96,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
+    guiCalls[i][2].onTouch = buttonCallback,i,i + #baseVariables, false
+    guiCalls[i][4] = {} --TODO: Find out a way to put the text vars in here.
+    guiCalls[i][1].disabled = true
+    guiCalls[i][2].disabled = true
   elseif userTable.settings.type == "bool" then
     guiCalls[i][1] = window:addChild(GUI.button(88,labelSpot,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
+    guiCalls[i][1].switchMode = true
+    guiCalls[i][1].onTouch = buttonCallback,i,i + #baseVariables
+    guiCalls[i][1].disabled = true
   end
-
   labelSpot = labelSpot + 2
 end
 
 if enableLinking == true then linkUserLabel = window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"LINK      : user not selected")) end --put at end for safe keeping CADE
 labelSpot = labelSpot + 2
+if enableLinking == true then
+  linkUserButton = window:addChild(GUI.button(96,labelSpot,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "link device"))
+linkUserButton.onTouch = linkUserCallback
+end
+if enableLinking == true then linkUserButton.disabled = true end
 
 listPageLabel = window:addChild(GUI.label(4,38,3,3,0x165FF2,tostring(listPageNumber + 1)))
 listUpButton = window:addChild(GUI.button(8,38,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
 listUpButton.onTouch = pageUpCallback
 listDownButton = window:addChild(GUI.button(12,38,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
 listDownButton.onTouch = pageDownCallback
-
-userLevelLabel = window:addChild(GUI.label(88,16,3,3,0x165FF2,"#"))
-LevelUpButton = window:addChild(GUI.button(92,16,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
-LevelUpButton.onTouch = levelUpCallback
-LevelDownButton = window:addChild(GUI.button(96,16,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
-LevelDownButton.onTouch = levelDownCallback
-MTFYesButton = window:addChild(GUI.button(88,18,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
-MTFYesButton.switchMode = true
-MTFYesButton.onTouch = mtfUserCallback
-GOIYesButton = window:addChild(GUI.button(88,20,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
-GOIYesButton.switchMode = true
-GOIYesButton.onTouch = goiUserCallback
-SecYesButton = window:addChild(GUI.button(88,22,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
-SecYesButton.switchMode = true
-SecYesButton.onTouch = secUserCallback
-IntYesButton = window:addChild(GUI.button(88,24,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
-IntYesButton.switchMode = true
-IntYesButton.onTouch = intUserCallback
-StaffYesButton = window:addChild(GUI.button(88,26,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
-StaffYesButton.switchMode = true
-StaffYesButton.onTouch = staffUserCallback
-userArmoryLabel= window:addChild(GUI.label(88,28,3,3,0x165FF2,"#"))
-ArmoryUpButton = window:addChild(GUI.button(92,28,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
-ArmoryUpButton.onTouch = armorUpCallback
-ArmoryDownButton= window:addChild(GUI.button(96,28,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
-ArmoryDownButton.onTouch = armorDownCallback
-userDepLabel = window:addChild(GUI.label(88,30,3,3,0x165FF2,"NAN"))
-DepUpButton = window:addChild(GUI.button(92,30,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
-DepUpButton.onTouch = depUpCallback
-DepDownButton = window:addChild(GUI.button(96,30,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
-DepDownButton.onTouch = depDownCallback
-cardBlockedYesButton = window:addChild(GUI.button(88,32,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
-cardBlockedYesButton.switchMode = true
-cardBlockedYesButton.onTouch = blockUserCallback
-if enableLinking == true then
-    linkUserButton = window:addChild(GUI.button(96,34,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "link device"))
-	linkUserButton.onTouch = linkUserCallback
-end
- 
-LevelUpButton.disabled = true
-LevelDownButton.disabled = true
-ArmoryUpButton.disabled = true
-ArmoryDownButton.disabled = true
-DepUpButton.disabled = true
-DepDownButton.disabled = true
-userNameText.disabled = true
-MTFYesButton.disabled = true
-GOIYesButton.disabled = true
-SecYesButton.disabled = true
-IntYesButton.disabled = true
-StaffYesButton.disabled = true
-cardBlockedYesButton.disabled = true
-if enableLinking == true then linkUserButton.disabled = true end
  
 --Line and user buttons
  
