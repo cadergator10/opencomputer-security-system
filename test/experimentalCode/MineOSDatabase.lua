@@ -162,55 +162,37 @@ function userListCallback()
         linkUserLabel.text = "LINK      : " .. userTable[selectedId].link
         linkUserButton.disabled = false
   end
-  userLevelLabel.text = tostring(userTable[selectedId].level)
-  userArmoryLabel.text = tostring(userTable[selectedId].armory)
-  userDepLabel.text = departments[userTable[selectedId].department]
   if userTable[selectedId].blocked == true then
     cardBlockedYesButton.pressed = true
   else
     cardBlockedYesButton.pressed = false
   end
   cardBlockedYesButton.disabled = false
-  if userTable[selectedId].mtf == true then
-    MTFYesButton.pressed = true
-  else
-    MTFYesButton.pressed = false
-  end
-  MTFYesButton.disabled = false
-  if userTable[selectedId].goi == true then
-    GOIYesButton.pressed = true
-  else
-    GOIYesButton.pressed = false
-  end
-  GOIYesButton.disabled = false
-  if userTable[selectedId].sec == true then
-    SecYesButton.pressed = true
-  else
-    SecYesButton.pressed = false
-  end
-  SecYesButton.disabled = false
-  if userTable[selectedId].int == true then
-    IntYesButton.pressed = true
-  else
-    IntYesButton.pressed = false
-  end
-  IntYesButton.disabled = false
   if userTable[selectedId].staff == true then
     StaffYesButton.pressed = true
   else
     StaffYesButton.pressed = false
   end
   StaffYesButton.disabled = false
-  
   listPageLabel.text = tostring(listPageNumber + 1)
-
-  LevelUpButton.disabled = false
-  LevelDownButton.disabled = false
-  ArmoryUpButton.disabled = false
-  ArmoryDownButton.disabled = false
-  DepUpButton.disabled = false
-  DepDownButton.disabled = false
   userNameText.disabled = false
+  for i=1,#userTable.settings.var,1 do
+    if userTable.settings.type[i] == "bool" then
+      if userTable[selectedId][userTable.settings.var[i]] == true then
+        guiCalls[i][1].pressed = true
+      else
+        guiCalls[i][1].pressed = false
+      end
+      guiCalls[i][1].disabled = false
+    elseif userTable.settings.type[i] == "string" or userTable.settings.type[i] == "-string" then
+      guiCalls[i][1].text = userTable[selectedId][userTable.settings.var[i]]
+      if userTable.settings.type[i] == "string" then guiCalls[i][1].disabled = false end
+    elseif userTable.settings.type[i] == "int" then
+      
+    else
+
+    end
+  end
 end
  
 function buttonCallback(buttonInt, callbackInt) --TODO: work on this more when user array is done
