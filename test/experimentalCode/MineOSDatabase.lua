@@ -23,7 +23,7 @@ local workspace, window, menu
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton
  
-local baseVariables = {"name","uuid","date","link","blocked","staff"}
+local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
 --[[set up on startup according to extra modifiers added by user.
 If type is string, [1] = text input.
