@@ -198,6 +198,7 @@ while true do
     end
     if isInAlready == false then table.insert(tmpTable) end
     saveTable(doorTable, "doorlist.txt")
+    modem.send(from,port,crypt(ser.serialize(UserTable.settings),cryptKey))
   elseif command == "redstoneUpdated" then
         gpu.setForeground(0x0000C0)
         term.write("Redstone has been updated")
