@@ -1,6 +1,6 @@
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "7.0"
+local doorVersion = "2.1.0"
 testR = true
 
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
