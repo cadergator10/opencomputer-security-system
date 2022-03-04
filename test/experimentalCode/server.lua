@@ -291,22 +291,134 @@ while true do
          end
       end
     else
-      local bool isRealCommand = false
+      local bool isRealCommand = false --TODO: verify this all functions maybe please??????
       for i=1,#userTable.settings.calls,1 do
         if command == userTable.settings.calls[i] then
-          term.write("Checking if user " .. thisUserName)
-          isRealCommand = true
-          local cu, isBlocked, varCheck, isStaff checkVar(userTable.settings.var[i],data.uuid)
-          if cu == true then
-            if userTable.settings.type[i] == "string" or userTable.settings.type[i] == "-string" then
-              term.write(" contains exact " .. userTable.settings.var[i] .. " :")
-            elseif userTable.settings.type[i] == "int" then
-              local currentDoor = getDoorInfo(data.type,from,data.key)
-              if currentDoor ~= nil then
-                if userTable.settings.above[i] then
-                  term.write(" is above " .. tostring(currentDoor.level) .. " :")
-                  if currentDoor.level > varCheck then
-                    ifStaff == true then
+          if lockDoors == true and bypassLock ~= 1 then
+            gpu.setForeground(0xFF0000)
+            term.write("Doors have been locked. Unable to open door\n")
+            data = crypt("locked", cryptKey)
+            modem.send(from, port, data)
+          else
+            term.write("Checking if user " .. thisUserName)
+            isRealCommand = true
+            local cu, isBlocked, varCheck, isStaff checkVar(userTable.settings.var[i],data.uuid)
+            if cu == true then
+              if isBlocked == false then
+                data = crypt("false", cryptKey)
+                gpu.setForeground(0xFF0000)
+                term.write(" user is blocked\n")
+                modem.send(from, port, data)
+              else
+                if userTable.settings.type[i] == "string" or userTable.settings.type[i] == "-string" then
+                  local currentDoor = getDoorInfo(data.type,from,data.key)
+                  if currentDoor ~= nil then
+                    term.write(" is exactly " .. currentDoor.level .. " in var " .. userTable.settings.var[i] .. " :")
+                    if currentDoor.level ~= varCheck then
+                      if isStaff == true then
+                        data = crypt("true", cryptKey)
+                        gpu.setForeground(0xFF00FF)
+                        term.write(" access granted due to staff\n")
+                        modem.send(from, port, data)  
+                      else
+                        data = crypt("false", cryptKey)
+                        gpu.setForeground(0xFF0000)
+                        term.write(" incorrect entry\n")
+                        modem.send(from, port, data)   
+                      end
+                    else
+                      data = crypt("true", cryptKey)
+                      gpu.setForeground(0x00FF00)
+                      term.write(" access granted\n")
+                      modem.send(from, port, data)
+                    end
+                  else
+                    gpu.setForeground(0xFF0000)
+                    term.write(" error getting door\n")
+                  end 
+                elseif userTable.settings.type[i] == "int" then
+                  local currentDoor = getDoorInfo(data.type,from,data.key)
+                  if currentDoor ~= nil then
+                    if userTable.settings.above[i] then
+                      term.write(" is above " .. tostring(currentDoor.level) .. " in var " .. userTable.settings.var[i] .. " :")
+                      if currentDoor.level > varCheck then
+                        if isStaff == true then
+                          data = crypt("true", cryptKey)
+                          gpu.setForeground(0xFF00FF)
+                          term.write(" access granted due to staff\n")
+                          modem.send(from, port, data)  
+                        else
+                          data = crypt("false", cryptKey)
+                          gpu.setForeground(0xFF0000)
+                          term.write(" level is too low\n")
+                          modem.send(from, port, data)   
+                        end
+                      else --TODO: check if this functions later after thing is written. It should be complete.
+                        data = crypt("true", cryptKey)
+                        gpu.setForeground(0x00FF00)
+                        term.write(" access granted\n")
+                        modem.send(from, port, data)
+                      end
+                    else
+                      term.write(" is exactly " .. tostring(currentDoor.level) .. " in var " .. userTable.settings.var[i] .. " :")
+                      if currentDoor.level ~= varCheck then
+                        if isStaff == true then
+                          data = crypt("true", cryptKey)
+                          gpu.setForeground(0xFF00FF)
+                          term.write(" access granted due to staff\n")
+                          modem.send(from, port, data)  
+                        else
+                          data = crypt("false", cryptKey)
+                          gpu.setForeground(0xFF0000)
+                          term.write(" level is incorrect\n")
+                          modem.send(from, port, data)   
+                        end
+                      else
+                        data = crypt("true", cryptKey)
+                        gpu.setForeground(0x00FF00)
+                        term.write(" access granted\n")
+                        modem.send(from, port, data)
+                      end
+                    end
+                  else
+                    gpu.setForeground(0xFF0000)
+                    term.write(" error getting door\n")
+                  end
+                elseif userTable.settings.type[i] == "-int" then
+                  local currentDoor = getDoorInfo(data.type,from,data.key)
+                  if currentDoor ~= nil then
+                    term.write(" is in group " .. userTable.settings.data[currentDoor.level] .. " in var " .. userTable.settings.var[i] .. " :")
+                    if currentDoor.level ~= varCheck then
+                      if isStaff == true then
+                        data = crypt("true", cryptKey)
+                        gpu.setForeground(0xFF00FF)
+                        term.write(" access granted due to staff\n")
+                        modem.send(from, port, data)  
+                      else
+                        data = crypt("false", cryptKey)
+                        gpu.setForeground(0xFF0000)
+                        term.write(" incorrect group\n")
+                        modem.send(from, port, data)   
+                      end
+                    else
+                      data = crypt("true", cryptKey)
+                      gpu.setForeground(0x00FF00)
+                      term.write(" access granted\n")
+                      modem.send(from, port, data)
+                    end
+                  else
+                    gpu.setForeground(0xFF0000)
+                    term.write(" error getting door\n")
+                  end
+                elseif userTable.settings.type[i] == "bool" then
+                  term.write(" is " .. userTable.settings.var[i] .. " :")
+                  if varCheck == true then
+                    data = crypt("true", cryptKey)
+                    gpu.setForeground(0x00FF00)
+                    term.write(" access granted\n")
+                    modem.send(from, port, data)
+                  else
+                    if isStaff == true then
                       data = crypt("true", cryptKey)
                       gpu.setForeground(0xFF00FF)
                       term.write(" access granted due to staff\n")
@@ -314,28 +426,18 @@ while true do
                     else
                       data = crypt("false", cryptKey)
                       gpu.setForeground(0xFF0000)
-                      term.write(" level is too low\n")
+                      term.write(" access denied\n")
                       modem.send(from, port, data)   
                     end
-                  else --TODO: finish this and don't forget
-                    data = crypt("true", cryptKey)
-                    gpu.setForeground(0x00FF00)
-                    term.write(" access granted\n")
-                    modem.send(from, port, data)
                   end
-                else
-                  term.write(" is exactly " .. tostring(currentDoor.level) .. " :")
                 end
-              else
-                gpu.setForeground(0xFF0000)
-                term.write(" error getting door\n")
               end
+            else
+              data = crypt("false", cryptKey)
+              gpu.setForeground(0x990000)
+              term.write(" user not found\n")
+              modem.send(from, port, data)
             end
-          else
-            data = crypt("false", cryptKey)
-            gpu.setForeground(0x990000)
-      			term.write(" user not found\n")
-      			modem.send(from, port, data)
           end
         end
       end
