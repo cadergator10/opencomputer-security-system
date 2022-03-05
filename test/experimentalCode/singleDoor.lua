@@ -1,6 +1,6 @@
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "7.0"
+local doorVersion = "2.1.0"
 local testR = true
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. 3 = rolldoor
 local doorType = 0
@@ -30,12 +30,8 @@ local forceOpen = 1
 local adminCard = "admincard"
 
 local cryptKey = {1, 2, 3, 4, 5}
-local departments = {"SD","ScD","MD","E&T","O5"}
 local modemPort = 199
-local updatePort = 198
 local diagPort = 180
-
-local serverSend = {"checkuser","checkarmor","checkMtf","checkgoi","checksec","checkdepartment","checkint","checkstaff"}
   
 local component = require("component")
 local gpu = component.gpu
@@ -49,6 +45,9 @@ local magReader = component.os_magreader
  
 local modem = component.modem 
  
+local baseVariables = {"name","uuid","date","link","blocked","staff"}
+local varSettings = {}
+
 local settingData = {}
  
 local function convert( chars, dist, inv )
@@ -75,7 +74,6 @@ local function crypt(str,k,inv)
   return enc;
 end
  
- 
 function splitString(str, sep)
         local sep, fields = sep or ":", {}
         local pattern = string.format("([^%s]+)", sep)
@@ -84,103 +82,94 @@ function splitString(str, sep)
 end
 
 local function update(msg, localAddress, remoteAddress, port, distance, msg, data)
-    	if(port == updatePort and testR == true) then
+    if(testR == true) then
         data = crypt(data, cryptKey, true)
-        if msg == "update" then
-        term.write("Updating door")
-        local fileReceiveFinal = io.open("ctrl.lua","w")
-  		fileReceiveFinal:write(data)
-  		fileReceiveFinal:flush()
-  		fileReceiveFinal:close()
-        event.ignore("modem_message", update)
-    	os.execute("ctrl")
-        os.exit()
-        elseif msg == "forceopen" and forceOpen ~= 0 then
+        if msg == "forceopen" and forceOpen ~= 0 then
             if data == "open" then
                 if(doorType == 0)then
-        component.os_doorcontroller.open()
-    elseif(doorType == 1)then
-        if(component.redstone.getOutput(redSide) == 0) then
-            component.redstone.setOutput(redSide,15)
-        else
-            component.redstone.setOutput(redSide,0)
-        end
-    elseif(doorType == 2)then
-        if(component.redstone.getBundledOutput(redSide, redColor) == 0) then
-            component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
-        else
-            component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
-        end
-    else
-        component.os_rolldoorcontroller.open()
-    end
+                    component.os_doorcontroller.open()
+                elseif(doorType == 1)then
+                    if(component.redstone.getOutput(redSide) == 0) then
+                        component.redstone.setOutput(redSide,15)
+                    else
+                        component.redstone.setOutput(redSide,0)
+                    end
+                elseif(doorType == 2)then
+                    if(component.redstone.getBundledOutput(redSide, redColor) == 0) then
+                        component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
+                    else
+                        component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
+                    end
+                else
+                    component.os_rolldoorcontroller.open()
+                end
             else
                 if(doorType == 0)then
-        component.os_doorcontroller.close()
-    elseif(doorType == 1)then
-        if(component.redstone.getOutput(redSide) == 0) then
-            component.redstone.setOutput(redSide,15)
-        else
-            component.redstone.setOutput(redSide,0)
-        end
-    elseif(doorType == 2)then
-        if(component.redstone.getBundledOutput(redSide, redColor) == 0) then
-            component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
-        else
-            component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
-        end
-    else
-        component.os_rolldoorcontroller.close()
-    end
+                    component.os_doorcontroller.close()
+                elseif(doorType == 1)then
+                    if(component.redstone.getOutput(redSide) == 0) then
+                        component.redstone.setOutput(redSide,15)
+                    else
+                        component.redstone.setOutput(redSide,0)
+                    end
+                elseif(doorType == 2)then
+                    if(component.redstone.getBundledOutput(redSide, redColor) == 0) then
+                        component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
+                    else
+                        component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
+                    end
+                else
+                    component.os_rolldoorcontroller.close()
+                end
             end
         end
-        end
+    end
 end
 
 function openDoor()
     if(toggle == 0) then
         if(doorType == 0)then
-        component.os_doorcontroller.toggle()
-        os.sleep(delay)
-        component.os_doorcontroller.toggle()
-    elseif(doorType == 1)then
-        component.redstone.setOutput(redSide,15)
-    	os.sleep(delay)
-    	component.redstone.setOutput(redSide,0)
-    elseif(doorType == 2)then
-        component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
-        os.sleep(delay)
-        component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
-    else
-        component.os_rolldoorcontroller.toggle()
-        os.sleep(delay)
-        component.os_rolldoorcontroller.toggle()
-    end
-    else
-    if(doorType == 0)then
-        component.os_doorcontroller.toggle()
-    elseif(doorType == 1)then
-        if(component.redstone.getOutput(redSide) == 0) then
+            component.os_doorcontroller.toggle()
+            os.sleep(delay)
+            component.os_doorcontroller.toggle()
+        elseif(doorType == 1)then
             component.redstone.setOutput(redSide,15)
-        else
+            os.sleep(delay)
             component.redstone.setOutput(redSide,0)
-        end
-    elseif(doorType == 2)then
-        if(component.redstone.getBundledOutput(redSide, redColor) == 0) then
+        elseif(doorType == 2)then
             component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
-        else
+            os.sleep(delay)
             component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
+        else
+            component.os_rolldoorcontroller.toggle()
+            os.sleep(delay)
+            component.os_rolldoorcontroller.toggle()
         end
     else
-        component.os_rolldoorcontroller.toggle()
-    end
+        if(doorType == 0)then
+            component.os_doorcontroller.toggle()
+        elseif(doorType == 1)then
+            if(component.redstone.getOutput(redSide) == 0) then
+                component.redstone.setOutput(redSide,15)
+            else
+                component.redstone.setOutput(redSide,0)
+            end
+        elseif(doorType == 2)then
+            if(component.redstone.getBundledOutput(redSide, redColor) == 0) then
+                component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
+            else
+                component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
+            end
+        else
+            component.os_rolldoorcontroller.toggle()
+        end
     end
  end
 
 term.clear()
 local fill = io.open("doorSettings.txt", "r")
 if fill~=nil then 
-    io.close(fill) 
+    io.close(fill)
 else 
 	settingData["doorType"] = 0
     settingData["redSide"] = 0
@@ -193,8 +182,19 @@ else
     settingData["bypassLock"] = 0
     ttf.save(settingData,"doorSettings.txt")
 end
-
 	settingData = ttf.load("doorSettings.txt")
+
+    fill = {}
+    fill["type"] = "single"
+    fill["data"] = settingData
+    modem.broadcast(modemPort,crypt(ser.serialize(fill),cryptKey))
+    local got, _, _, _, _, fill = event.pull(2, "modem_message")
+    if got then
+        varSettings = ser.unserialize(crypt(fill,cryptKey,true))
+    else
+        print("Failed to receive confirmation from server")
+        os.exit()
+    end
 	
 	doorType = settingData.doorType
 	redSide = settingData.redSide
@@ -205,32 +205,36 @@ end
 	toggle = settingData.toggle
 	forceOpen = settingData.forceOpen
 	bypassLock = settingData.bypassLock
-	
 
-if (cardRead == 0)then
-    print("ACCESS LEVEL " .. tostring(accessLevel) .. " REQUIRED")
-elseif (cardRead == 1)then
-    print("ARMORY CLEARANCE LEVEL " .. tostring(accessLevel) .. " REQUIRED")
-elseif (cardRead == 2)then
-    print("MTF PASS REQUIRED")
-elseif (cardRead == 3)then
-    print("GOI PASS REQUIRED")
-elseif (cardRead == 4)then
-    print("SECURITY PASS REQUIRED")
-elseif (cardRead == 5)then
-    print("DEPARTMENT " .. departments[accessLevel] .. " ONLY")
-elseif (cardRead == 6)then
-    print("INTERCOM PASS REQUIRED")
-elseif (cardRead == 7)then
-    print("STAFF ONLY")
+if cardRead <= #baseVariables then
+    if cardRead == 6 then
+        print("STAFF ONLY")
+        print("")
+    else
+        print("Code is either broken or config not set up right")
+        os.exit()
+    end
+else
+    local cardRead2 = cardRead - #baseVariables
+    print("Checking: ") .. varSettings.var[cardRead2]
+    if varSettings.type[cardRead2] == "string" or varSettings.type[cardRead2] == "-string" then
+        print("Must be exactly " .. accessLevel)
+    elseif varSettings.type[cardRead2] == "int" then
+        if varSettings.above[cardRead2] == true then
+            print("Level " .. tostring(accessLevel) .. " or above required")
+        else
+            print("Level " .. tostring(accessLevel) .. " exactly required")
+        end
+    elseif varSettings.type[cardRead2] == "-int" then
+        print("Must be group " .. varSettings.data[cardRead2][accessLevel] .. " to enter")
+    elseif varSettings.type[cardRead2] == "bool" then
+        print("Must have pass to enter")
+    end
 end
 print("---------------------------------------------------------------------------")
  
 if modem.isOpen(modemPort) == false then
   modem.open(modemPort)
-end
-if modem.isOpen(updatePort) == false then
-  modem.open(updatePort)
 end
 event.listen("modem_message", update)
 process.info().data.signal = function(...)
@@ -240,46 +244,43 @@ process.info().data.signal = function(...)
   os.exit()
 end    
 
-while true do
+while true do --TODO: test this program.
   if modem.isOpen(updatePort) == false then
-  modem.open(updatePort)
+    modem.open(updatePort)
   end
   ev, _, user, str, uuid, data = event.pull("magData")
   term.write(str .. "\n")
   local data = crypt(str, cryptKey, true)
   if ev then
     if (data == adminCard) then
-            term.write("Admin card swiped. Sending diagnostics\n")
-            modem.open(diagPort)
-            local diagData = settingData
-            diagData["status"] = "ok"
-            diagData["type"] = "single"
-            diagData["version"] = doorVersion
-            diagData["key"] = "NAN"
-            data = crypt(ser.serialize(diagData),cryptKey)
-            modem.broadcast(diagPort, "diag", data)
+        term.write("Admin card swiped. Sending diagnostics\n")
+        modem.open(diagPort)
+        local diagData = settingData
+        diagData["status"] = "ok"
+        diagData["type"] = "single"
+        diagData["version"] = doorVersion
+        diagData["key"] = "NAN"
+        data = crypt(ser.serialize(diagData),cryptKey)
+        modem.broadcast(diagPort, "diag", data)
     else
-    local tmpTable = ser.unserialize(data)
-    term.write(tmpTable["name"] .. ":")
-    if modem.isOpen(modemPort) == false then
-      modem.open(modemPort)
-    end
+        local tmpTable = ser.unserialize(data)
+        term.write(tmpTable["name"] .. ":")
+        if modem.isOpen(modemPort) == false then
+            modem.open(modemPort)
+        end
     if modem.isOpen(updatePort) == false then
   		modem.open(updatePort)
   	end
-            
-    if (cardRead == 0 or cardRead == 1 or cardRead == 5) then
-    	data = crypt(tostring(accessLevel), cryptKey)
-        modem.broadcast(modemPort, "setlevel", data)
-        data = crypt
-        (tmpTable["uuid"], cryptKey)
-        modem.broadcast(modemPort, serverSend[(cardRead + 1)], data, bypassLock)                
-    elseif (cardRead == 2 or cardRead == 3 or cardRead == 4 or cardRead == 6 or cardRead == 7) then
-        data = crypt
-		(tmpTable["uuid"], cryptKey)
-    	modem.broadcast(modemPort, serverSend[(cardRead + 1)], data, bypassLock)            
+    data["type"] = "single"
+    data["key"] = "none"
+    if cardRead == 6 then
+        data = crypt(tmpTable, cryptKey)
+    	modem.broadcast(modemPort, "checkstaff", data, bypassLock)
+    else
+        data = crypt(tmpTable, cryptKey)
+        modem.broadcast(modemPort, varSettings.calls[cardRead - #baseVariables], data, bypassLock)
     end
-                
+            
     local e, _, from, port, _, msg = event.pull(1, "modem_message")
     if e then
       data = crypt(msg, cryptKey, true)

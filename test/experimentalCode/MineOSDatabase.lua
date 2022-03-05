@@ -35,7 +35,7 @@ If type is -int, [1] = minus button, [2] = plus button, [3] = value label, [4] =
 ----------
  
 local prgName = "Security database"
-local version = "v8.0"
+local version = "v2.1.0"
  
 local modem
  

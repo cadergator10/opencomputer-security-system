@@ -1,6 +1,6 @@
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "7.0"
+local doorVersion = "2.1.0"
 testR = true
 
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
@@ -30,10 +30,9 @@ local adminCard = "admincard"
 
 local cryptKey = {1, 2, 3, 4, 5}
 local modemPort = 199
-local updatePort = 197
 local diagPort = 180
 
-local serverSend = {"checkuser","checkarmor","checkMtf","checkgoi","checksec","checkdepartment","checkint","checkstaff"}
+--Done with it local serverSend = {"checkuser","checkarmor","checkMtf","checkgoi","checksec","checkdepartment","checkint","checkstaff"}
   
 local component = require("component")
 local gpu = component.gpu
@@ -47,6 +46,9 @@ local computer = component.computer
 local magReader = component.os_magreader
  
 local modem = component.modem 
+
+local baseVariables = {"name","uuid","date","link","blocked","staff"}
+local varSettings = {}
  
 local settingData = {}
  
@@ -73,8 +75,7 @@ local function crypt(str,k,inv)
   end
   return enc;
 end
- 
- 
+
 function splitString(str, sep)
         local sep, fields = sep or ":", {}
         local pattern = string.format("([^%s]+)", sep)
@@ -83,93 +84,42 @@ function splitString(str, sep)
 end
 
 local function update(msg, localAddress, remoteAddress, port, distance, msg, data)
-    	if(port == updatePort and testR == true) then
-        data = crypt(data, cryptKey, true)
-        if msg == "update" then
-        term.write("Updating door")
-        local fileReceiveFinal = io.open("ctrl.lua","w")
-  		fileReceiveFinal:write(data)
-  		fileReceiveFinal:flush()
-  		fileReceiveFinal:close()
-        event.ignore("modem_message", update)
-    	os.execute("ctrl")
-        os.exit()
-        elseif msg == "forceopen" then
-            local keyed = nil
-            if data == "open" then
-  				for key, valued in pairs(settingData) do
-                    if valued.forceOpen ~= 0 then
-        			if valued.doorType == 0 then
-                        component.proxy(valued.doorAddress).open()
-                    elseif valued.doorType == 1 then
-                        
-                    elseif valued.doorType == 2 then
-                        component.redstone.setBundledOutput(redSide, { [valued.redColor] = 255})
-                    elseif valued.doorType == 3 then
-                        component.proxy(valued.doorAddress).open()
-                    end
-                    end
-  				end
-            else
-                for key, valued in pairs(settingData) do
-                    if valued.forceOpen ~= 0 then
-        			if valued.doorType == 0 then
-                        component.proxy(valued.doorAddress).close()
-                    elseif valued.doorType == 1 then
-                        
-                    elseif valued.doorType == 2 then
-                        component.redstone.setBundledOutput(redSide, { [valued.redColor] = 0})
-                    elseif valued.doorType == 3 then
-                        component.proxy(valued.doorAddress).close()
-                    end
-                    end
-  				end
+  if testR == true then
+    data = crypt(data, cryptKey, true)
+    if msg == "forceopen" then
+      local keyed = nil
+      if data == "open" then
+        for key, valued in pairs(settingData) do
+          if valued.forceOpen ~= 0 then
+            if valued.doorType == 0 then
+              component.proxy(valued.doorAddress).open()
+            elseif valued.doorType == 1 then
+              print("potentially broken door at key " .. key .. ": set to redstone")
+            elseif valued.doorType == 2 then
+              component.redstone.setBundledOutput(redSide, { [valued.redColor] = 255})
+            elseif valued.doorType == 3 then
+              component.proxy(valued.doorAddress).open()
             end
+          end
         end
+      else
+        for key, valued in pairs(settingData) do
+          if valued.forceOpen ~= 0 then
+            if valued.doorType == 0 then
+              component.proxy(valued.doorAddress).close()
+            elseif valued.doorType == 1 then
+              print("potentially broken door at key " .. key .. ": set to redstone")
+            elseif valued.doorType == 2 then
+              component.redstone.setBundledOutput(redSide, { [valued.redColor] = 0})
+            elseif valued.doorType == 3 then
+              component.proxy(valued.doorAddress).close()
+            end
+          end
         end
-end
-
-function openDoor()
-    local delayH = delay
-    local redColorH = redColor
-    local doorAddressH = doorAddress
-    local toggleH = toggle
-    if(toggleH == 0) then
-        if(doorType == 0 or doorType == 3)then
-        	component.proxy(doorAddressH).toggle()
-        	os.sleep(delayH)
-        	component.proxy(doorAddressH).toggle()
-    	elseif(doorType == 1)then
-        	component.redstone.setOutput(redSide,15)
-    		os.sleep(delayH)
-    		component.redstone.setOutput(redSide,0)
-    	elseif(doorType == 2)then
-        	component.redstone.setBundledOutput(redSide, { [redColorH] = 255 } )
-        	os.sleep(delayH)
-        	component.redstone.setBundledOutput(redSide, { [redColorH] = 0 } )
-    	else
-        	os.sleep(1)
-    	end
-    else
-        if(doorType == 0 or doorType == 3)then
-        	component.proxy(doorAddressH).toggle()
-    	elseif(doorType == 1)then
-        	if(component.redstone.getOutput(redSide) == 0) then
-            	component.redstone.setOutput(redSide,15)
-        	else
-            	component.redstone.setOutput(redSide,0)
-        	end
-    	elseif(doorType == 2)then
-        	if(component.redstone.getBundledOutput(redSide, redColorH) == 0) then
-            component.redstone.setBundledOutput(redSide, { [redColorH] = 255 } )
-        else
-            component.redstone.setBundledOutput(redSide, { [redColorH] = 0 } )
-        end
-    	else
-        	os.sleep(1)
-    	end
+      end
     end
- end
+  end
+end
 
 term.clear()
 local fill = io.open("doorSettings.txt", "r")
@@ -200,17 +150,25 @@ else
     settingData["w"]["bypassLock"] = 0
     ttf.save(settingData,"doorSettings.txt")
 end
-
 	settingData = ttf.load("doorSettings.txt")
+
+fill = {}
+fill["type"] = "multi"
+fill["data"] = settingData
+modem.broadcast(modemPort,crypt(ser.serialize(fill),cryptKey))
+local got, _, _, _, _, fill = event.pull(2, "modem_message")
+if got then
+  varSettings = ser.unserialize(crypt(fill,cryptKey,true))
+else
+  print("Failed to receive confirmation from server")
+  os.exit()
+end
 
 print("Multi-Door Control terminal")
 print("---------------------------------------------------------------------------")
  
 if modem.isOpen(modemPort) == false then
   modem.open(modemPort)
-end
-if modem.isOpen(updatePort) == false then
-  modem.open(updatePort)
 end
 event.listen("modem_message", update)
 process.info().data.signal = function(...)
@@ -220,13 +178,13 @@ process.info().data.signal = function(...)
   os.exit()
 end
     
-while true do
+while true do --TODO: Test this program
   if modem.isOpen(updatePort) == false then
   modem.open(updatePort)
   end
   ev, address, user, str, uuid, data = event.pull("magData")
   term.write(str .. "\n")
-    
+  
   local keyed = nil
   for key, valuedd in pairs(settingData) do
         if(valuedd.reader == address) then
@@ -253,42 +211,37 @@ while true do
   local data = crypt(str, cryptKey, true)
   if ev then
     if (data == adminCard) then
-            term.write("Admin card swiped. Sending diagnostics\n")
-            modem.open(diagPort)
-            local diagData = settingData[keyed]
-            if diagData == nil then 
-                diagData = {}
-            end
-            diagData["status"] = isOk
-            diagData["type"] = "multi"
-            diagData["version"] = doorVersion
-            diagData["key"] = keyed
-            local counter = 0
-            for index in pairs(settingData) do
-                counter = counter + 1
-            end
-            diagData["entries"] = counter
-            data = crypt(ser.serialize(diagData),cryptKey)
-            modem.broadcast(diagPort, "temp", data)
+      term.write("Admin card swiped. Sending diagnostics\n")
+      modem.open(diagPort)
+      local diagData = settingData[keyed]
+      if diagData == nil then 
+          diagData = {}
+      end
+      diagData["status"] = isOk
+      diagData["type"] = "multi"
+      diagData["version"] = doorVersion
+      diagData["key"] = keyed
+      local counter = 0
+      for index in pairs(settingData) do
+          counter = counter + 1
+      end
+      diagData["entries"] = counter
+      data = crypt(ser.serialize(diagData),cryptKey)
+      modem.broadcast(diagPort, "temp", data)
     else
     local tmpTable = ser.unserialize(data)
     term.write(tmpTable["name"] .. ":")
     if modem.isOpen(modemPort) == false then
       modem.open(modemPort)
     end
-    if modem.isOpen(updatePort) == false then
-  		modem.open(updatePort)
-  	end
-    if (cardRead == 0 or cardRead == 1 or cardRead == 5) then
-        data = crypt(tostring(accessLevel), cryptKey)
-        modem.broadcast(modemPort, "setlevel", data)
-        data = crypt
-        (tmpTable["uuid"], cryptKey)
-        modem.broadcast(modemPort, serverSend[(cardRead + 1)], data, bypassLock)                
-    elseif (cardRead == 2 or cardRead == 3 or cardRead == 4 or cardRead == 6 or cardRead == 7) then
-        data = crypt
-        (tmpTable["uuid"], cryptKey)
-        modem.broadcast(modemPort, serverSend[(cardRead + 1)], data, bypassLock)            
+    data["type"] = "multi"
+    data["key"] = keyed
+    if cardRead == 6 then
+      data = crypt(tmpTable, cryptKey)
+    	modem.broadcast(modemPort, "checkstaff", data, bypassLock)
+    else
+      data = crypt(tmpTable, cryptKey)
+      modem.broadcast(modemPort, varSettings.calls[cardRead - #baseVariables], data, bypassLock)
     end
     local e, _, from, port, _, msg = event.pull(1, "modem_message")
     if e then
