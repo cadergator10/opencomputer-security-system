@@ -197,7 +197,10 @@ function userListCallback()
   end
 end
  
-function buttonCallback(buttonInt, callbackInt, isPos) --TODO: work on this more when user array is done
+function buttonCallback(workspace, button) --TODO: work on this more when user array is done
+  local buttonInt = button.buttonInt
+  local callbackInt = button.callbackInt
+  local isPos = button.isPos
   local selected = pageMult * listPageNumber + userList.selectedItem
   if callbackInt > #baseVariables then
     callbackInt = callbackInt - #baseVariables
@@ -365,6 +368,7 @@ local layout = window:addChild(GUI.layout(1, 1, window.width, window.height, 1, 
 local contextMenu = menu:addContextMenuItem("File")
 contextMenu:addItem("Close").onTouch = function()
 window:remove()
+  --os.exit()
 end
  
 window:addChild(GUI.panel(3,3,60,36,0x6B6E74))
@@ -410,29 +414,45 @@ for i=1,#userTable.settings.var,1 do
   guiCalls[i] = {}
   if userTable.settings.type[i] == "string" then
     guiCalls[i][1] = window:addChild(GUI.input(88,labelSpot,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "input text"))
-    guiCalls[i][1].onInputFinished = buttonCallback,i,i + #baseVariables
+    guiCalls[i][1].buttonInt = i
+    guiCalls[i][1].callbackInt = i + #baseVariables
+    guiCalls[i][1].onInputFinished = buttonCallback
     guiCalls[i][1].disabled = true
   elseif userTable.settings.type[i] == "-string" then
     guiCalls[i][1] = window:addChild(GUI.label(88,labelSpot,3,3,0x165FF2,"NAN"))
   elseif userTable.settings.type[i] == "int" then
     guiCalls[i][3] = window:addChild(GUI.label(88,labelSpot,3,3,0x165FF2,"#"))
     guiCalls[i][1] = window:addChild(GUI.button(92,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
-    guiCalls[i][1].onTouch = buttonCallback,i,i + #baseVariables, true
+    guiCalls[i][1].buttonInt = i
+    guiCalls[i][1].callbackInt = i + #baseVariables
+    guiCalls[i][1].isPos = true
+    guiCalls[i][1].onTouch = buttonCallback
     guiCalls[i][2] = window:addChild(GUI.button(96,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
-    guiCalls[i][2].onTouch = buttonCallback,i,i + #baseVariables, false
+    guiCalls[i][2].buttonInt = i
+    guiCalls[i][2].callbackInt = i + #baseVariables
+    guiCalls[i][2].isPos = false
+    guiCalls[i][2].onTouch = buttonCallback
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type[i] == "-int" then
     guiCalls[i][3] = window:addChild(GUI.label(88,labelSpot,3,3,0x165FF2,"NAN"))
     guiCalls[i][1] = window:addChild(GUI.button(92,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
-    guiCalls[i][1].onTouch = buttonCallback,i,i + #baseVariables, true
+    guiCalls[i][1].buttonInt = i
+    guiCalls[i][1].callbackInt = i + #baseVariables
+    guiCalls[i][1].isPos = true
+    guiCalls[i][1].onTouch = buttonCallback
     guiCalls[i][2] = window:addChild(GUI.button(96,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
-    guiCalls[i][2].onTouch = buttonCallback,i,i + #baseVariables, false
+    guiCalls[i][2].buttonInt = i
+    guiCalls[i][2].callbackInt = i + #baseVariables
+    guiCalls[i][2].isPos = false
+    guiCalls[i][2].onTouch = buttonCallback
     guiCalls[i][4] = userTable.settings.data[i] --TODO: Find out a way to put the text vars in here.
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type[i] == "bool" then
     guiCalls[i][1] = window:addChild(GUI.button(88,labelSpot,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "toggle"))
+    guiCalls[i][1].buttonInt = i
+    guiCalls[i][1].callbackInt = i + #baseVariables
     guiCalls[i][1].switchMode = true
     guiCalls[i][1].onTouch = buttonCallback,i,i + #baseVariables
     guiCalls[i][1].disabled = true
