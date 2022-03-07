@@ -122,27 +122,44 @@ local function update(msg, localAddress, remoteAddress, port, distance, msg, dat
                     component.os_rolldoorcontroller.close()
                 end
             end
+        elseif msg == "remoteControl" then
+            data = ser.unserialize(data)
+            if data.id == component.list("modem")[1] then
+                if data.type == "base" then
+                    openDoor()
+                elseif data.type == "toggle" then
+                    openDoor(true,1)
+                elseif data.type == "delay" then
+                    openDoor(true,0,data.delay)
+                end
+            end
         end
     end
 end
 
-function openDoor()
-    if(toggle == 0) then
+function openDoor(override,datas) --TODO: update this more.
+    local delay2 = delay
+    local toggle2 = toggle
+    if override then
+       delay2 = datas.delay
+       toggle2 = datas.toggle 
+    end
+    if(toggle2 == 0) then
         if(doorType == 0)then
             component.os_doorcontroller.toggle()
-            os.sleep(delay)
+            os.sleep(delay2)
             component.os_doorcontroller.toggle()
         elseif(doorType == 1)then
             component.redstone.setOutput(redSide,15)
-            os.sleep(delay)
+            os.sleep(delay2)
             component.redstone.setOutput(redSide,0)
         elseif(doorType == 2)then
             component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
-            os.sleep(delay)
+            os.sleep(delay2)
             component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
         else
             component.os_rolldoorcontroller.toggle()
-            os.sleep(delay)
+            os.sleep(delay2)
             component.os_rolldoorcontroller.toggle()
         end
     else
@@ -171,6 +188,7 @@ local fill = io.open("doorSettings.txt", "r")
 if fill~=nil then 
     io.close(fill)
 else 
+    settingData["name"] = "single door placeholder"
 	settingData["doorType"] = 0
     settingData["redSide"] = 0
     settingData["redColor"] = 0

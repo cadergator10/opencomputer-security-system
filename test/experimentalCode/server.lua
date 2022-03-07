@@ -70,6 +70,10 @@ function loadTable( sfile )
     end
 end
 
+function advWrite(text,color,wrap)
+  gpu.setForeground(color or gpu.getForeground())
+  term.write(text,wrap or true)
+end
 --------Getting tables and setting up terminal
 
 term.clear()
@@ -85,8 +89,8 @@ end
 
 term.clear()
 gpu.setForeground(0xFFFFFF)
-print("Security server version: " .. version)
-print("---------------------------------------------------------------------------")
+advWrite("Security server version: " .. version .. "\n",0xFFFFFF)
+advWrite("---------------------------------------------------------------------------\n")
 
 local serverSettings = loadTable("serversettings.txt")
 local userTable = loadTable("userlist.txt")
@@ -179,13 +183,11 @@ while true do
     thisUserName = getVar("name",data.uuid)
   end
   if command == "updateuserlist" then
-    gpu.setForeground(0x0000C0)
     userTable = ser.unserialize(data)
-    term.write("Updated userlist received\n")
+    advWrite("Updated userlist received\n",0x0000C0)
     saveTable(userTable, "userlist.txt")
   elseif command == "setDoor" then
-    gpu.setForeground(0xFFFF80)
-    term.write("Received door parameters from id: " .. from .. "\n")
+    advWrite("Received door parameters from id: " .. from .. "\n",0xFFFF80)
     local tmpTable = ser.unserialize(data)
     tmpTable["id"] = from
     local isInAlready = false
@@ -199,14 +201,13 @@ while true do
     if isInAlready == false then table.insert(tmpTable) end
     saveTable(doorTable, "doorlist.txt")
     modem.send(from,port,crypt(ser.serialize(UserTable.settings),cryptKey))
+  elseif command == "remoteControl" then
+    advWrite("Coming soon?\n",0xFF0000) --TODO: allow remote control pc sometime in future
   elseif command == "redstoneUpdated" then
-        gpu.setForeground(0x0000C0)
-        term.write("Redstone has been updated")
+        advWrite("Redstone has been updated\n",0x0000C0)
         local newRed = ser.unserialize(data)
         if newRed["lock"] ~= redstone["lock"] then
             lockDoors = newRed["lock"]
-        else
-            
         end
         if newRed["forceopen"] ~= redstone["forceopen"] then
             forceopen = newRed["forceopen"]
@@ -217,86 +218,76 @@ while true do
                 data = crypt("close",cryptKey)
                 modem.broadcast(199,"forceopen",data)
             end
-        else
-            
         end
         redstone = newRed   
       elseif command == "checkstaff" then
         if false == true then
-          gpu.setForeground(0xFF0000)
-    	term.write("WHY DOES THIS RUN??? IM SAD :(\n")
-        data = crypt("locked", cryptKey)
-        modem.send(from, port, data)
-    	else
-        gpu.setForeground(0xFFFF80)
-        term.write("Checking if user " .. thisUserName .. " is Staff:")
-        local cu, isBlocked, isStaff = checkStaff(data.uuid)
-        if cu == true then
+          advWrite("WHY DOES THIS RUN??? IM SAD :(\n",0xFF0000)
+          data = crypt("locked", cryptKey)
+          modem.send(from, port, data)
+    	  else
+          advWrite("Checking if user " .. thisUserName .. " is Staff:",0xFFFF80)
+          local cu, isBlocked, isStaff = checkStaff(data.uuid)
+          if cu == true then
             if isBlocked == false then
-	        data = crypt("false", cryptKey)
-          gpu.setForeground(0xFF0000)
-	        term.write(" user is blocked\n")
-	        modem.send(from, port, data)
+              data = crypt("false", cryptKey)
+              advWrite(" user is blocked\n",0xFF0000)
+              modem.send(from, port, data)
             else
-                if isStaff == true then
-                    data = crypt("true", cryptKey)
-                    gpu.setForeground(0x00FF00)
-	  				term.write(" access granted\n")
-	  				modem.send(from, port, data)        
-                else
-                	data = crypt("false", cryptKey)
-                  gpu.setForeground(0xFF0000)
-					term.write(" access denied\n")
-					modem.send(from, port, data)
-                end
-         end
-                else
+              if isStaff == true then
+                data = crypt("true", cryptKey)
+                advWrite(" access granted\n",0x00FF00)
+                modem.send(from, port, data)        
+              else
+                data = crypt("false", cryptKey)
+                advWrite(" access denied\n",0xFF0000)
+                modem.send(from, port, data)
+              end
+            end
+          else
       			data = crypt("false", cryptKey)
-            gpu.setForeground(0x990000)
-      			term.write(" user not found\n")
+            advWrite(" user not found\n",0x990000)
       			modem.send(from, port, data)
-         end
-      end  
-	elseif command == "checkLinked" then
+          end
+        end  
+	    elseif command == "checkLinked" then
         if false == true then
           gpu.setForeground(0xFF0000)
-    	term.write("DONT RUN or i b sad ;-;\n")
-    	else
-        gpu.setForeground(0xFFFF80)
-        term.write("Checking test tablet is linked to a user:")
-        local cu, isBlocked, thisName = checkLink(data)
-        local dis = {}
-        if cu == true then
+    	    term.write("DONT RUN or i b sad ;-;\n")
+    	  else
+          advWrite(" Checking if device is linked to a user:\n",0xFFFF80)
+          local cu, isBlocked, thisName = checkLink(data)
+          local dis = {}
+          if cu == true then
             if isBlocked == false then
-            dis["status"] = false
-            dis["reason"] = 2
-	        data = crypt(ser.serialize(dis), cryptKey)
-          gpu.setForeground(0xFF0000)
-	        term.write(" user " .. thisName .. "is blocked\n")
-	        modem.send(from, port, data)
+              dis["status"] = false
+              dis["reason"] = 2
+  	          data = crypt(ser.serialize(dis), cryptKey)
+              advWrite(" user " .. thisName .. "is blocked\n",0xFF0000)
+	            modem.send(from, port, data)
             else
-            dis["status"] = true
-            dis["name"] = thisName
-            data = crypt(ser.serialize(dis), cryptKey)
-            gpu.setForeground(0x00FF00)
-			term.write(" tablet is connected to " .. thisName .. "\n")
-			modem.send(from, port, data)
-         end
-                else
-                dis["status"] = false
-                dis["reason"] = 1
+              dis["status"] = true
+              dis["name"] = thisName
+              data = crypt(ser.serialize(dis), cryptKey)
+              gpu.setForeground(0x00FF00)
+			        term.write(" tablet is connected to " .. thisName .. "\n")
+			        modem.send(from, port, data)
+            end
+          else
+            dis["status"] = false
+            dis["reason"] = 1
       			data = crypt(ser.serialize(dis), cryptKey)
             gpu.setForeground(0x990000)
       			term.write(" tablet not linked\n")
       			modem.send(from, port, data)
-         end
-      end
-    else
-      local bool isRealCommand = false --TODO: verify this all functions maybe please??????
-      for i=1,#userTable.settings.calls,1 do
-        if command == userTable.settings.calls[i] then
-          if lockDoors == true and bypassLock ~= 1 then
-            gpu.setForeground(0xFF0000)
+          end
+        end
+      else
+        local bool isRealCommand = false --TODO: verify this all functions maybe please??????
+        for i=1,#userTable.settings.calls,1 do
+          if command == userTable.settings.calls[i] then
+            if lockDoors == true and bypassLock ~= 1 then
+              gpu.setForeground(0xFF0000)
             term.write("Doors have been locked. Unable to open door\n")
             data = crypt("locked", cryptKey)
             modem.send(from, port, data)

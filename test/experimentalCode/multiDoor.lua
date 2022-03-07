@@ -83,6 +83,44 @@ function splitString(str, sep)
         return fields
 end
 
+function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH)
+  if(toggleH == 0) then
+    if(doorTypeH == 0 or doorTypeH == 3)then
+      component.proxy(doorAddressH).open()
+      os.sleep(delayH)
+      component.proxy(doorAddressH).close()
+    elseif(doorTypeH == 1)then
+      component.redstone.setOutput(redSideH,15)
+      os.sleep(delayH)
+      component.redstone.setOutput(redSideH,0)
+    elseif(doorTypeH == 2)then
+      component.redstone.setBundledOutput(redSideH, { [redColorH] = 255 } )
+      os.sleep(delayH)
+      component.redstone.setBundledOutput(redSideH, { [redColorH] = 0 } )
+    else
+      os.sleep(1)
+    end
+  else
+    if(doorTypeH == 0 or doorTypeH == 3)then
+      component.proxy(doorAddressH).toggle()
+    elseif(doorTypeH == 1)then
+      if(component.redstone.getOutput(redSideH) == 0) then
+          component.redstone.setOutput(redSideH,15)
+      else
+          component.redstone.setOutput(redSideH,0)
+      end
+    elseif(doorTypeH == 2)then
+      if(component.redstone.getBundledOutput(redSideH, redColorH) == 0) then
+      component.redstone.setBundledOutput(redSideH, { [redColorH] = 255 } )
+    else
+      component.redstone.setBundledOutput(redSideH, { [redColorH] = 0 } )
+    end
+    else
+      os.sleep(1)
+    end
+  end
+end
+
 local function update(msg, localAddress, remoteAddress, port, distance, msg, data)
   if testR == true then
     data = crypt(data, cryptKey, true)
@@ -117,6 +155,17 @@ local function update(msg, localAddress, remoteAddress, port, distance, msg, dat
           end
         end
       end
+    elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key",["type"]="type of door change",extras like delay and toggle}
+      data = ser.unserialize(data)
+      if data.id == component.list("modem")[1] then
+        if data.type == "base" then
+          thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, settingData[data.key].redSide)
+        elseif data.type == "toggle" then
+          thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, settingData[data.key].redSide)
+        elseif data.type == "delay" then
+          thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, settingData[data.key].redSide)
+        end
+      end
     end
   end
 end
@@ -128,6 +177,7 @@ if fill~=nil then
 else 
     settingData["q"] = {}
     settingData["w"] = {}
+    settingData["q"]["name"] = "door 1 placeholder"
     settingData["q"]["reader"] = ""
     settingData["q"]["redColor"] = 0
     settingData["q"]["delay"] = 5
@@ -138,6 +188,7 @@ else
     settingData["q"]["toggle"] = 0
     settingData["q"]["forceOpen"] = 1
     settingData["q"]["bypassLock"] = 0
+    settingData["w"]["name"] = "door 2 placeholder"
     settingData["w"]["reader"] = ""
     settingData["w"]["redColor"] = 0
     settingData["w"]["delay"] = 5
@@ -248,56 +299,20 @@ while true do --TODO: Test this program
       data = crypt(msg, cryptKey, true)
 --    print(data)
       if data == "true" then
-    term.write("Access granted\n")
-    computer.beep()
-    thread.create(function(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH)
-        if(toggleH == 0) then
-            if(doorTypeH == 0 or doorTypeH == 3)then
-                component.proxy(doorAddressH).toggle()
-                os.sleep(delayH)
-                component.proxy(doorAddressH).toggle()
-            elseif(doorTypeH == 1)then
-                component.redstone.setOutput(redSideH,15)
-                os.sleep(delayH)
-                component.redstone.setOutput(redSideH,0)
-            elseif(doorTypeH == 2)then
-                component.redstone.setBundledOutput(redSideH, { [redColorH] = 255 } )
-                os.sleep(delayH)
-                component.redstone.setBundledOutput(redSideH, { [redColorH] = 0 } )
-            else
-                os.sleep(1)
-            end
-        else
-            if(doorTypeH == 0 or doorTypeH == 3)then
-                component.proxy(doorAddressH).toggle()
-            elseif(doorTypeH == 1)then
-                if(component.redstone.getOutput(redSideH) == 0) then
-                    component.redstone.setOutput(redSideH,15)
-                else
-                    component.redstone.setOutput(redSideH,0)
-                end
-            elseif(doorTypeH == 2)then
-                if(component.redstone.getBundledOutput(redSideH, redColorH) == 0) then
-                component.redstone.setBundledOutput(redSideH, { [redColorH] = 255 } )
-            else
-                component.redstone.setBundledOutput(redSideH, { [redColorH] = 0 } )
-            end
-            else
-                os.sleep(1)
-            end
-        end
-    end, delay, redColor, doorAddress, toggle, doorType, redSide)
+        term.write("Access granted\n")
+        computer.beep()
+        thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide)
       elseif data == "false" then
-    term.write("Access denied\n")
-    computer.beep()
-    computer.beep()
+        term.write("Access denied\n")
+        computer.beep()
+        computer.beep()
       elseif data == "locked" then
-    term.write("Doors have been locked\n")
-    computer.beep()
-    computer.beep()
-    computer.beep()
+        term.write("Doors have been locked\n")
+        computer.beep()
+        computer.beep()
+        computer.beep()
       else
-    term.write("Unknown command\n")
+        term.write("Unknown command\n")
       end
     else
       term.write("server timeout\n")
