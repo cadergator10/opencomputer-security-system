@@ -3,10 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="fc02fa2b-775b-42f6-88ae-65b34767494b" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/experimentalCode/MineOSDatabase.lua" beforeDir="false" afterPath="$PROJECT_DIR$/test/experimentalCode/MineOSDatabase.lua" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/experimentalCode/multiDoor.lua" beforeDir="false" afterPath="$PROJECT_DIR$/test/experimentalCode/multiDoor.lua" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/experimentalCode/server.lua" beforeDir="false" afterPath="$PROJECT_DIR$/test/experimentalCode/server.lua" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/experimentalCode/singleDoor.lua" beforeDir="false" afterPath="$PROJECT_DIR$/test/experimentalCode/singleDoor.lua" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/database/OpenOS/OpenOSDatabase.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/database/OpenOS/OpenOSDatabase.lua" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/doorcontrols/multiDoor.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/doorcontrols/multiDoor.lua" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/doorcontrols/singleDoor.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/doorcontrols/singleDoor.lua" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/server/server.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/server/server.lua" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
