@@ -5,15 +5,16 @@ local ser = require("serialization")
 local fs = require("filesystem")
 local shell = require("shell")
 local modem = component.modem
+local modemPort = 199
 
 local tableToFileCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/libraries/tableToFile.lua"
-local singleCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/singleDoor.lua"
-local multiCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/multiDoor.lua"
+local singleCode = {"https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/test/experimentalCode/singleDoor.lua"}
+local multiCode = {"https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/test/experimentalCode/multiDoor.lua"}
 local program = "ctrl.lua"
 local tableToFileName = "tableToFile.lua"
 local settingFileName = "doorSettings.txt"
 
-local ExperimentalCode = true
+local ExperimentalCode = false
 
 local settingData2 = {}
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
@@ -542,10 +543,20 @@ if fill~=nil then
         
     end
 else
-    if ExperimentalCode == true then
+    if true then
     term.clear()
     print("Alert: severe unchecked updates were done to the autoinstaller. There may be severe bugs.")
     print("...")
+    print("Would you like to use the default cryptKey of {1,2,3,4,5}? 1 if yes, 2 if no.")
+    text = term.read()
+    local tmpTable = {["cryptKey"]=nil}
+    if tonumber(text) == 1 then
+        tmpTable.cryptKey = {1,2,3,4,5}
+    else
+        tmpTable.cryptKey = {1,2,3,4,5} --TODO: Add ability to set cryptKey in autoinstaller
+        saveTable(,"extraConfig.txt")
+    end
+    saveTable(,"extraConfig.txt")
     print("Would you like to use an external device for accelerated setup?")
     print("This makes it easier to set up doors without having to move from the door to the pc constantly.")
     print("It requires the program here to be set up on a tablet with a modem: https://github.com/cadergator10/opensecurity-scp-security-system/blob/main/src/extras/acceleratedDoorSetup.lua")

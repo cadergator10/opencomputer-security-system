@@ -16,7 +16,7 @@ local GOIYesButton, GOINoButton, SecYesButton, SecNoButton, userArmoryLabel, Arm
 local userDepLabel, DepUpButton, DepDownButton, IntYesButton, IntNoButton, StaffYesButton, StaffNoButton
 
 local prgName = "SCP Security System"
-local version = "v1.7.0"
+local version = "v1.8.0"
 
 local modem = component.modem 
 
