@@ -286,7 +286,7 @@ end
 
 function updateServer()
   local data = ser.serialize(userTable)
-  local crypted = crypt(data, cryptKey)
+  local crypted = crypt(data, settingTable.cryptKey)
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end
@@ -429,7 +429,7 @@ function writeCardCallback(guiID, id)
   local selected = gui.getSelected(myGui, userList)
   local data = {["date"]=userTable[selected].date,["name"]=userTable[selected].name,["uuid"]=userTable[selected].uuid}
   data = ser.serialize(data)
-  local crypted = crypt(data, cryptKey)
+  local crypted = crypt(data, settingTable.cryptKey)
   writer.write(crypted, userTable[selected].name .. "'s security pass", false, 8)
 end
 
@@ -504,6 +504,12 @@ userList = gui.newList(myGui, 4, 4, 58, 34, {}, userListCallback)
 userTable = loadTable("userlist.txt")
 if userTable == nil then
   userTable = {}
+end
+settingTable = loadTable("dbsettings.txt")
+if settingTable == nil then
+  settingTable = {["cryptKey"]={1,2,3,4,5}}
+  saveTable(settingTable,"dbsettings.txt")
+  error("Recommend checking cryptKey in dbsettings.txt to make sure it is the same as server. Default is {1,2,3,4,5}. Restart program when ready.")
 end
 updateList()
 
