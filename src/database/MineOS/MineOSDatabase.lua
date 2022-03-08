@@ -1,6 +1,5 @@
 local GUI = require("GUI")
 local system = require("System")
-local cryptKey = {1, 2, 3, 4, 5}
 local departments = {"SD","ScD","MD","E&T","O5"}
 local modemPort = 199
 local dbPort = 144
@@ -111,7 +110,7 @@ end
 ----------Callbacks
 function updateServer()
   local data = ser.serialize(userTable)
-  local crypted = crypt(data, cryptKey)
+  local crypted = crypt(data, settingTable.cryptKey)
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end
@@ -294,13 +293,13 @@ function writeCardCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
   local data = {["date"]=userTable[selected].date,["name"]=userTable[selected].name,["uuid"]=userTable[selected].uuid}
   data = ser.serialize(data)
-  local crypted = crypt(data, cryptKey)
+  local crypted = crypt(data, settingTable.cryptKey)
   writer.write(crypted, userTable[selected].name .. "'s security pass", false, 0)
 end
 
 function writeAdminCardCallback()
   local data =  adminCard
-  local crypted = crypt(data, cryptKey)
+  local crypted = crypt(data, settingTable.cryptKey)
   writer.write(crypted, "ADMIN DIAGNOSTIC CARD", false, 14)
 end
  
@@ -388,9 +387,9 @@ function linkUserCallback()
     local e, _, from, port, _, msg = event.pull(20)
     container:remove()
     if e == "modem_message" then
-        local data = crypt(msg,cryptKey,true)
+        local data = crypt(msg,settingTable.cryptKey,true)
         userTable[selected].link = data
-        modem.send(from,port,crypt(userTable[selected].name,cryptKey))
+        modem.send(from,port,crypt(userTable[selected].name,settingTable.cryptKey))
         GUI.alert("Link successful")
     else
         userTable[selected].link = "nil"
@@ -418,6 +417,12 @@ listPageNumber = 0
 userTable = loadTable("userlist.txt")
 if userTable == nil then
   userTable = {}
+end
+settingTable = loadTable("dbsettings.txt")
+if settingTable == nil then
+  GUI.alert("It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.")
+  settingTable = {["cryptKey"]={1,2,3,4,5}}
+  saveTable(settingTable,"dbsettings.txt")
 end
 updateList()
  
