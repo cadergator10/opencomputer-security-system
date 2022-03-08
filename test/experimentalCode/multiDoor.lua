@@ -203,10 +203,13 @@ else
 end
 	settingData = ttf.load("doorSettings.txt")
 
+if modem.isOpen(modemPort) == false then
+    modem.open(modemPort)
+end
 fill = {}
 fill["type"] = "multi"
 fill["data"] = settingData
-modem.broadcast(modemPort,crypt(ser.serialize(fill),cryptKey))
+modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),cryptKey))
 local got, _, _, _, _, fill = event.pull(2, "modem_message")
 if got then
   varSettings = ser.unserialize(crypt(fill,cryptKey,true))
@@ -230,8 +233,8 @@ process.info().data.signal = function(...)
 end
     
 while true do --TODO: Test this program
-  if modem.isOpen(updatePort) == false then
-  modem.open(updatePort)
+  if modem.isOpen(modemPort) == false then
+  modem.open(modemPort)
   end
   ev, address, user, str, uuid, data = event.pull("magData")
   term.write(str .. "\n")
@@ -261,62 +264,62 @@ while true do --TODO: Test this program
     
   local data = crypt(str, cryptKey, true)
   if ev then
-    if (data == adminCard) then
-      term.write("Admin card swiped. Sending diagnostics\n")
-      modem.open(diagPort)
-      local diagData = settingData[keyed]
-      if diagData == nil then 
-          diagData = {}
-      end
-      diagData["status"] = isOk
-      diagData["type"] = "multi"
-      diagData["version"] = doorVersion
-      diagData["key"] = keyed
-      local counter = 0
-      for index in pairs(settingData) do
-          counter = counter + 1
-      end
-      diagData["entries"] = counter
-      data = crypt(ser.serialize(diagData),cryptKey)
-      modem.broadcast(diagPort, "temp", data)
-    else
-    local tmpTable = ser.unserialize(data)
-    term.write(tmpTable["name"] .. ":")
-    if modem.isOpen(modemPort) == false then
-      modem.open(modemPort)
-    end
-    data["type"] = "multi"
-    data["key"] = keyed
-    if cardRead == 6 then
-      data = crypt(tmpTable, cryptKey)
-    	modem.broadcast(modemPort, "checkstaff", data, bypassLock)
-    else
-      data = crypt(tmpTable, cryptKey)
-      modem.broadcast(modemPort, varSettings.calls[cardRead - #baseVariables], data, bypassLock)
-    end
-    local e, _, from, port, _, msg = event.pull(1, "modem_message")
-    if e then
-      data = crypt(msg, cryptKey, true)
---    print(data)
-      if data == "true" then
-        term.write("Access granted\n")
-        computer.beep()
-        thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide)
-      elseif data == "false" then
-        term.write("Access denied\n")
-        computer.beep()
-        computer.beep()
-      elseif data == "locked" then
-        term.write("Doors have been locked\n")
-        computer.beep()
-        computer.beep()
-        computer.beep()
+      if (data == adminCard) then
+          term.write("Admin card swiped. Sending diagnostics\n")
+          modem.open(diagPort)
+          local diagData = settingData[keyed]
+          if diagData == nil then
+              diagData = {}
+          end
+          diagData["status"] = isOk
+          diagData["type"] = "multi"
+          diagData["version"] = doorVersion
+          diagData["key"] = keyed
+          local counter = 0
+          for index in pairs(settingData) do
+              counter = counter + 1
+          end
+          diagData["entries"] = counter
+          data = crypt(ser.serialize(diagData),cryptKey)
+          modem.broadcast(diagPort, "temp", data)
       else
-        term.write("Unknown command\n")
+          local tmpTable = ser.unserialize(data)
+          term.write(tmpTable["name"] .. ":")
+          if modem.isOpen(modemPort) == false then
+              modem.open(modemPort)
+          end
+          tmpTable["type"] = "multi"
+          tmpTable["key"] = keyed
+          if cardRead == 6 then
+              data = crypt(ser.serialize(tmpTable), cryptKey)
+              modem.broadcast(modemPort, "checkstaff", data, bypassLock)
+          else
+              data = crypt(ser.serialize(tmpTable), cryptKey)
+              modem.broadcast(modemPort, varSettings.calls[cardRead - #baseVariables], data, bypassLock)
+          end
+          local e, _, from, port, _, msg = event.pull(1, "modem_message")
+          if e then
+              data = crypt(msg, cryptKey, true)
+              --    print(data)
+              if data == "true" then
+                  term.write("Access granted\n")
+                  computer.beep()
+                  thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide)
+              elseif data == "false" then
+                  term.write("Access denied\n")
+                  computer.beep()
+                  computer.beep()
+              elseif data == "locked" then
+                  term.write("Doors have been locked\n")
+                  computer.beep()
+                  computer.beep()
+                  computer.beep()
+              else
+                  term.write("Unknown command\n")
+              end
+          else
+              term.write("server timeout\n")
+          end
       end
-    else
-      term.write("server timeout\n")
-    end
-    end
   end
 end

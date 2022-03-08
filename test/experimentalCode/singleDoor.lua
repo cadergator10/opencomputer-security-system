@@ -202,10 +202,14 @@ else
 end
 	settingData = ttf.load("doorSettings.txt")
 
+    if modem.isOpen(modemPort) == false then
+        modem.open(modemPort)
+    end
+
     fill = {}
     fill["type"] = "single"
     fill["data"] = settingData
-    modem.broadcast(modemPort,crypt(ser.serialize(fill),cryptKey))
+    modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),cryptKey))
     local got, _, _, _, _, fill = event.pull(2, "modem_message")
     if got then
         varSettings = ser.unserialize(crypt(fill,cryptKey,true))
@@ -234,7 +238,7 @@ if cardRead <= #baseVariables then
     end
 else
     local cardRead2 = cardRead - #baseVariables
-    print("Checking: ") .. varSettings.var[cardRead2]
+    print("Checking: " .. varSettings.var[cardRead2])
     if varSettings.type[cardRead2] == "string" or varSettings.type[cardRead2] == "-string" then
         print("Must be exactly " .. accessLevel)
     elseif varSettings.type[cardRead2] == "int" then
@@ -263,8 +267,8 @@ process.info().data.signal = function(...)
 end    
 
 while true do --TODO: test this program.
-  if modem.isOpen(updatePort) == false then
-    modem.open(updatePort)
+  if modem.isOpen(modemPort) == false then
+    modem.open(modemPort)
   end
   ev, _, user, str, uuid, data = event.pull("magData")
   term.write(str .. "\n")
@@ -286,16 +290,13 @@ while true do --TODO: test this program.
         if modem.isOpen(modemPort) == false then
             modem.open(modemPort)
         end
-    if modem.isOpen(updatePort) == false then
-  		modem.open(updatePort)
-  	end
-    data["type"] = "single"
-    data["key"] = "none"
+    tmpTable["type"] = "single"
+    tmpTable["key"] = "none"
     if cardRead == 6 then
-        data = crypt(tmpTable, cryptKey)
+        data = crypt(ser.serialize(tmpTable), cryptKey)
     	modem.broadcast(modemPort, "checkstaff", data, bypassLock)
     else
-        data = crypt(tmpTable, cryptKey)
+        data = crypt(ser.serialize(tmpTable), cryptKey)
         modem.broadcast(modemPort, varSettings.calls[cardRead - #baseVariables], data, bypassLock)
     end
             

@@ -195,10 +195,10 @@ while true do
       if doorTable[i].id == from then
         isInAlready = true
         doorTable[i] = tmpTable
-        return
+        break
       end
     end
-    if isInAlready == false then table.insert(tmpTable) end
+    if isInAlready == false then table.insert(doorTable,tmpTable) end
     saveTable(doorTable, "doorlist.txt")
     modem.send(from,port,crypt(ser.serialize(UserTable.settings),cryptKey))
   elseif command == "remoteControl" then
@@ -294,7 +294,7 @@ while true do
           else
             term.write("Checking if user " .. thisUserName)
             isRealCommand = true
-            local cu, isBlocked, varCheck, isStaff checkVar(userTable.settings.var[i],data.uuid)
+            local cu, isBlocked, varCheck, isStaff = checkVar(userTable.settings.var[i],data.uuid)
             if cu == true then
               if isBlocked == false then
                 data = crypt("false", cryptKey)
@@ -379,7 +379,7 @@ while true do
                 elseif userTable.settings.type[i] == "-int" then
                   local currentDoor = getDoorInfo(data.type,from,data.key)
                   if currentDoor ~= nil then
-                    term.write(" is in group " .. userTable.settings.data[currentDoor.level] .. " in var " .. userTable.settings.var[i] .. " :")
+                    term.write(" is in group " .. userTable.settings.data[i][currentDoor.level] .. " in var " .. userTable.settings.var[i] .. " :")
                     if currentDoor.level ~= varCheck then
                       if isStaff == true then
                         data = crypt("true", cryptKey)

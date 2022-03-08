@@ -181,11 +181,11 @@ function userListCallback()
       guiCalls[i][1].pressed = userTable[selectedId][userTable.settings.var[i]]
       guiCalls[i][1].disabled = false
     elseif userTable.settings.type[i] == "string" or userTable.settings.type[i] == "-string" then
-      guiCalls[i][1].text = userTable[selectedId][userTable.settings.var[i]]
+      guiCalls[i][1].text = tostring(userTable[selectedId][userTable.settings.var[i]])
       if userTable.settings.type[i] == "string" then guiCalls[i][1].disabled = false end
     elseif userTable.settings.type[i] == "int" or userTable.settings.type[i] == "-int" then
       if userTable.settings.type[i] == "-int" then
-        guiCalls[i][3].text = guiCalls[i][4][userTable[selectedId][userTable.settings.var[i]]]
+        guiCalls[i][3].text = tostring(guiCalls[i][4][userTable[selectedId][userTable.settings.var[i]]] or "none")
       else
         guiCalls[i][3].text = tostring(userTable[selectedId][userTable.settings.var[i]])
       end
@@ -377,7 +377,7 @@ userList:addItem("HELLO")
 listPageNumber = 0
 userTable = loadTable("userlist.txt")
 if userTable == nil then
-  userTable = {["settings"]={["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
+  userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
 end
 updateList()
  
@@ -421,13 +421,13 @@ for i=1,#userTable.settings.var,1 do
   elseif userTable.settings.type[i] == "-string" then
     guiCalls[i][1] = window:addChild(GUI.label(88,labelSpot,3,3,0x165FF2,"NAN"))
   elseif userTable.settings.type[i] == "int" then
-    guiCalls[i][3] = window:addChild(GUI.label(88,labelSpot,3,3,0x165FF2,"#"))
-    guiCalls[i][1] = window:addChild(GUI.button(92,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
+    guiCalls[i][3] = window:addChild(GUI.label(96,labelSpot,3,3,0x165FF2,"#"))
+    guiCalls[i][1] = window:addChild(GUI.button(88,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
     guiCalls[i][1].buttonInt = i
     guiCalls[i][1].callbackInt = i + #baseVariables
     guiCalls[i][1].isPos = true
     guiCalls[i][1].onTouch = buttonCallback
-    guiCalls[i][2] = window:addChild(GUI.button(96,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
+    guiCalls[i][2] = window:addChild(GUI.button(92,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
     guiCalls[i][2].buttonInt = i
     guiCalls[i][2].callbackInt = i + #baseVariables
     guiCalls[i][2].isPos = false
@@ -435,18 +435,18 @@ for i=1,#userTable.settings.var,1 do
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type[i] == "-int" then
-    guiCalls[i][3] = window:addChild(GUI.label(88,labelSpot,3,3,0x165FF2,"NAN"))
-    guiCalls[i][1] = window:addChild(GUI.button(92,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
+    guiCalls[i][3] = window:addChild(GUI.label(96,labelSpot,3,3,0x165FF2,"NAN"))
+    guiCalls[i][1] = window:addChild(GUI.button(88,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "+"))
     guiCalls[i][1].buttonInt = i
     guiCalls[i][1].callbackInt = i + #baseVariables
     guiCalls[i][1].isPos = true
     guiCalls[i][1].onTouch = buttonCallback
-    guiCalls[i][2] = window:addChild(GUI.button(96,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
+    guiCalls[i][2] = window:addChild(GUI.button(92,labelSpot,3,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "-"))
     guiCalls[i][2].buttonInt = i
     guiCalls[i][2].callbackInt = i + #baseVariables
     guiCalls[i][2].isPos = false
     guiCalls[i][2].onTouch = buttonCallback
-    guiCalls[i][4] = userTable.settings.data[i] --TODO: Find out a way to put the text vars in here.
+    guiCalls[i][4] = userTable.settings.data --TODO: Find out a way to put the text vars in here.
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type[i] == "bool" then
