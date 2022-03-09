@@ -198,6 +198,9 @@ if fill ~= nil then
   io.close(fill)
 else
   extraConfig["cryptKey"]={1,2,3,4,5}
+  extraConfig["type"]="single"
+  extraConfig["num"]=1
+  extraConfig["version"]=version
   ttf.save(extraConfig,"extraConfig.txt")
 end
     extraConfig = ttf.load("extraConfig.txt")

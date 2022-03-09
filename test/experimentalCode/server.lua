@@ -74,7 +74,6 @@ function advWrite(text,color,wrap)
   term.write(text,wrap or true)
 end
 --------Getting tables and setting up terminal
-
 term.clear()
 local settingTable = loadTable("settings.txt")
 if settingTable == nil then
@@ -86,7 +85,6 @@ if settingTable == nil then
   saveTable(settingTable,"settings.txt")
 end
 
-term.clear()
 advWrite("Security server version: " .. version .. "\n",0xFFFFFF)
 advWrite("---------------------------------------------------------------------------\n")
 

@@ -29,7 +29,6 @@ local forceOpen = 1
 --Labels for admin security cards, which are cards that make the security system send diagnostic info of the door.
 local adminCard = "admincard"
 
-local cryptKey = {1, 2, 3, 4, 5}
 local modemPort = 199
 local diagPort = 180
   
@@ -49,6 +48,7 @@ local baseVariables = {"name","uuid","date","link","blocked","staff"}
 local varSettings = {}
 
 local settingData = {}
+local extraConfig = {}
  
 local function convert( chars, dist, inv )
   return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
@@ -83,7 +83,7 @@ end
 
 local function update(msg, localAddress, remoteAddress, port, distance, msg, data)
     if(testR == true) then
-        data = crypt(data, cryptKey, true)
+        data = crypt(data, extraConfig.cryptKey, true)
         if msg == "forceopen" and forceOpen ~= 0 then
             if data == "open" then
                 if(doorType == 0)then
@@ -200,6 +200,18 @@ else
     settingData["bypassLock"] = 0
     ttf.save(settingData,"doorSettings.txt")
 end
+fill = io.open("extraConfig.txt","r")
+if fill ~= nil then
+  io.close(fill)
+else
+  extraConfig["cryptKey"]={1,2,3,4,5}
+  extraConfig["type"]="single"
+  extraConfig["num"]=2
+  extraConfig["version"]=version
+  ttf.save(extraConfig,"extraConfig.txt")
+end
+
+    extraConfig = ttf.load("extraConfig.txt")
 	settingData = ttf.load("doorSettings.txt")
 
     if modem.isOpen(modemPort) == false then
@@ -209,10 +221,10 @@ end
     fill = {}
     fill["type"] = "single"
     fill["data"] = settingData
-    modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),cryptKey))
+    modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
     local got, _, _, _, _, fill = event.pull(2, "modem_message")
     if got then
-        varSettings = ser.unserialize(crypt(fill,cryptKey,true))
+        varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
     else
         print("Failed to receive confirmation from server")
         os.exit()
@@ -272,7 +284,7 @@ while true do --TODO: test this program.
   end
   ev, _, user, str, uuid, data = event.pull("magData")
   term.write(str .. "\n")
-  local data = crypt(str, cryptKey, true)
+  local data = crypt(str, extraConfig.cryptKey, true)
   if ev then
     if (data == adminCard) then
         term.write("Admin card swiped. Sending diagnostics\n")
@@ -282,7 +294,7 @@ while true do --TODO: test this program.
         diagData["type"] = "single"
         diagData["version"] = doorVersion
         diagData["key"] = "NAN"
-        data = crypt(ser.serialize(diagData),cryptKey)
+        data = crypt(ser.serialize(diagData),extraConfig.cryptKey)
         modem.broadcast(diagPort, "diag", data)
     else
         local tmpTable = ser.unserialize(data)
@@ -293,16 +305,16 @@ while true do --TODO: test this program.
     tmpTable["type"] = "single"
     tmpTable["key"] = "none"
     if cardRead == 6 then
-        data = crypt(ser.serialize(tmpTable), cryptKey)
+        data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
     	modem.broadcast(modemPort, "checkstaff", data, bypassLock)
     else
-        data = crypt(ser.serialize(tmpTable), cryptKey)
+        data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
         modem.broadcast(modemPort, varSettings.calls[cardRead - #baseVariables], data, bypassLock)
     end
             
     local e, _, from, port, _, msg = event.pull(1, "modem_message")
     if e then
-      data = crypt(msg, cryptKey, true)
+      data = crypt(msg, extraConfig.cryptKey, true)
 --    print(data)
       if data == "true" then
     term.write("Access granted\n")

@@ -16,6 +16,7 @@ local ser = require("serialization")
 local uuid = require("uuid")
 local fs = require("Filesystem")
 local writer
+local aRD = fs.path(system.getCurrentScript())
  
 ----------
  
@@ -130,7 +131,7 @@ function updateList()
   end
   end
 
-  saveTable(userTable, "userlist.txt")
+  saveTable(userTable, aRD .. "userlist.txt")
   if (previousPage == listPageNumber) then
   userList.selectedItem = selectedId
   else
@@ -414,15 +415,15 @@ window:addChild(GUI.panel(3,3,60,36,0x6B6E74))
 userList = window:addChild(GUI.list(4, 4, 58, 34, 3, 0, 0xE1E1E1, 0x4B4B4B, 0xD2D2D2, 0x4B4B4B, 0x3366CC, 0xFFFFFF, false))
 userList:addItem("HELLO")
 listPageNumber = 0
-userTable = loadTable("userlist.txt")
+userTable = loadTable(aRD .. "userlist.txt")
 if userTable == nil then
   userTable = {}
 end
-settingTable = loadTable("dbsettings.txt")
+settingTable = loadTable(aRD .. "dbsettings.txt")
 if settingTable == nil then
   GUI.alert("It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.")
   settingTable = {["cryptKey"]={1,2,3,4,5}}
-  saveTable(settingTable,"dbsettings.txt")
+  saveTable(settingTable,aRD .. "dbsettings.txt")
 end
 updateList()
  

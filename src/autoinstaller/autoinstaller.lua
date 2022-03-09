@@ -8,8 +8,8 @@ local modem = component.modem
 local modemPort = 199
 
 local tableToFileCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/libraries/tableToFile.lua"
-local singleCode = {"https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/test/experimentalCode/singleDoor.lua"}
-local multiCode = {"https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/test/experimentalCode/multiDoor.lua"}
+local singleCode = {"https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/test/experimentalCode/singleDoor.lua"}
+local multiCode = {"https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/test/experimentalCode/multiDoor.lua"}
 local program = "ctrl.lua"
 local tableToFileName = "tableToFile.lua"
 local settingFileName = "doorSettings.txt"
@@ -41,7 +41,7 @@ local function runInstall(multi,num,accelerate,from2,port2,barcode)
             port = port2
             modem.send(from,port,"clearTerm")
                     modem.send(from,port,"print","downloading files...")
-                    os.execute("wget -f " .. singleCode .. " " .. program)
+                    os.execute("wget -f " .. singleCode[1] .. " " .. program)
                     modem.send(from,port,"print","ONLY ENTER NUMBERS FOR ALL THE SETTINGS! NO WORDS")
                     modem.send(from,port,"print","Door Type? 0= doorcontrol. 1=redstone. 2=bundled. 3=rolldoor")
                     modem.send(from,port,"getInput")
@@ -119,7 +119,7 @@ local function runInstall(multi,num,accelerate,from2,port2,barcode)
         elseif accelerate == false then
             
             term.clear()
-       os.execute("wget -f " .. singleCode .. " " .. program)
+       os.execute("wget -f " .. singleCode[1] .. " " .. program)
         print("ONLY ENTER NUMBERS FOR ALL THE SETTINGS! NO WORDS")
         print("Door Type? 0= doorcontrol. 1=redstone. 2=bundled. 3=rolldoor")
         text = term.read()
@@ -531,10 +531,10 @@ if fill~=nil then
         text = term.read()
         if tonumber(text) == 1 then
             print("downloading...")
-            os.execute("wget -f " .. singleCode .. " " .. program)
+            os.execute("wget -f " .. singleCode[1] .. " " .. program)
         elseif tonumber(text) == 2 then
             print("downloading...")
-            os.execute("wget -f " .. multiCode .. " " .. program)
+            os.execute("wget -f " .. multiCode[1] .. " " .. program)
         else
             
         end
@@ -621,7 +621,7 @@ else
        --was single normal
     elseif(tonumber(text) == 2) then
                             term.clear()
-       os.execute("wget -f " .. multiCode .. " " .. program)
+       os.execute("wget -f " .. multiCode[1] .. " " .. program)
        print("Read the text carefully. Some of the inputs REQUIRE NUMBERS ONLY! Some require text.")
        print("The redSide is always 2, or back of the computer.")
        print("How many different doors are there?")
