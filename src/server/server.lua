@@ -226,7 +226,7 @@ while true do
     data = {}
     data.num = 1
     data.version = version
-    modem.send(from,port,crypt(ser.serialize(data),settingTable.cryptKey))
+    modem.send(from,port,ser.serialize(data))
   elseif command == "updateuser" then
     gpu.setForeground(0x0000C0)
     userTable = ser.unserialize(data)

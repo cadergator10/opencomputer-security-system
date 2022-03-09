@@ -161,12 +161,6 @@ function checkLink(user)
   return false
 end
 
-  if modem.isOpen(198) == false then
-    modem.open(198)
-  end
-  if modem.isOpen(197) == false then
-    modem.open(197)
-  end
 redstone = {}
 redstone["lock"] = false
 redstone["forceopen"] = false
@@ -192,7 +186,7 @@ while true do
     data.num = 2
     data.version = version
     data.data = userTable.settings
-    modem.send(from,port,crypt(ser.serialize(data),settingTable.cryptKey))
+    modem.send(from,port,ser.serialize(data))
   elseif command == "setDoor" then
     advWrite("Received door parameters from id: " .. from .. "\n",0xFFFF80)
     local tmpTable = ser.unserialize(data)
