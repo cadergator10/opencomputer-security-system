@@ -376,7 +376,7 @@ window:addChild(GUI.panel(3,3,60,36,0x6B6E74))
 userList = window:addChild(GUI.list(4, 4, 58, 34, 3, 0, 0xE1E1E1, 0x4B4B4B, 0xD2D2D2, 0x4B4B4B, 0x3366CC, 0xFFFFFF, false))
 userList:addItem("HELLO")
 listPageNumber = 0
-userTable = loadTable("userlist.txt")
+userTable = loadTable(aRD .. "userlist.txt")
 if userTable == nil then
   userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
 end
