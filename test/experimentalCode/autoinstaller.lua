@@ -35,7 +35,7 @@ local function loadTable(location)
 end
 
 local function sendMsg(...)
-    for int i=1,#arg,1 do
+    for i=1,#arg,1 do
         argType = type(arg[i])
         if editorSettings.accelerate == true then
             if argType == "string" then
@@ -45,6 +45,9 @@ local function sendMsg(...)
                 if arg[i] < 3 then
                     local e, _, _, _, _, text = event.pull("modem_message")
                     return text
+                end
+                if arg[i] == 4 then
+                    print("terminated connection")
                 end
             else
                 modem.send(editorSettings.from,editorSettings.port,"print","potential error in code for sendMsg")
@@ -109,10 +112,10 @@ local function runInstall()
     for i=1,times,1 do
         local loopArray = {}
         sendMsg(3)
+        local j
         if editorSettings.type == "multi" then
             sendMsg("Door # " .. i .. " is being edited:")
             local keepLoop = true
-            local j
             while keepLoop do
             j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
                 keepLoop = false
@@ -124,7 +127,61 @@ local function runInstall()
             end
         end
         text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet" or "Enter the uuid of the device in TEXT",editorSettings.scanner and 2 or 1)
+        loopArray["reader"] = text
+        text = sendMsg(editorSettings.type == "multi" and "Door Type? 0= doorcontrol. 2=bundled. 3=rolldoor. NEVER USE 1! NUMBER ONLY" or "Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY",1)
+        loopArray["doorType"] = tonumber(text)
+        if loopArray.doorType == 2 then
+            text = sendMsg("What color. Use the Color API wiki provided in discord, and enter the NUMBER",1)
+            loopArray["redColor"] = tonumber(text)
+            if editorSettings.type == "multi" then
+                sendMsg("No need to input anything for door address. The setting doesn't require it :)")
+                loopArray["doorAddress"] = ""
+            else
+                text = sendMsg("What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY",1)
+                loopArray["redSide"] = tonumber(text)
+            end
+        elseif loopArray.doorType == 1 then
+            loopArray["redColor"] = 0
+            text = sendMsg("No need for redColor! The settings you inputted before don't require it :)","What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY",1)
+            loopArray["redSide"] = tonumber(text)
+        else
+            loopArray["redColor"] = 0
+            if editorSettings.type == "single" then loopArray["redSide"] = 0 end
+            sendMsg("no need to input anything for redColor. The setting doesn't require it :)",editorSettings.type == "single" and "no need to input anything for redSide. The setting doesn't require it :)" or nil)
+            if editorSettings.type == "multi" then
+                text = sendMsg("What is the address for the doorcontrol/rolldoor block?", editorSettings.scanner and "Scan the block with tablet" or "Enter uuid as text",editorSettings.scanner and 2 or 1)
+                loopArray["doorAddress"] = text
+            end
+        end
+        text = sendMsg("Should the door be toggleable, or not? 0 for autoclose and 1 for toggleable",1)
+        loopArray["toggle"] = tonumber(text)
+        if loopArray.toggle == 0 then
+            text = sendMsg("How long should the door stay open in seconds? NUMBER ONLY",1)
+            loopArray["delay"] = tonumber(text)
+        else
+            sendMsg("No need to change delay! Previous setting doesn't require it :)")
+            loopArray["delay"] = 0
+        end
+        if editorSettings.num == 1 then
+            text = sendMsg("What should be read? 0 = level; 1 = armory level; 2 = MTF;","3 = GOI; 4 = Security; 5 = Department; 6 = Intercom; 7 = Staff",1)
+            loopArray["cardRead"] = tonumber(text)
+            if loopArray.cardRead <= 1 or loopArray.cardRead == 5 then
+                text = sendMsg("Access Level of what should be read? NUMBER ONLY",loopArray.cardRead ~= 5 and "level or armory level: enter the level that it should be." or "Department: 1=SD, 2=ScD, 3=MD, 4=E&T, 5=O5",1)
+                loopArray["accessLevel"] = tonumber(text)
+            else
+                loopArray["accessLevel"] = 0
+                sendMsg("No need to set access level. This mode doesn't require it :)")
+            end
+        else
+            --TODO: Figure out how to set what the card reads with new system...
+        end
+        text = sendMsg("Is this door opened whenever all doors are asked to open? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is yes",1)
+        loopArray["forceOpen"] = tonumber(text)
+        text = sendMsg("Is this door immune to lock door? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is no",1)
+        loopArray["bypassLock"] = tonumber(text)
+        if editorSettings.type == "multi" then tmpTable[j] = loopArray else tmpTable = loopArray end
     end
+    sendMsg("All done! You can remove internet card now. Run " .. program .. " now to start door!",4)
 
     return tmpTable
 end
