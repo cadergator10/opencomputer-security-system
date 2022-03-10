@@ -205,6 +205,8 @@ else
 end
     extraConfig = ttf.load("extraConfig.txt")
 	settingData = ttf.load("doorSettings.txt")
+  extraConfig.version = version
+  ttf.save(extraConfig,"extraConfig.txt")
 	
 	doorType = settingData.doorType
 	redSide = settingData.redSide

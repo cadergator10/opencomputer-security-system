@@ -20,7 +20,7 @@ local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", 
 local commandArray = {"getInput","analyzer","clearTerm","terminate"}
 
 local query = {["num"]=0}
-local editorSettings = {}
+local editorSettings = {} --Types of variables used in runInstall: type = door type (single or multi) required, num = old or new type (1 or 2) required, times = times to loop through (only edited before entering runInstall if adding more doors to multi) conditional, version = server version "not used yet", accelerate = if using seperate door setup tablet required, scanner = only used if accelerate true and if tablet has analyzer required, key = key of multidoor if editing door depends, edit = if editing. false if new door. required
 
 local function saveTable(table, location)
     --saves a table to a file
@@ -83,6 +83,8 @@ local function runInstall()
         if editorSettings.times ~= nil then
             tmpTable = editorSettings.data --TODO: Double check if this works later when finished
             times = editorSettings.times
+        elseif editorSettings.key ~= nil then
+            times = 1
         else
             text = sendMsg("Read the text carefully. Some of the inputs REQUIRE NUMBERS ONLY! Some require text.","The redSide is always 2, or back of the computer.","How many different doors are there?",1)
             times = tonumber(text)
@@ -93,19 +95,24 @@ local function runInstall()
     os.execute("wget -f " .. tableToFileCode .. " " .. tableToFileName)
 
     local config = {}
+    if editorSettings.edit then
+        local config = loadTable(configFileName)   
+    end
     config.type = editorSettings.type
     config.num = editorSettings.num
     config.version = editorSettings.version
-    text = sendMsg("Do you want to use the default cryptKey of {1,2,3,4,5}?","1 for yes, 2 for no",1)
-    if tonumber(text) == 2 then
-        config.cryptKey = {}
-        sendMsg("there are 5 parameters, each requiring a number. Recommend doing 1 digit numbers cause I got no idea how this works lol")
-        for i=1,5,1 do
-            text = sendMsg("enter param " .. i,1)--TODO: Finish this!
-            config.cryptKey[i] = tonumber(text)
+    if editorSettings.edit == false then
+        text = sendMsg("Do you want to use the default cryptKey of {1,2,3,4,5}?","1 for yes, 2 for no",1)
+        if tonumber(text) == 2 then
+            config.cryptKey = {}
+            sendMsg("there are 5 parameters, each requiring a number. Recommend doing 1 digit numbers cause I got no idea how this works lol")
+            for i=1,5,1 do
+                text = sendMsg("enter param " .. i,1)--TODO: Finish this!
+                config.cryptKey[i] = tonumber(text)
+            end
+        else
+            config.cryptKey = {1,2,3,4,5}
         end
-    else
-        config.cryptKey = {1,2,3,4,5}
     end
     saveTable(config,configFileName)
 
@@ -115,15 +122,19 @@ local function runInstall()
         local j
         if editorSettings.type == "multi" then
             sendMsg("Door # " .. i .. " is being edited:")
-            local keepLoop = true
-            while keepLoop do
-            j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
-                keepLoop = false
-                for key,value in pairs(tmpTable) do
-                    if key == j then
-                        keepLoop = true
+            if editorSettings.key == nil then
+                local keepLoop = true
+                while keepLoop do
+                j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
+                    keepLoop = false
+                    for key,value in pairs(tmpTable) do
+                        if key == j then
+                            keepLoop = true
+                        end
                     end
                 end
+            else
+                j = editorSettings.key
             end
         end
         text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet" or "Enter the uuid of the device in TEXT",editorSettings.scanner and 2 or 1)
@@ -173,7 +184,43 @@ local function runInstall()
                 sendMsg("No need to set access level. This mode doesn't require it :)")
             end
         else
-            --TODO: Figure out how to set what the card reads with new system...
+            --TODO: Test this out with new system
+            local nextmsg = "What should be read? 0 = staff,"
+            for i=1,#editorSettings.settings.var,1 do
+                nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.label[i]
+            end
+            text = sendMsg("What should be read?" .. nextmsg,1)
+            if tonumber(text) == 0 then
+                loopArray["cardRead"] = 6
+                loopArray["accessLevel"] = 0
+                sendMsg("No need to set access level. This mode doesn't require it :)")
+            else
+                loopArray["cardRead"] = tonumber(text) + 6
+                if editorSettings.settings.type[loopArray.cardRead - 6] == "string" or editorSettings.settings.type == "-string" then
+                    text = sendMsg("What is the string you would like to read? Enter text.",1)
+                    loopArray["accessLevel"] = text
+                elseif editorSettings.settings.type[loopArray.cardRead - 6] == "bool" then
+                    loopArray["accessLevel"] = 0
+                    sendMsg("No need to set access level. This mode doesn't require it :)")
+                elseif editorSettings.settings.type[loopArray.cardRead - 6] == "int" then
+                    if editorSettings.settings.above[loopArray.cardRead - 6] == true then
+                        text = sendMsg("What level and above should be required?",1)
+                    else
+                        text = sendMsg("what level exactly should be required?",1)
+                    end
+                    loopArray["accessLevel"] = tonumber(text)
+                elseif editorSettings.settings.type[loopArray.cardRead - 6] == "-int" then
+                    local nextmsg = "What group are you wanting to set?"
+                    for i=1,#editorSettings.settings.data[loopArray.cardRead - 6],1 do --TODO: Check if this works well
+                        nextmsg = nextmsg .. ", " .. i .. " = " .. #editorSettings.settings.data[loopArray.cardRead - 6][i]
+                    end
+                    text = sendMsg(nextmsg,1)
+                    loopArray["accessLevel"] = tonumber(text)
+                else
+                    sendMsg("error in cardRead area for num 2")
+                    loopArray["accessLevel"] = 0
+                end
+            end
         end
         text = sendMsg("Is this door opened whenever all doors are asked to open? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is yes",1)
         loopArray["forceOpen"] = tonumber(text)
@@ -181,7 +228,7 @@ local function runInstall()
         loopArray["bypassLock"] = tonumber(text)
         if editorSettings.type == "multi" then tmpTable[j] = loopArray else tmpTable = loopArray end
     end
-    sendMsg("All done! You can remove internet card now. Run " .. program .. " now to start door!",4)
+    sendMsg("All done with installer!",4)
 
     return tmpTable
 end
@@ -193,6 +240,7 @@ local function oldFiles()
         print("Error reading config file. Is this an up to date version?")
         print("It is recommended to wipe and reinstall at this point")
     end
+    editorSettings.type = config.type
     print("Old files detected. Please select an option:")
     print("1 = wipe all files (maybe)")
     print("2 = add more doors (very experimental)")
@@ -226,10 +274,10 @@ local function oldFiles()
             print("how many doors would you like to add?")
             text = term.read()
             local num = tonumber(text)
-            --local tempArray = runInstall(true,num,false) FIXME: Update runInstall to be smaller and more me-friendly
-            for key, value in pairs(tempArray) do
-                settingData[key] = value
-            end
+            editorSettings.times = num
+            editorSettings.data = settingData
+            settingData = runInstall()
+            editorSettings.data = settingData
             saveTable(settingData,settingFileName)
             print("Added the doors. It is recommended you check if it worked, as this is experimental.")
         else
@@ -256,9 +304,21 @@ local function oldFiles()
         --TODO: Implement a more "efficient" program to change door
         if config.type == "single" then
             print("starting single door editing...")
+            editorSettings.edit = true
+            settingData = runInstall()
+            print("Old config should be overwritten. It is recommended to double check if it worked.")
         else
-            print("Starting multi door editing...")
+            print("What is the key for the door you want to edit?")
+            text = term.read()
+            editorSettings.times = 1
+            editorSettings.key = text:sub(1,-2)
+            editorSettings.edit = true
+            editorSettings.data = settingData
+            print("Starting multi door editing on " .. editorSettings.key .. "...")
+            settingData = runInstall()
+            print("Door should have been edited. It is recommended to double check if it worked.")
         end
+        saveTable(settingData,settingFileName)
     elseif tonumber(text) == 5 then
         print("Are you sure you want to do this? New updates sometimes require manual changing of config.")
         print("1 for continue, 2 for cancel")
@@ -307,12 +367,33 @@ if e == false then
 end
 print("Query received")
 query = ser.unserialize(msg)
+editorSettings.num = query.num
+editorSettings.version = query.version
+if editorSettings.num == 2 then editorSettings.settings = query.data end
+editorSettings.scanner = false
+editorSettings.accelerate = false
 term.clear()
 print("Checking files...")
+local text
 local fill = io.open(program,"r")
 if fill~=nil then
     fill:close()
     oldFile()
 else
-
+    term.clear()
+    --Would you like to use an external device for accelerated setup? TODO: Add something like this
+    term.clear()
+    text = sendMsg("What kind of door do you want? 1 for single, 2 for multi",1)
+    if tonumber(text) == 1 then
+        editorSettings.type = "single"
+    elseif tonumber(text) == 2 then
+        editorSettings.type == "multi"
+    else
+        term.clear()
+        sendMsg("Not an answer:" .. text)
+        os.exit()
+    end
+    settingData = runInstall()
+    saveTable(settingData,settingFileName)
+    print("Run " .. program .. " now to start door.")
 end

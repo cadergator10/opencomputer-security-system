@@ -213,6 +213,8 @@ end
 
 settingData = ttf.load("doorSettings.txt")
 extraConfig = ttf.load("extraConfig.txt")
+extraConfig.version = version
+ttf.save(extraConfig,"extraConfig.txt")
 
 print("Multi-Door Control terminal")
 print("---------------------------------------------------------------------------")

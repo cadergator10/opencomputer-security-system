@@ -213,6 +213,8 @@ end
 
     extraConfig = ttf.load("extraConfig.txt")
 	settingData = ttf.load("doorSettings.txt")
+    extraConfig.version = version
+    ttf.save(extraConfig,"extraConfig.txt")
 
     if modem.isOpen(modemPort) == false then
         modem.open(modemPort)
