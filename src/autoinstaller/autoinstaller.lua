@@ -545,18 +545,9 @@ if fill~=nil then
 else
     if true then
     term.clear()
-    print("Alert: severe unchecked updates were done to the autoinstaller. There may be severe bugs.")
+    print("LEGACY AUTOINSTALLER! Use this ONLY if you need to do something to pc 1.7.1 and below.")
+    print("Autoupdating a pc in this autoinstaller will mean the new autoinstaller must be used after on it.")
     print("...")
-    print("Would you like to use the default cryptKey of {1,2,3,4,5}? 1 if yes, 2 if no.")
-    text = term.read()
-    local tmpTable = {["cryptKey"]=nil}
-    if tonumber(text) == 1 then
-        tmpTable.cryptKey = {1,2,3,4,5}
-    else
-        tmpTable.cryptKey = {1,2,3,4,5} --TODO: Add ability to set cryptKey in autoinstaller
-        saveTable(,"extraConfig.txt")
-    end
-    saveTable(,"extraConfig.txt")
     print("Would you like to use an external device for accelerated setup?")
     print("This makes it easier to set up doors without having to move from the door to the pc constantly.")
     print("It requires the program here to be set up on a tablet with a modem: https://github.com/cadergator10/opensecurity-scp-security-system/blob/main/src/extras/acceleratedDoorSetup.lua")
