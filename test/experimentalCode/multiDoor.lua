@@ -246,7 +246,7 @@ process.info().data.signal = function(...)
   os.exit()
 end
     
-while true do --TODO: Test this program
+while true do --TEST: Does this run well with autoinstaller?
   if modem.isOpen(modemPort) == false then
   modem.open(modemPort)
   end

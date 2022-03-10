@@ -198,7 +198,7 @@ function userListCallback()
   end
 end
  
-function buttonCallback(workspace, button) --TODO: work on this more when user array is done
+function buttonCallback(workspace, button)
   local buttonInt = button.buttonInt
   local callbackInt = button.callbackInt
   local isPos = button.isPos
@@ -453,7 +453,7 @@ for i=1,#userTable.settings.var,1 do
     guiCalls[i][2].callbackInt = i + #baseVariables
     guiCalls[i][2].isPos = false
     guiCalls[i][2].onTouch = buttonCallback
-    guiCalls[i][4] = userTable.settings.data --TODO: Find out a way to put the text vars in here.
+    guiCalls[i][4] = userTable.settings.data
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type[i] == "bool" then

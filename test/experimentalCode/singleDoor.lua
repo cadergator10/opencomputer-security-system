@@ -137,7 +137,7 @@ local function update(msg, localAddress, remoteAddress, port, distance, msg, dat
     end
 end
 
-function openDoor(override,datas) --TODO: update this more.
+function openDoor(override,datas) --REVIEW: Update more
     local delay2 = delay
     local toggle2 = toggle
     if override then
@@ -280,7 +280,7 @@ process.info().data.signal = function(...)
   os.exit()
 end    
 
-while true do --TODO: test this program.
+while true do --TEST: test if this functions well
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end

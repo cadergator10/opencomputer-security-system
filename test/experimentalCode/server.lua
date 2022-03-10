@@ -80,7 +80,6 @@ if settingTable == nil then
   print("Security server requires settings to be set")
   print("...")
   print("If you are not leaving cryptKey at default, make sure you change it in settings.txt")
-  --TODO: add some settings
   settingTable = {["cryptKey"]={1,2,3,4,5}}
   saveTable(settingTable,"settings.txt")
 end
@@ -97,11 +96,6 @@ if userTable == nil then
 end
 if doorTable == nil then
   doorTable = {}
-end
-if settingTable == nil then
-  settingTable = {["cryptKey"]={1,2,3,4,5}}
-  print("IT IS RECOMMENDED YOU DOUBLE CHECK settings.txt FOR CRYPT KEY! Make sure it is the same across all devices.")
-  saveTable(settingTable,"settings.txt")
 end
 
 --------account functions
@@ -203,7 +197,7 @@ while true do
     saveTable(doorTable, "doorlist.txt")
     modem.send(from,port,crypt(ser.serialize(UserTable.settings),settingTable.cryptKey))
   elseif command == "remoteControl" then
-    advWrite("Coming soon?\n",0xFF0000) --TODO: allow remote control pc sometime in future
+    advWrite("Coming soon?\n",0xFF0000) --IDEA: allow remote control pc sometime in future
   elseif command == "redstoneUpdated" then
         advWrite("Redstone has been updated\n",0x0000C0)
         local newRed = ser.unserialize(data)
@@ -279,10 +273,10 @@ while true do
       			data = crypt(ser.serialize(dis), settingTable.cryptKey)
             advWrite(" tablet not linked\n",0x990000)
       			modem.send(from, port, data)
-          end
+          end--IMPORTANT: Hello
         end
       else
-        local bool isRealCommand = false --TODO: verify this all functions maybe please??????
+        local bool isRealCommand = false --TEST: verify this all functions maybe please??????
         for i=1,#userTable.settings.calls,1 do
           if command == userTable.settings.calls[i] then
             if lockDoors == true and bypassLock ~= 1 then
@@ -336,7 +330,7 @@ while true do
                           advWrite(" level is too low\n",0xFF0000)
                           modem.send(from, port, data)   
                         end
-                      else --TODO: check if this functions later after thing is written. It should be complete.
+                      else --TEST: check if this functions later after thing is written. It should be complete.
                         data = crypt("true", settingTable.cryptKey)
                         advWrite(" access granted\n",0x00FF00)
                         modem.send(from, port, data)

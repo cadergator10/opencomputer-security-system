@@ -81,7 +81,7 @@ local function runInstall()
     if editorSettings.type == "multi" then
         os.execute("wget -f " .. multiCode[editorSettings.num]] .. " " .. program)
         if editorSettings.times ~= nil then
-            tmpTable = editorSettings.data --TODO: Double check if this works later when finished
+            tmpTable = editorSettings.data --TEST: if runInstall times gets the previous array if needed
             times = editorSettings.times
         elseif editorSettings.key ~= nil then
             times = 1
@@ -107,7 +107,7 @@ local function runInstall()
             config.cryptKey = {}
             sendMsg("there are 5 parameters, each requiring a number. Recommend doing 1 digit numbers cause I got no idea how this works lol")
             for i=1,5,1 do
-                text = sendMsg("enter param " .. i,1)--TODO: Finish this!
+                text = sendMsg("enter param " .. i,1)
                 config.cryptKey[i] = tonumber(text)
             end
         else
@@ -184,7 +184,7 @@ local function runInstall()
                 sendMsg("No need to set access level. This mode doesn't require it :)")
             end
         else
-            --TODO: Test this out with new system
+            --TEST: Will new autoinstaller work with new 2.#.# system
             local nextmsg = "What should be read? 0 = staff,"
             for i=1,#editorSettings.settings.var,1 do
                 nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.label[i]
@@ -211,7 +211,7 @@ local function runInstall()
                     loopArray["accessLevel"] = tonumber(text)
                 elseif editorSettings.settings.type[loopArray.cardRead - 6] == "-int" then
                     local nextmsg = "What group are you wanting to set?"
-                    for i=1,#editorSettings.settings.data[loopArray.cardRead - 6],1 do --TODO: Check if this works well
+                    for i=1,#editorSettings.settings.data[loopArray.cardRead - 6],1 do --TEST: Does grabbing loopArray again work as int
                         nextmsg = nextmsg .. ", " .. i .. " = " .. #editorSettings.settings.data[loopArray.cardRead - 6][i]
                     end
                     text = sendMsg(nextmsg,1)
@@ -301,7 +301,7 @@ local function oldFiles()
             os.exit()
         end
     elseif tonumber(text) == 4 then
-        --TODO: Implement a more "efficient" program to change door
+        --TEST: Test if this is efficient.
         if config.type == "single" then
             print("starting single door editing...")
             editorSettings.edit = true
