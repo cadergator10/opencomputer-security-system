@@ -23,6 +23,7 @@ local aRD = fs.path(system.getCurrentScript())
 local workspace, window, menu
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton
+local addVarButton, delVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton
  
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
@@ -67,7 +68,14 @@ local function convert( chars, dist, inv )
   return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
 end
  
- 
+local function split(s, delimiter)
+  result = {};
+  for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+      table.insert(result, match);
+  end
+  return result;
+end 
+
 local function crypt(str,k,inv)
   local enc= "";
   for i=1,#str do
@@ -342,7 +350,7 @@ function inputCallback()
 end
 
 function linkUserCallback()
-    local container = GUI.addBackgroundContainer(window, false, true, "You have 20 seconds to link your device now. Do not click anything")
+    local container = GUI.addBackgroundContainer(workspace, false, true, "You have 20 seconds to link your device now. do not click anything")
     local selected = pageMult * listPageNumber + userList.selectedItem
     modem.open(dbPort)
     local e, _, from, port, _, msg = event.pull(20)
@@ -359,6 +367,107 @@ function linkUserCallback()
     modem.close(dbPort)
     updateList()
     userListCallback()
+end
+
+function checkTypeCallback()
+  addVarArray.above = false
+  addVarArray.data = false
+  local typeArray = {"string","-string","int","-int","bool"}
+  local selected = typeSelect.selectedItem
+  if extraVar ~= nil then
+    extraVar:remove()
+    extraVar = nil
+  end
+  if selected == 3 then
+    extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "check above value")).onTouch = function()
+      addVarArray.above = extraVar.pressed
+    end
+    extraVar.toggle = true
+  elseif selectedItem == 4 then
+    extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "groups (comma seperating each group)")).onInputFinished = function()
+      addVarArray.data = split(extraVar.text,",")
+    end
+  else
+    
+  end
+end
+
+function addVarYesCall() --TODO: Continue
+  for i=1,#userTable,1 do
+    if addVarArray.type == "string" or addVarArray.type == "-string" then
+      userTable[i][addVarArray.var] = "none"
+    elseif addVarArray.type == "int" or addVarArray.type == "-int" then
+      userTable[i][addVarArray.var] = 0
+    elseif addVarArray.type == "bool" then
+      userTable[i][addVarArray.var] = false
+    else
+      GUI.alert("Error occured in addVarYesCall function. Please report this to author.")
+        varContainer:removeChildren()
+        varContainer:remove()
+        varContainer = nil
+      return
+    end
+  end
+  table.insert(userTable.settings.var,addVarArray.var)
+  table.insert(userTable.settings.label,addVarArray.label)
+  table.insert(userTable.settings.calls,addVarArray.calls)
+  table.insert(userTable.settings.type,addVarArray.type)
+  table.insert(userTable.settings.above,addVarArray.above)
+  table.insert(userTable.settings.data,addVarArray.data)
+  addVarArray = nil
+  varContainer:removeChildren()
+  varContainer:remove()
+  varContainer = nil
+  saveTable(userTable,"userlist.txt")
+  GUI.alert("New variable added. App will be auto closed and changes will be applied on next start.")
+  window:remove()
+end
+
+--TEST: Check if this successfully adds and removes variables.
+function addVarCallback()
+  addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "variable key")).onTouch = function()
+    addVarArray.var = varInput.text
+  end
+  labelInput = varContainer.layout:addChild(GUI.input(1,6,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "variable label")).onTouch = function()
+    addVarArray.label = labelInput.text
+  end
+  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,11,30,3, 0xEEEEEE, 0x2D2D2D, 0xCCCCCC, 0x888888))
+  typeSelect:addItem("String").onTouch = checkTypeCallback
+  typeSelect:addItem("Hidden String") = checkTypeCallback--TODO: Finish this
+  typeSelect:addItem("Level (Int)") = checkTypeCallback
+  typeSelect:addItem("Group") = checkTypeCallback
+  typeSelect:addItem("Pass (true/false)") = checkTypeCallback
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add variable to system")).onTouch = addVarYesCall
+end
+
+function delVarYesCall()
+  local selected = typeSelect.selectedItem
+  userTable.settings.label[selected] = nil
+  userTable.settings.calls[selected] = nil
+  userTable.settings.type[selected] = nil
+  userTable.settings.above[selected] = nil
+  userTable.settings.data[selected] = nil
+  for i=1,#userTable,1 do
+    userTable[i][userTable.settings.var[selected]] = nil
+  end
+  userTable.settings.var[selected] = nil
+  varContainer:removeChildren()
+  varContainer:remove()
+  varContainer = nil
+  saveTable(userTable,"userlist.txt")
+  GUI.alert("Variable removed. App will be auto closed and changes will be applied on next start.")
+  window:remove()
+end
+
+function delVarCallback()
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, 0xEEEEEE, 0x2D2D2D, 0xCCCCCC, 0x888888))
+  for i=1,#userTable.settings.var,1 do
+    typeSelect:addItem(userTable.settings.label[i])
+  end
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add variable to system")).onTouch = delVarYesCall
 end
  
 ----------GUI SETUP
@@ -492,6 +601,10 @@ userChangeUUIDButton = window:addChild(GUI.button(32,42,16,1,0xFFFFFF, 0x555555,
 userChangeUUIDButton.onTouch = changeUUID
 createAdminCardButton = window:addChild(GUI.button(46,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "admin card")) 
 createAdminCardButton.onTouch = writeAdminCardCallback
+addVarButton = window:addChild(GUI.button(60,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add var")) 
+addVarButton.onTouch = addVarCallback
+delVarButton = window:addChild(GUI.button(72,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "delete var")) 
+delVarButton.onTouch = delVarCallback
  
 --CardWriter frame
  
