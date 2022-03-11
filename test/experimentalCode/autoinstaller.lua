@@ -42,7 +42,7 @@ local function sendMsg(...) --FIXME: Figure out What the HECK is wrong with the 
         if editorSettings.accelerate == true then
             if argType == "string" then
                 modem.send(editorSettings.from,editorSettings.port,"print",arg[i])
-            elseif argType == "int" then
+            elseif argType == "number" then
                 modem.send(editorSettings.from,editorSettings.port,commandArray[arg[i]])
                 if arg[i] < 3 then
                     local e, _, _, _, _, text = event.pull("modem_message")
@@ -57,7 +57,7 @@ local function sendMsg(...) --FIXME: Figure out What the HECK is wrong with the 
         else
             if argType == "string" then
                 print(arg[i])
-            elseif argType == "int" then
+            elseif argType == "number" then
                 if arg[i] == 1 then
                     local text = term.read()
                     return text:sub(1,-2)
