@@ -4,6 +4,7 @@ local io = require("io")
 local ser = require("serialization")
 local fs = require("filesystem")
 local shell = require("shell")
+local event = require("event")
 local modem = component.modem
 local modemPort = 199
 

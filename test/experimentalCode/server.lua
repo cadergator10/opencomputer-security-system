@@ -165,9 +165,9 @@ while true do
 
   local _, _, from, port, _, command, msg, bypassLock = event.pull("modem_message")
   local data = msg
-  data = crypt(msg, settingTable.cryptKey, true)
+  if command ~= "autoInstallerQuery" then data = crypt(msg, settingTable.cryptKey, true) end
   local thisUserName = false
-  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" then
+  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" then
     data = ser.unserialize(data)
     thisUserName = getVar("name",data.uuid)
   end

@@ -4,6 +4,7 @@ local io = require("io")
 local ser = require("serialization")
 local fs = require("filesystem")
 local shell = require("shell")
+local event = require("event")
 local modem = component.modem
 local modemPort = 199
 
@@ -34,9 +35,10 @@ local function loadTable(location)
     return ser.unserialize(tableFile:read("*all"))
 end
 
-local function sendMsg(...)
+local function sendMsg(...) --FIXME: Figure out What the HECK is wrong with the VARARGS
+    local arg = table.pack(...)
     for i=1,#arg,1 do
-        argType = type(arg[i])
+        local argType = type(arg[i])
         if editorSettings.accelerate == true then
             if argType == "string" then
                 modem.send(editorSettings.from,editorSettings.port,"print",arg[i])
@@ -79,7 +81,7 @@ local function runInstall()
     local times = 1
     local text = ""
     if editorSettings.type == "multi" then
-        os.execute("wget -f " .. multiCode[editorSettings.num]] .. " " .. program)
+        os.execute("wget -f " .. multiCode[editorSettings.num] .. " " .. program)
         if editorSettings.times ~= nil then
             tmpTable = editorSettings.data --TEST: if runInstall times gets the previous array if needed
             times = editorSettings.times
@@ -90,7 +92,7 @@ local function runInstall()
             times = tonumber(text)
         end
     else
-        os.execute("wget -f " .. singleCode[editorSettings.num]] .. " " .. program)
+        os.execute("wget -f " .. singleCode[editorSettings.num] .. " " .. program)
     end
     os.execute("wget -f " .. tableToFileCode .. " " .. tableToFileName)
 
@@ -260,10 +262,10 @@ local function oldFiles()
         local fill = io.open(settingFileName)
         if fill~=nil then
             print("an error occured and some files may not have deleted.")
+            fill:close()
         else
             print("all done!")
         end
-        fill:close()
     elseif tonumber(text) == 2 then
         if config.type == "single" then
             print("you cannot add more doors as this is a single door. If you want to swap to a multidoor,")
@@ -378,7 +380,7 @@ local text
 local fill = io.open(program,"r")
 if fill~=nil then
     fill:close()
-    oldFile()
+    oldFiles()
 else
     term.clear()
     --Would you like to use an external device for accelerated setup? TODO: Add something like this
@@ -387,7 +389,7 @@ else
     if tonumber(text) == 1 then
         editorSettings.type = "single"
     elseif tonumber(text) == 2 then
-        editorSettings.type == "multi"
+        editorSettings.type = "multi"
     else
         term.clear()
         sendMsg("Not an answer:" .. text)
