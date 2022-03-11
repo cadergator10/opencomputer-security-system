@@ -195,7 +195,7 @@ while true do
     end
     if isInAlready == false then table.insert(doorTable,tmpTable) end
     saveTable(doorTable, "doorlist.txt")
-    modem.send(from,port,crypt(ser.serialize(UserTable.settings),settingTable.cryptKey))
+    modem.send(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
   elseif command == "remoteControl" then
     advWrite("Coming soon?\n",0xFF0000) --IDEA: allow remote control pc sometime in future
   elseif command == "redstoneUpdated" then
@@ -286,7 +286,7 @@ while true do
             else
             advWrite("Checking if user " .. thisUserName,0xFFFF80)
             isRealCommand = true
-            local cu, isBlocked, varCheck, isStaff checkVar(userTable.settings.var[i],data.uuid)
+            local cu, isBlocked, varCheck, isStaff = checkVar(userTable.settings.var[i],data.uuid)
             if cu == true then
               if isBlocked == false then
                 data = crypt("false", settingTable.cryptKey)

@@ -374,18 +374,21 @@ function checkTypeCallback()
   addVarArray.data = false
   local typeArray = {"string","-string","int","-int","bool"}
   local selected = typeSelect.selectedItem
+  addVarArray.type = typeArray[selected]
   if extraVar ~= nil then
     extraVar:remove()
     extraVar = nil
   end
   if selected == 3 then
-    extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "check above value")).onTouch = function()
+    extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "check above value"))
+      extraVar.onTouch = function()
       addVarArray.above = extraVar.pressed
     end
-    extraVar.toggle = true
-  elseif selectedItem == 4 then
-    extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "groups (comma seperating each group)")).onInputFinished = function()
-      addVarArray.data = split(extraVar.text,",")
+    extraVar.switchMode = true
+  elseif selected == 4 then
+    extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "groups (comma seperating each group)"))
+    extraVar.onInputFinished = function()
+    addVarArray.data = split(extraVar.text,",")
     end
   else
     
@@ -418,7 +421,7 @@ function addVarYesCall() --TODO: Continue
   varContainer:removeChildren()
   varContainer:remove()
   varContainer = nil
-  saveTable(userTable,"userlist.txt")
+  saveTable(userTable,aRD .. "userlist.txt")
   GUI.alert("New variable added. App will be auto closed and changes will be applied on next start.")
   window:remove()
 end
@@ -427,19 +430,22 @@ end
 function addVarCallback()
   addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
-  varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "variable key")).onTouch = function()
+  varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "variable key"))
+  varInput.onInputFinished = function()
     addVarArray.var = varInput.text
   end
-  labelInput = varContainer.layout:addChild(GUI.input(1,6,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "variable label")).onTouch = function()
+  labelInput = varContainer.layout:addChild(GUI.input(1,6,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "variable label"))
+  labelInput.onInputFinished = function()
     addVarArray.label = labelInput.text
   end
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,11,30,3, 0xEEEEEE, 0x2D2D2D, 0xCCCCCC, 0x888888))
   typeSelect:addItem("String").onTouch = checkTypeCallback
-  typeSelect:addItem("Hidden String") = checkTypeCallback--TODO: Finish this
-  typeSelect:addItem("Level (Int)") = checkTypeCallback
-  typeSelect:addItem("Group") = checkTypeCallback
-  typeSelect:addItem("Pass (true/false)") = checkTypeCallback
-  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add variable to system")).onTouch = addVarYesCall
+  typeSelect:addItem("Hidden String").onTouch = checkTypeCallback--TODO: Finish this
+  typeSelect:addItem("Level (Int)").onTouch = checkTypeCallback
+  typeSelect:addItem("Group").onTouch = checkTypeCallback
+  typeSelect:addItem("Pass (true/false)").onTouch = checkTypeCallback
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add variable to system"))
+  varYesButton.onTouch = addVarYesCall
 end
 
 function delVarYesCall()
@@ -456,7 +462,7 @@ function delVarYesCall()
   varContainer:removeChildren()
   varContainer:remove()
   varContainer = nil
-  saveTable(userTable,"userlist.txt")
+  saveTable(userTable,aRD .. "userlist.txt")
   GUI.alert("Variable removed. App will be auto closed and changes will be applied on next start.")
   window:remove()
 end
@@ -467,7 +473,8 @@ function delVarCallback()
   for i=1,#userTable.settings.var,1 do
     typeSelect:addItem(userTable.settings.label[i])
   end
-  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add variable to system")).onTouch = delVarYesCall
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add variable to system"))
+  varYesButton.onTouch = delVarYesCall
 end
  
 ----------GUI SETUP
@@ -562,7 +569,7 @@ for i=1,#userTable.settings.var,1 do
     guiCalls[i][2].callbackInt = i + #baseVariables
     guiCalls[i][2].isPos = false
     guiCalls[i][2].onTouch = buttonCallback
-    guiCalls[i][4] = userTable.settings.data
+    guiCalls[i][4] = userTable.settings.data[i]
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type[i] == "bool" then

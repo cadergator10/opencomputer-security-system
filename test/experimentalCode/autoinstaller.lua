@@ -12,6 +12,7 @@ local program = "ctrl.lua"
 local tableToFileName = "tableToFile.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
+local tableToFileCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/libraries/tableToFile.lua"
 local singleCode = {"https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/test/experimentalCode/singleDoor.lua"}
 local multiCode = {"https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/test/experimentalCode/multiDoor.lua"}
 local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/versionHolder.txt"
@@ -98,12 +99,12 @@ local function runInstall()
 
     local config = {}
     if editorSettings.edit then
-        local config = loadTable(configFileName)   
+        config = loadTable(configFileName)
     end
     config.type = editorSettings.type
     config.num = editorSettings.num
     config.version = editorSettings.version
-    if editorSettings.edit == false then
+    if editorSettings.edit == false or editorSettings.edit == nil then
         text = sendMsg("Do you want to use the default cryptKey of {1,2,3,4,5}?","1 for yes, 2 for no",1)
         if tonumber(text) == 2 then
             config.cryptKey = {}
@@ -138,9 +139,9 @@ local function runInstall()
             else
                 j = editorSettings.key
             end
+            text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet" or "Enter the uuid of the device in TEXT",editorSettings.scanner and 2 or 1)
+            loopArray["reader"] = text
         end
-        text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet" or "Enter the uuid of the device in TEXT",editorSettings.scanner and 2 or 1)
-        loopArray["reader"] = text
         text = sendMsg(editorSettings.type == "multi" and "Door Type? 0= doorcontrol. 2=bundled. 3=rolldoor. NEVER USE 1! NUMBER ONLY" or "Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY",1)
         loopArray["doorType"] = tonumber(text)
         if loopArray.doorType == 2 then
@@ -189,7 +190,7 @@ local function runInstall()
             --TEST: Will new autoinstaller work with new 2.#.# system
             local nextmsg = "What should be read? 0 = staff,"
             for i=1,#editorSettings.settings.var,1 do
-                nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.label[i]
+                nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.label[i]
             end
             text = sendMsg("What should be read?" .. nextmsg,1)
             if tonumber(text) == 0 then
@@ -214,7 +215,7 @@ local function runInstall()
                 elseif editorSettings.settings.type[loopArray.cardRead - 6] == "-int" then
                     local nextmsg = "What group are you wanting to set?"
                     for i=1,#editorSettings.settings.data[loopArray.cardRead - 6],1 do --TEST: Does grabbing loopArray again work as int
-                        nextmsg = nextmsg .. ", " .. i .. " = " .. #editorSettings.settings.data[loopArray.cardRead - 6][i]
+                        nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[loopArray.cardRead - 6][i]
                     end
                     text = sendMsg(nextmsg,1)
                     loopArray["accessLevel"] = tonumber(text)
@@ -302,7 +303,7 @@ local function oldFiles()
             print("error reading config file")
             os.exit()
         end
-    elseif tonumber(text) == 4 then
+    elseif tonumber(text) == 4 then --FIXME: MultiDoor editing deletes other door setups.
         --TEST: Test if this is efficient.
         if config.type == "single" then
             print("starting single door editing...")
