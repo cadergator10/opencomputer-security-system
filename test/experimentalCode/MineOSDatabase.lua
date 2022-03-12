@@ -395,7 +395,7 @@ function checkTypeCallback()
   end
 end
 
-function addVarYesCall() --TODO: Continue
+function addVarYesCall()
   for i=1,#userTable,1 do
     if addVarArray.type == "string" or addVarArray.type == "-string" then
       userTable[i][addVarArray.var] = "none"
@@ -440,7 +440,7 @@ function addVarCallback()
   end
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,11,30,3, 0xEEEEEE, 0x2D2D2D, 0xCCCCCC, 0x888888))
   typeSelect:addItem("String").onTouch = checkTypeCallback
-  typeSelect:addItem("Hidden String").onTouch = checkTypeCallback--TODO: Finish this
+  typeSelect:addItem("Hidden String").onTouch = checkTypeCallback
   typeSelect:addItem("Level (Int)").onTouch = checkTypeCallback
   typeSelect:addItem("Group").onTouch = checkTypeCallback
   typeSelect:addItem("Pass (true/false)").onTouch = checkTypeCallback

@@ -36,7 +36,7 @@ local function loadTable(location)
     return ser.unserialize(tableFile:read("*all"))
 end
 
-local function sendMsg(...) --FIXME: Figure out What the HECK is wrong with the VARARGS
+local function sendMsg(...)
     local arg = table.pack(...)
     for i=1,#arg,1 do
         local argType = type(arg[i])
@@ -316,7 +316,7 @@ local function oldFiles()
             editorSettings.times = 1
             editorSettings.key = text:sub(1,-2)
             editorSettings.edit = true
-            editorSettings.data = settingData
+            editorSettings.data = loadTable(settingFileName)
             print("Starting multi door editing on " .. editorSettings.key .. "...")
             settingData = runInstall()
             print("Door should have been edited. It is recommended to double check if it worked.")
