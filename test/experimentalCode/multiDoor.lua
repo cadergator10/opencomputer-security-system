@@ -294,7 +294,7 @@ while true do --TEST: Does this run well with autoinstaller?
               counter = counter + 1
           end
           diagData["entries"] = counter
-          data = crypt(ser.serialize(diagData),extraConfig.cryptKey)
+          data = ser.serialize(diagData)
           modem.broadcast(diagPort, "temp", data)
       else
           local tmpTable = ser.unserialize(data)

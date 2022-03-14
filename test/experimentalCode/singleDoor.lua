@@ -296,7 +296,7 @@ while true do --TEST: test if this functions well
         diagData["type"] = "single"
         diagData["version"] = doorVersion
         diagData["key"] = "NAN"
-        data = crypt(ser.serialize(diagData),extraConfig.cryptKey)
+        data = ser.serialize(diagData)
         modem.broadcast(diagPort, "diag", data)
     else
         local tmpTable = ser.unserialize(data)

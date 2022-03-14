@@ -142,6 +142,8 @@ local function runInstall()
             text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet" or "Enter the uuid of the device in TEXT",editorSettings.scanner and 2 or 1)
             loopArray["reader"] = text
         end
+        text = sendMsg("What do you want to nickname this door? This will show up on the server (if it's the 2.#.# version)",1)
+        loopArray["name"] = text
         text = sendMsg(editorSettings.type == "multi" and "Door Type? 0= doorcontrol. 2=bundled. 3=rolldoor. NEVER USE 1! NUMBER ONLY" or "Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY",1)
         loopArray["doorType"] = tonumber(text)
         if loopArray.doorType == 2 then
@@ -303,8 +305,7 @@ local function oldFiles()
             print("error reading config file")
             os.exit()
         end
-    elseif tonumber(text) == 4 then --FIXME: MultiDoor editing deletes other door setups.
-        --TEST: Test if this is efficient.
+    elseif tonumber(text) == 4 then --TEST: MultiDoor editing works now and doesn't erase it.
         if config.type == "single" then
             print("starting single door editing...")
             editorSettings.edit = true
@@ -364,7 +365,7 @@ print("Sending query to server...")
 modem.open(modemPort)
 modem.broadcast(modemPort,"autoInstallerQuery")
 local e,_,from,port,_,msg = event.pull(3,"modem_message")
-if e == false then
+if e == nil then
     print("Failed. Is the server on?")
     os.exit()
 end
@@ -384,7 +385,27 @@ if fill~=nil then
     oldFiles()
 else
     term.clear()
-    --Would you like to use an external device for accelerated setup? TODO: Add something like this
+    text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires the program here to be set up on a tablet with a modem: https://github.com/cadergator10/opensecurity-scp-security-system/blob/main/src/extras/acceleratedDoorSetup.lua","1 for yes, 2 for no",1) --TEST: does accelerated door setup work?
+    if tonumber(text) == 1 then
+        local code = math.floor(math.random(1000,9999))
+        modem.open(code)
+        sendMsg("Code is:  " .. tostring(code),"Enter the code into the door setup tablet. In 60 seconds setup will cancel.")
+        local e, _, from, port, _, msg, barcode = event.pull(60, "modem_message")
+        if e then
+            modem.send(from,port,"connected")
+            term.clear()
+            sendMsg("Connection successful! All prompts will be on the tablet now on.")
+            os.sleep(1)
+            editorSettings.scanner = barcode
+            editorSettings.accelerate = true
+        else
+            modem.close(code)
+            print("Setup cancelled")
+            os.exit()
+        end
+    else
+        sendMsg("Normal setup initiating.")
+    end
     term.clear()
     text = sendMsg("What kind of door do you want? 1 for single, 2 for multi",1)
     if tonumber(text) == 1 then
