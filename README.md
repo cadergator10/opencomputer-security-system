@@ -30,7 +30,7 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
 
 ----Door Control: All the doorcontrol scripts. Can be very low spec honestly, but at least one 3.5 tier ram is probably safe :) Requires a Modem, redstone tier 2 card, and internet card.
 
-   All you have to do is run the command "pastebin run X8M664ew" and follow the prompts. For multidoor, you will have to use an analyzer to copy the ids of the magstrip readers and rolldoor/doorcontrol blocks, while you dont with the single door one. However, if you want to look at the code, the code is in the github. HOWEVER, the programs do require a library to work, which the autorun command does for you, so I recommend just doing the above command. SERVER MUST BE ON IN ORDER FOR AUTOINSTALLER TO INSTALL CORRECT DOOR CONTROL VERSION!
+   All you have to do is run the command "pastebin run cP70MhB0" and follow the prompts. For multidoor, you will have to use an analyzer to copy the ids of the magstrip readers and rolldoor/doorcontrol blocks, while you dont with the single door one. However, if you want to look at the code, the code is in the github. HOWEVER, the programs do require a library to work, which the autorun command does for you, so I recommend just doing the above command. SERVER MUST BE ON IN ORDER FOR AUTOINSTALLER TO INSTALL CORRECT DOOR CONTROL VERSION!
 
 ----Autoinstaller: just follow the prompts to install! It's actually that simple! PLUS, it comes with more extra features than just that. You can update the door program, wipe all files, add more doors to a multidoor, delete a door from a multidoor, change settings of doors, and more!
  
