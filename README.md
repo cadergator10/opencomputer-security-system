@@ -36,7 +36,8 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
  
    If you want to use pastebin run command, do 
    
-    pastebin run X8M664ew
+    pastebin run cP70MhB0
+    (If you have a 7.0 or earlier version of doorcontrol, run pastebin run X8M664ew to update to new version)
 
 ----NOT NECESSARY FOR PROGRAM TO WORK: Diagnostic tablet: a special program that works with the new admin card to get info about a door and it's settings and if it works. It is best used with a tablet that has a tier 3 gpu, a wireless modem, and an internet card. When the admin card is scanned, it sends all the info of the computer to the tablet. It's most noteable use is with the multidoor computer, as it tells you if that magnetic card reader is connected to a door, what the key of the door is (if you want to edit door settings after first set up) and more.
 
@@ -58,12 +59,12 @@ Beta Changelog:
 
 1.#.# Changelog:
 <ul>
-   <li>1.8.0: Updates to add cryptKey function to old system (added in new system) 3/# </li>
+   <li>1.8.0: Updates to add cryptKey function to old system (added in new system) 3/15 </li>
 </ul>
 
 2.#.# Changelog:
 <ul>
-   <li>2.1.0: Completely from scratch work for door now out with full modular support! 3/#
+   <li>2.1.0: Completely from scratch work for door now out with full modular support! 3/15
 </ul>
 
 Future updates:
