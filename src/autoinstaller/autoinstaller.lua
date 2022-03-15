@@ -13,9 +13,9 @@ local tableToFileName = "tableToFile.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
 local tableToFileCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/libraries/tableToFile.lua"
-local singleCode = {"https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/test/experimentalCode/singleDoor.lua"}
-local multiCode = {"https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/doorcontrols/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/test/experimentalCode/multiDoor.lua"}
-local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/versionHolder.txt"
+local singleCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/singleDoor.lua"}
+local multiCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/multiDoor.lua"}
+local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
 
 local settingData = {}
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
