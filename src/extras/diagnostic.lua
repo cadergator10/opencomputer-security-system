@@ -1,5 +1,6 @@
 local cryptKey = {1, 2, 3, 4, 5}
 local diagPort = 180
+local modemPort = 199
 
 local component = require("component")
 local event = require("event")
@@ -8,14 +9,14 @@ local ser = require ("serialization")
 local term = require("term")
 local ios = require("io")
 
-local departments = {"SD","ScD","MD","E&T","O5"}
-local cardReadTypes = {"access level","armory level","MTF","GOI","Security Pass","Department","Intercom","Staff"}
 local toggleTypes = {"not toggleable","toggleable"}
 local doorTypeTypes = {"Door Control","Redstone dust","Bundled Cable","Rolldoor"}
 local redSideTypes = {"bottom","top","back","front","right","left"}
 local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}
 local forceOpenTypes = {"False","True"}
 local bypassLockTypes = {"",""}
+
+local settings
 
 local function convert( chars, dist, inv )
   return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
@@ -53,6 +54,21 @@ local function exportstring( s )
     return s
 end
 
+print("Sending query to server...") --TEST: Does this work with 1.#.# and 2.#.# (not og systems)
+modem.open(modemPort)
+modem.broadcast(modemPort,"autoInstallerQuery")
+local e,_,_,_,_,msg = event.pull(3,"modem_message")
+modem.close(modemPort)
+if e == nil then
+    print("No query received. Assuming old server system is in place and will not work")
+    os.exit()
+else
+  print("Query received")
+  settings = ser.unserialize(msg)
+  
+end
+
+
 term.clear()
 print("Admin Diagnostic Tablet")
 print("Swipe an admin card on any security door to retrieve the door information")
@@ -64,13 +80,12 @@ while true do
   
   local _, _, from, port, _, command, msg = event.pull("modem_message")
   local data = msg
-  data = crypt(msg, cryptKey, true)
   local diagInfo = ser.unserialize(data)
+  local temp
   num = num + 1
   term.clear()
   print("Retrieved new door information # " .. num)
-  print("--------------------")
-  print("	Main Computer info:")
+  print("--Main Computer info--")
   print("door status = " .. diagInfo["status"])
   print("door type = " .. diagInfo["type"])
   print("door update version = " .. diagInfo["version"])
@@ -79,20 +94,34 @@ while true do
         if diagInfo["type"] == "multi" then
         print("number of door entries: " .. diagInfo["entries"])
         print("door's key: " .. diagInfo["key"])
+        print("door name: ") .. diagInfo["name"]
     else
         print("***")
         print("***")
+        print("door name: " .. diagInfo["name"])
     end
-  print("--------------------")
-  print("	Door's settings")
-    print("Pass type: " .. cardReadTypes[diagInfo["cardRead"] + 1])
-    if diagInfo["cardRead"] <= 1 then
-        print("Level read: " .. diagInfo["accessLevel"])
-    elseif diagInfo["cardRead"] == 5 then
-        print("Department: " .. departments[diagInfo["accessLevel"]])
+    print("---Door's settings----")
+    temp = diagInfo["cardRead"] == 6 and "staff" or settings.data.label[diagInfo["cardRead"] - 6]
+    print("Pass type: " .. temp)
+
+    if diagInfo["cardRead"] == 6 then
+      print("***")
     else
+      if settings.data.type[diagInfo["cardRead"] - 6] == "string" or settings.data.type[diagInfo["cardRead"] - 6] == "-string" then
+        print("String input required: " .. diagInfo["accessLevel"])
+      elseif settings.data.type[diagInfo["cardRead"] - 6] == "int" then
+        if settings.data.above[diagInfo["cardRead"] - 6] == true then
+          print("Level above " .. diagInfo["accessLevel"])
+        else
+          print("Level exactly " .. diagInfo["accessLevel"])
+        end
+      elseif settings.data.type[diagInfo["cardRead"] - 6] == "-int" then
+        print("Group " .. settings.data.data[diagInfo["cardRead"] - 6])
+      else
         print("***")
+      end
     end
+
     print("Door type: " .. doorTypeTypes[diagInfo["doorType"] + 1])
     if diagInfo["doorType"] == 1 then
         if diagInfo["type"] == "multi" then
@@ -130,8 +159,7 @@ while true do
     else
             print("Bypasses door lock: " .. forceOpenTypes[diagInfo["bypassLock"] + 1])
     end
-  print("--------------------")
-  print("	Component Addresses")
+  print("-Component Addresses--")
         if diagInfo["type"] == "multi" then
             if diagInfo["doorType"] == 0 then
                 print("Reader Address: " .. diagInfo["reader"])
@@ -140,7 +168,7 @@ while true do
                 print("Reader Address: " .. diagInfo["reader"])
                 print("RollDoor Address: " .. diagInfo["doorAddress"])
             else
-				print("Reader Address: " .. diagInfo["reader"])
+				      print("Reader Address: " .. diagInfo["reader"])
            		print("***")
             end
         else
@@ -155,8 +183,7 @@ while true do
         print("***")
         print("***")
     end
-  print("--------------------")
-  print("	Door's settings")
+  print("---Door's settings----")
     print("***")
     print("***")
     print("***")
@@ -166,8 +193,7 @@ while true do
     print("***")
     print("***")
     print("***")
-  print("--------------------")
-  print("	Component Addresses")
+  print("-Component Addresses--")
   print("***")
   print("***")
   end

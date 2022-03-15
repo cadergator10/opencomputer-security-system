@@ -33,6 +33,7 @@ if e then
         elseif msg == "terminate" then
             stayIn = false
         elseif msg == "analyzer" then
+            print("Scan the device with your tablet")
             text = event.pull("tablet_use")
             modem.send(from,port,text)
         end

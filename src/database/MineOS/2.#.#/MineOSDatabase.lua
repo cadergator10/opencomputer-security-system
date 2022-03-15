@@ -1,6 +1,5 @@
 local GUI = require("GUI")
 local system = require("System")
-local cryptKey = {1, 2, 3, 4, 5}
 local modemPort = 199
 local dbPort = 144
 
@@ -16,12 +15,15 @@ local ser = require("serialization")
 local uuid = require("uuid")
 local fs = require("Filesystem")
 local writer
+
+local aRD = fs.path(system.getCurrentScript())
  
 ----------
  
 local workspace, window, menu
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton
+local addVarButton, delVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton
  
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
@@ -66,7 +68,14 @@ local function convert( chars, dist, inv )
   return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
 end
  
- 
+local function split(s, delimiter)
+  result = {};
+  for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+      table.insert(result, match);
+  end
+  return result;
+end 
+
 local function crypt(str,k,inv)
   local enc= "";
   for i=1,#str do
@@ -117,7 +126,7 @@ end
 ----------Callbacks
 function updateServer()
   local data = ser.serialize(userTable)
-  local crypted = crypt(data, cryptKey)
+  local crypted = crypt(data, settingTable.cryptKey)
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end
@@ -137,7 +146,7 @@ function updateList()
   end
   end
 
-  saveTable(userTable, "userlist.txt")
+  saveTable(userTable, aRD .. "userlist.txt")
   if (previousPage == listPageNumber) then
   userList.selectedItem = selectedId
   else
@@ -197,7 +206,7 @@ function userListCallback()
   end
 end
  
-function buttonCallback(workspace, button) --TODO: work on this more when user array is done
+function buttonCallback(workspace, button)
   local buttonInt = button.buttonInt
   local callbackInt = button.callbackInt
   local isPos = button.isPos
@@ -309,13 +318,13 @@ function writeCardCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
   local data = {["date"]=userTable[selected].date,["name"]=userTable[selected].name,["uuid"]=userTable[selected].uuid}
   data = ser.serialize(data)
-  local crypted = crypt(data, cryptKey)
+  local crypted = crypt(data, settingTable.cryptKey)
   writer.write(crypted, userTable[selected].name .. "'s security pass", false, 0)
 end
 
 function writeAdminCardCallback()
   local data =  adminCard
-  local crypted = crypt(data, cryptKey)
+  local crypted = crypt(data, settingTable.cryptKey)
   writer.write(crypted, "ADMIN DIAGNOSTIC CARD", false, 14)
 end
 
@@ -341,15 +350,15 @@ function inputCallback()
 end
 
 function linkUserCallback()
-    local container = GUI.addBackgroundContainer(window, false, true, "You have 20 seconds to link your device now. Do not click anything")
+    local container = GUI.addBackgroundContainer(workspace, false, true, "You have 20 seconds to link your device now. do not click anything")
     local selected = pageMult * listPageNumber + userList.selectedItem
     modem.open(dbPort)
     local e, _, from, port, _, msg = event.pull(20)
     container:remove()
     if e == "modem_message" then
-        local data = crypt(msg,cryptKey,true)
+        local data = crypt(msg,settingTable.cryptKey,true)
         userTable[selected].link = data
-        modem.send(from,port,crypt(userTable[selected].name,cryptKey))
+        modem.send(from,port,crypt(userTable[selected].name,settingTable.cryptKey))
         GUI.alert("Link successful")
     else
         userTable[selected].link = "nil"
@@ -358,6 +367,114 @@ function linkUserCallback()
     modem.close(dbPort)
     updateList()
     userListCallback()
+end
+
+function checkTypeCallback()
+  addVarArray.above = false
+  addVarArray.data = false
+  local typeArray = {"string","-string","int","-int","bool"}
+  local selected = typeSelect.selectedItem
+  addVarArray.type = typeArray[selected]
+  if extraVar ~= nil then
+    extraVar:remove()
+    extraVar = nil
+  end
+  if selected == 3 then
+    extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "check above value"))
+      extraVar.onTouch = function()
+      addVarArray.above = extraVar.pressed
+    end
+    extraVar.switchMode = true
+  elseif selected == 4 then
+    extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "groups (comma seperating each group)"))
+    extraVar.onInputFinished = function()
+    addVarArray.data = split(extraVar.text,",")
+    end
+  else
+    
+  end
+end
+
+function addVarYesCall()
+  for i=1,#userTable,1 do
+    if addVarArray.type == "string" or addVarArray.type == "-string" then
+      userTable[i][addVarArray.var] = "none"
+    elseif addVarArray.type == "int" or addVarArray.type == "-int" then
+      userTable[i][addVarArray.var] = 0
+    elseif addVarArray.type == "bool" then
+      userTable[i][addVarArray.var] = false
+    else
+      GUI.alert("Error occured in addVarYesCall function. Please report this to author.")
+        varContainer:removeChildren()
+        varContainer:remove()
+        varContainer = nil
+      return
+    end
+  end
+  table.insert(userTable.settings.var,addVarArray.var)
+  table.insert(userTable.settings.label,addVarArray.label)
+  table.insert(userTable.settings.calls,addVarArray.calls)
+  table.insert(userTable.settings.type,addVarArray.type)
+  table.insert(userTable.settings.above,addVarArray.above)
+  table.insert(userTable.settings.data,addVarArray.data)
+  addVarArray = nil
+  varContainer:removeChildren()
+  varContainer:remove()
+  varContainer = nil
+  saveTable(userTable,aRD .. "userlist.txt")
+  GUI.alert("New variable added. App will be auto closed and changes will be applied on next start.")
+  window:remove()
+end
+
+--TEST: Check if this successfully adds and removes variables.
+function addVarCallback()
+  addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "variable key"))
+  varInput.onInputFinished = function()
+    addVarArray.var = varInput.text
+  end
+  labelInput = varContainer.layout:addChild(GUI.input(1,6,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "variable label"))
+  labelInput.onInputFinished = function()
+    addVarArray.label = labelInput.text
+  end
+  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,11,30,3, 0xEEEEEE, 0x2D2D2D, 0xCCCCCC, 0x888888))
+  typeSelect:addItem("String").onTouch = checkTypeCallback
+  typeSelect:addItem("Hidden String").onTouch = checkTypeCallback
+  typeSelect:addItem("Level (Int)").onTouch = checkTypeCallback
+  typeSelect:addItem("Group").onTouch = checkTypeCallback
+  typeSelect:addItem("Pass (true/false)").onTouch = checkTypeCallback
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add variable to system"))
+  varYesButton.onTouch = addVarYesCall
+end
+
+function delVarYesCall()
+  local selected = typeSelect.selectedItem
+  userTable.settings.label[selected] = nil
+  userTable.settings.calls[selected] = nil
+  userTable.settings.type[selected] = nil
+  userTable.settings.above[selected] = nil
+  userTable.settings.data[selected] = nil
+  for i=1,#userTable,1 do
+    userTable[i][userTable.settings.var[selected]] = nil
+  end
+  userTable.settings.var[selected] = nil
+  varContainer:removeChildren()
+  varContainer:remove()
+  varContainer = nil
+  saveTable(userTable,aRD .. "userlist.txt")
+  GUI.alert("Variable removed. App will be auto closed and changes will be applied on next start.")
+  window:remove()
+end
+
+function delVarCallback()
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, 0xEEEEEE, 0x2D2D2D, 0xCCCCCC, 0x888888))
+  for i=1,#userTable.settings.var,1 do
+    typeSelect:addItem(userTable.settings.label[i])
+  end
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add variable to system"))
+  varYesButton.onTouch = delVarYesCall
 end
  
 ----------GUI SETUP
@@ -375,9 +492,15 @@ window:addChild(GUI.panel(3,3,60,36,0x6B6E74))
 userList = window:addChild(GUI.list(4, 4, 58, 34, 3, 0, 0xE1E1E1, 0x4B4B4B, 0xD2D2D2, 0x4B4B4B, 0x3366CC, 0xFFFFFF, false))
 userList:addItem("HELLO")
 listPageNumber = 0
-userTable = loadTable("userlist.txt")
+userTable = loadTable(aRD .. "userlist.txt")
 if userTable == nil then
   userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
+end
+settingTable = loadTable(aRD .. "dbsettings.txt")
+if settingTable == nil then
+  GUI.alert("It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.")
+  settingTable = {["cryptKey"]={1,2,3,4,5}}
+  saveTable(settingTable,aRD .. "dbsettings.txt")
 end
 updateList()
  
@@ -446,7 +569,7 @@ for i=1,#userTable.settings.var,1 do
     guiCalls[i][2].callbackInt = i + #baseVariables
     guiCalls[i][2].isPos = false
     guiCalls[i][2].onTouch = buttonCallback
-    guiCalls[i][4] = userTable.settings.data --TODO: Find out a way to put the text vars in here.
+    guiCalls[i][4] = userTable.settings.data[i]
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type[i] == "bool" then
@@ -485,6 +608,10 @@ userChangeUUIDButton = window:addChild(GUI.button(32,42,16,1,0xFFFFFF, 0x555555,
 userChangeUUIDButton.onTouch = changeUUID
 createAdminCardButton = window:addChild(GUI.button(46,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "admin card")) 
 createAdminCardButton.onTouch = writeAdminCardCallback
+addVarButton = window:addChild(GUI.button(60,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add var")) 
+addVarButton.onTouch = addVarCallback
+delVarButton = window:addChild(GUI.button(72,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "delete var")) 
+delVarButton.onTouch = delVarCallback
  
 --CardWriter frame
  
