@@ -54,7 +54,7 @@ local function exportstring( s )
     return s
 end
 
-print("Sending query to server...")
+print("Sending query to server...") --TEST: Does this work with 1.#.# and 2.#.# (not og systems)
 modem.open(modemPort)
 modem.broadcast(modemPort,"autoInstallerQuery")
 local e,_,_,_,_,msg = event.pull(3,"modem_message")
@@ -102,7 +102,7 @@ while true do
     end
     print("---Door's settings----")
     temp = diagInfo["cardRead"] == 6 and "staff" or settings.data.label[diagInfo["cardRead"] - 6]
-    print("Pass type: " .. temp) --TODO: Finish
+    print("Pass type: " .. temp)
 
     if diagInfo["cardRead"] == 6 then
       print("***")
@@ -111,24 +111,17 @@ while true do
         print("String input required: " .. diagInfo["accessLevel"])
       elseif settings.data.type[diagInfo["cardRead"] - 6] == "int" then
         if settings.data.above[diagInfo["cardRead"] - 6] == true then
-          print("Level " .. ) --TODO: FINISH PRINT
+          print("Level above " .. diagInfo["accessLevel"])
         else
-
+          print("Level exactly " .. diagInfo["accessLevel"])
         end
       elseif settings.data.type[diagInfo["cardRead"] - 6] == "-int" then
-
+        print("Group " .. settings.data.data[diagInfo["cardRead"] - 6])
       else
-
+        print("***")
       end
     end
 
-    if diagInfo["cardRead"] <= 1 then
-        print("Level read: " .. diagInfo["accessLevel"])
-    elseif diagInfo["cardRead"] == 5 then
-        print("Department: " .. departments[diagInfo["accessLevel"]])
-    else
-        print("***")
-    end
     print("Door type: " .. doorTypeTypes[diagInfo["doorType"] + 1])
     if diagInfo["doorType"] == 1 then
         if diagInfo["type"] == "multi" then
@@ -175,7 +168,7 @@ while true do
                 print("Reader Address: " .. diagInfo["reader"])
                 print("RollDoor Address: " .. diagInfo["doorAddress"])
             else
-				print("Reader Address: " .. diagInfo["reader"])
+				      print("Reader Address: " .. diagInfo["reader"])
            		print("***")
             end
         else
