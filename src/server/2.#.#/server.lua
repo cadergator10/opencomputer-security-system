@@ -165,9 +165,9 @@ while true do
 
   local _, _, from, port, _, command, msg, bypassLock = event.pull("modem_message")
   local data = msg
-  if command ~= "autoInstallerQuery" then data = crypt(msg, settingTable.cryptKey, true) end
+  if command ~= "autoInstallerQuery" and command ~= "remotecontrol" then data = crypt(msg, settingTable.cryptKey, true) end
   local thisUserName = false
-  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" then
+  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "remotecontrol" then
     data = ser.unserialize(data)
     thisUserName = getVar("name",data.uuid)
   end
@@ -196,8 +196,12 @@ while true do
     if isInAlready == false then table.insert(doorTable,tmpTable) end
     saveTable(doorTable, "doorlist.txt")
     modem.send(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
-  elseif command == "remoteControl" then
+  elseif command == "remotecontrol" then
     advWrite("Coming soon?\n",0xFF0000) --IDEA: allow remote control pc sometime in future
+    --data = ser.unserialize(data) --{["call"]="the call as what to do",["par1"]=stored params,["par2"]=stored params 2,continued}
+    --if data.call == "openDoor" --Don't know if going to do all control on server or if it's going to send door info to the device. I'm going to send door info.
+    modem.send(from,port,ser.serialize(doorTable))
+    advWrite("Sent door info to remote door control tablet\n",0x0000C0)
   elseif command == "redstoneUpdated" then
         advWrite("Redstone has been updated\n",0x0000C0)
         local newRed = ser.unserialize(data)
