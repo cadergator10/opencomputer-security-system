@@ -450,15 +450,15 @@ end
 
 function delVarYesCall()
   local selected = typeSelect.selectedItem
-  userTable.settings.label[selected] = nil
-  userTable.settings.calls[selected] = nil
-  userTable.settings.type[selected] = nil
-  userTable.settings.above[selected] = nil
-  userTable.settings.data[selected] = nil
+  table.remove(userTable.settings.data,selected)
+  table.remove(userTable.settings.label,selected)
+  table.remove(userTable.settings.calls,selected)
+  table.remove(userTable.settings.type,selected)
+  table.remove(userTable.settings.above,selected)
   for i=1,#userTable,1 do
     userTable[i][userTable.settings.var[selected]] = nil
   end
-  userTable.settings.var[selected] = nil
+  table.remove(userTable.settings.var,selected)
   varContainer:removeChildren()
   varContainer:remove()
   varContainer = nil
@@ -473,7 +473,7 @@ function delVarCallback()
   for i=1,#userTable.settings.var,1 do
     typeSelect:addItem(userTable.settings.label[i])
   end
-  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add variable to system"))
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "remove variable from system"))
   varYesButton.onTouch = delVarYesCall
 end
  
