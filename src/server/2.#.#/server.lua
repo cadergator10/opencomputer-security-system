@@ -123,14 +123,14 @@ function getDoorInfo(type,id,key)
     for i=1,#doorTable,1 do --doorTable[i] = {type="single or multi",id="computer's modem uuid",data={door's setting table}}
       if doorTable[i].id == id then
         if doorTable[i].data[key]~=nil then
-          return {["read"]=doorTable[i].data[key].cardRead,["level"]=doorTable[i].data[key].accessLevel}
+          return {["read"]=doorTable[i].data[key].cardRead,["level"]=doorTable[i].data[key].accessLevel,["name"]=doorTable[i].data[key].name}
         end
       end
     end
   else
     for i=1,#doorTable,1 do --doorTable[i] = {type="single or multi",id="computer's modem uuid",data={door's setting table}}
       if doorTable[i].id == id then
-        return {["read"]=doorTable[i].data.cardRead,["level"]=doorTable[i].data.accessLevel}
+        return {["read"]=doorTable[i].data.cardRead,["level"]=doorTable[i].data.accessLevel,["name"]=doorTable[i].data.name}
       end
     end
   end
