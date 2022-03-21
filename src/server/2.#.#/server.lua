@@ -11,7 +11,7 @@ local term = require("term")
 local ios = require("io")
 local gpu = component.gpu
 
-local version = "2.1.0"
+local version = "2.1.1"
 
 local redstone = {}
 
@@ -379,6 +379,7 @@ while true do
                     advWrite(" error getting door\n",0xFF0000)
                   end
                 elseif userTable.settings.type[i] == "bool" then
+		  local currentDoor = getDoorInfo(data.type,from,data.key)							
                   term.write(" is " .. userTable.settings.var[i] .. "to access " .. currentDoor.name .. " :")
                   if varCheck == true then
                     data = crypt("true", settingTable.cryptKey)
