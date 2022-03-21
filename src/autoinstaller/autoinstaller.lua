@@ -398,6 +398,8 @@ else
             os.sleep(1)
             editorSettings.scanner = barcode
             editorSettings.accelerate = true
+            editorSettings.from = from
+            editorSettings.port = port
         else
             modem.close(code)
             print("Setup cancelled")
