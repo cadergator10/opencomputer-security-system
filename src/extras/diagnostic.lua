@@ -94,7 +94,7 @@ while true do
         if diagInfo["type"] == "multi" then
         print("number of door entries: " .. diagInfo["entries"])
         print("door's key: " .. diagInfo["key"])
-        print("door name: ") .. diagInfo["name"]
+        print("door name: " .. diagInfo["name"])
     else
         print("***")
         print("***")
