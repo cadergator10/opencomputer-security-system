@@ -319,7 +319,7 @@ while true do
                   local currentDoor = getDoorInfo(data.type,from,data.key)
                   if currentDoor ~= nil then
                     if userTable.settings.above[i] then
-                      term.write(" is above " .. tostring(currentDoor.level) .. " in var " .. userTable.settings.var[i] .. "to access " .. currentDoor.name .. " :")
+                      term.write(" is above " .. tostring(currentDoor.level) .. " in var " .. userTable.settings.var[i] .. " to access " .. currentDoor.name .. " :")
                       if currentDoor.level > varCheck then
                         if isStaff == true then
                           data = crypt("true", settingTable.cryptKey)
@@ -336,7 +336,7 @@ while true do
                         modem.send(from, port, data)
                       end
                     else
-                      term.write(" is exactly " .. tostring(currentDoor.level) .. " in var " .. userTable.settings.var[i] .. "to access " .. currentDoor.name .. " :")
+                      term.write(" is exactly " .. tostring(currentDoor.level) .. " in var " .. userTable.settings.var[i] .. " to access " .. currentDoor.name .. " :")
                       if currentDoor.level ~= varCheck then
                         if isStaff == true then
                           data = crypt("true", settingTable.cryptKey)
@@ -359,7 +359,7 @@ while true do
                 elseif userTable.settings.type[i] == "-int" then
                   local currentDoor = getDoorInfo(data.type,from,data.key)
                   if currentDoor ~= nil then
-                    term.write(" is in group " .. userTable.settings.data[currentDoor.level] .. " in var " .. userTable.settings.var[i] .. "to access " .. currentDoor.name .. " :")
+                    term.write(" is in group " .. userTable.settings.data[currentDoor.level] .. " in var " .. userTable.settings.var[i] .. " to access " .. currentDoor.name .. " :")
                     if currentDoor.level ~= varCheck then
                       if isStaff == true then
                         data = crypt("true", settingTable.cryptKey)
@@ -380,7 +380,7 @@ while true do
                   end
                 elseif userTable.settings.type[i] == "bool" then
 		  local currentDoor = getDoorInfo(data.type,from,data.key)							
-                  term.write(" is " .. userTable.settings.var[i] .. "to access " .. currentDoor.name .. " :")
+                  term.write(" is " .. userTable.settings.var[i] .. " to access " .. currentDoor.name .. " :")
                   if varCheck == true then
                     data = crypt("true", settingTable.cryptKey)
                     advWrite(" access granted\n",0x00FF00)
