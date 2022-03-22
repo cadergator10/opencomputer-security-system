@@ -88,6 +88,7 @@ local function runInstall()
             times = editorSettings.times
         elseif editorSettings.key ~= nil then
             times = 1
+            tmpTable = editorSettings.data
         else
             text = sendMsg("Read the text carefully. Some of the inputs REQUIRE NUMBERS ONLY! Some require text.","The redSide is always 2, or back of the computer.","How many different doors are there?",1)
             times = tonumber(text)
@@ -314,7 +315,6 @@ local function oldFiles()
         else
             print("What is the key for the door you want to edit?")
             text = term.read()
-            editorSettings.times = 1
             editorSettings.key = text:sub(1,-2)
             editorSettings.edit = true
             editorSettings.data = loadTable(settingFileName)
