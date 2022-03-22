@@ -116,7 +116,7 @@ while true do
           print("Level exactly " .. diagInfo["accessLevel"])
         end
       elseif settings.data.type[diagInfo["cardRead"] - 6] == "-int" then
-        print("Group " .. settings.data.data[diagInfo["cardRead"] - 6])
+        print("Group " .. settings.data.data[diagInfo["cardRead"] - 6][diagInfo["accessLevel"]])
       else
         print("***")
       end
