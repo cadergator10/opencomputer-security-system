@@ -221,7 +221,8 @@ while true do
           data = crypt("locked", settingTable.cryptKey)
           modem.send(from, port, data)
     	  else
-          advWrite("Checking if user " .. thisUserName .. " is Staff:",0xFFFF80)
+	  local currentDoor = getDoorInfo(data.type,from,data.key)
+          advWrite("-Checking if user " .. thisUserName .. " is Staff to access " .. currentDoor.name .. ":",0xFFFF80)
           local cu, isBlocked, isStaff = checkStaff(data.uuid)
           if cu == true then
             if isBlocked == false then
@@ -250,7 +251,7 @@ while true do
           gpu.setForeground(0xFF0000)
     	    term.write("DONT RUN or i b sad ;-;\n")
     	  else
-          advWrite(" Checking if device is linked to a user:\n",0xFFFF80)
+          advWrite("-Checking if device is linked to a user:\n",0xFFFF80)
           local cu, isBlocked, thisName = checkLink(data)
           local dis = {}
           if cu == true then
@@ -284,36 +285,36 @@ while true do
               data = crypt("locked", settingTable.cryptKey)
               modem.send(from, port, data)
             else
-            advWrite("Checking if user " .. thisUserName,0xFFFF80)
+            advWrite("-Checking if user " .. thisUserName,0xFFFF80)
             isRealCommand = true
             local cu, isBlocked, varCheck, isStaff = checkVar(userTable.settings.var[i],data.uuid)
             if cu == true then
               if isBlocked == false then
                 data = crypt("false", settingTable.cryptKey)
-                advWrite(" user is blocked\n",0xFF0000)
+                advWrite("\nuser is blocked\n",0xFF0000)
                 modem.send(from, port, data)
               else
                 if userTable.settings.type[i] == "string" or userTable.settings.type[i] == "-string" then
                   local currentDoor = getDoorInfo(data.type,from,data.key)
                   if currentDoor ~= nil then
-                    term.write(" is exactly " .. currentDoor.level .. " in var " .. userTable.settings.var[i] .. "to access " .. currentDoor.name .. " :")
+                    term.write("\nis exactly " .. currentDoor.level .. " in var " .. userTable.settings.var[i] .. "to access " .. currentDoor.name .. " :")
                     if currentDoor.level ~= varCheck then
                       if isStaff == true then
                         data = crypt("true", settingTable.cryptKey)
-                        advWrite(" access granted due to staff\n",0xFF00FF)
+                        advWrite("\naccess granted due to staff\n",0xFF00FF)
                         modem.send(from, port, data)  
                       else
                         data = crypt("false", settingTable.cryptKey)
-                        advWrite(" incorrect entry\n",0xFF0000)
+                        advWrite("\nincorrect entry\n",0xFF0000)
                         modem.send(from, port, data)   
                       end
                     else
                       data = crypt("true", settingTable.cryptKey)
-                      advWrite(" access granted\n",0x00FF00)
+                      advWrite("\naccess granted\n",0x00FF00)
                       modem.send(from, port, data)
                     end
                   else
-                    advWrite(" error getting door\n",0xFF0000)
+                    advWrite("\nerror getting door\n",0xFF0000)
                   end 
                 elseif userTable.settings.type[i] == "int" then
                   local currentDoor = getDoorInfo(data.type,from,data.key)
@@ -323,16 +324,16 @@ while true do
                       if currentDoor.level > varCheck then
                         if isStaff == true then
                           data = crypt("true", settingTable.cryptKey)
-                          advWrite(" access granted due to staff\n",0xFF00FF)
+                          advWrite("\naccess granted due to staff\n",0xFF00FF)
                           modem.send(from, port, data)  
                         else
                           data = crypt("false", settingTable.cryptKey)
-                          advWrite(" level is too low\n",0xFF0000)
+                          advWrite("\nlevel is too low\n",0xFF0000)
                           modem.send(from, port, data)   
                         end
                       else --TEST: check if this functions later after thing is written. It should be complete.
                         data = crypt("true", settingTable.cryptKey)
-                        advWrite(" access granted\n",0x00FF00)
+                        advWrite("\naccess granted\n",0x00FF00)
                         modem.send(from, port, data)
                       end
                     else
@@ -340,59 +341,59 @@ while true do
                       if currentDoor.level ~= varCheck then
                         if isStaff == true then
                           data = crypt("true", settingTable.cryptKey)
-                          advWrite(" access granted due to staff\n",0xFF00FF)
+                          advWrite("\naccess granted due to staff\n",0xFF00FF)
                           modem.send(from, port, data)  
                         else
                           data = crypt("false", settingTable.cryptKey)
-                          advWrite(" level is incorrect\n",0xFF0000)
+                          advWrite("\nlevel is incorrect\n",0xFF0000)
                           modem.send(from, port, data)   
                         end
                       else
                         data = crypt("true", settingTable.cryptKey)
-                        advWrite(" access granted\n",0x00FF00)
+                        advWrite("\naccess granted\n",0x00FF00)
                         modem.send(from, port, data)
                       end
                     end
                   else
-                    advWrite(" error getting door\n",0xFF0000)
+                    advWrite("\nerror getting door\n",0xFF0000)
                   end
                 elseif userTable.settings.type[i] == "-int" then
                   local currentDoor = getDoorInfo(data.type,from,data.key)
                   if currentDoor ~= nil then
-                    term.write(" is in group " .. userTable.settings.data[currentDoor.level] .. " in var " .. userTable.settings.var[i] .. " to access " .. currentDoor.name .. " :")
+                    term.write(" is in group " .. userTable.settings.data[i][currentDoor.level] .. " in var " .. userTable.settings.var[i] .. " to access " .. currentDoor.name .. " :")
                     if currentDoor.level ~= varCheck then
                       if isStaff == true then
                         data = crypt("true", settingTable.cryptKey)
-                        advWrite(" access granted due to staff\n",0xFF00FF)
+                        advWrite("\naccess granted due to staff\n",0xFF00FF)
                         modem.send(from, port, data)  
                       else
                         data = crypt("false", settingTable.cryptKey)
-                        advWrite(" incorrect group\n",0xFF0000)
+                        advWrite("\nincorrect group\n",0xFF0000)
                         modem.send(from, port, data)   
                       end
                     else
                       data = crypt("true", settingTable.cryptKey)
-                      advWrite(" access granted\n",0x00FF00)
+                      advWrite("\naccess granted\n",0x00FF00)
                       modem.send(from, port, data)
                     end
                   else
-                    advWrite(" error getting door\n",0xFF0000)
+                    advWrite("\nerror getting door\n",0xFF0000)
                   end
                 elseif userTable.settings.type[i] == "bool" then
 		  local currentDoor = getDoorInfo(data.type,from,data.key)							
                   term.write(" is " .. userTable.settings.var[i] .. " to access " .. currentDoor.name .. " :")
                   if varCheck == true then
                     data = crypt("true", settingTable.cryptKey)
-                    advWrite(" access granted\n",0x00FF00)
+                    advWrite("\naccess granted\n",0x00FF00)
                     modem.send(from, port, data)
                   else
                     if isStaff == true then
                       data = crypt("true", settingTable.cryptKey)
-                      advWrite(" access granted due to staff\n",0xFF00FF)
+                      advWrite("\naccess granted due to staff\n",0xFF00FF)
                       modem.send(from, port, data)  
                     else
                       data = crypt("false", settingTable.cryptKey)
-                      advWrite(" access denied\n",0xFF0000)
+                      advWrite("\naccess denied\n",0xFF0000)
                       modem.send(from, port, data)   
                     end
                   end
@@ -400,7 +401,7 @@ while true do
               end
             else
               data = crypt("false", settingTable.cryptKey)
-              advWrite(" user not found\n",0x990000)
+              advWrite("\nuser not found\n",0x990000)
               modem.send(from, port, data)
             end
           end
