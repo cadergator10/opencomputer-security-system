@@ -227,22 +227,22 @@ while true do
           if cu == true then
             if isBlocked == false then
               data = crypt("false", settingTable.cryptKey)
-              advWrite(" user is blocked\n",0xFF0000)
+              advWrite("\nuser is blocked\n",0xFF0000)
               modem.send(from, port, data)
             else
               if isStaff == true then
                 data = crypt("true", settingTable.cryptKey)
-                advWrite(" access granted\n",0x00FF00)
+                advWrite("\naccess granted\n",0x00FF00)
                 modem.send(from, port, data)        
               else
                 data = crypt("false", settingTable.cryptKey)
-                advWrite(" access denied\n",0xFF0000)
+                advWrite("\naccess denied\n",0xFF0000)
                 modem.send(from, port, data)
               end
             end
           else
       			data = crypt("false", settingTable.cryptKey)
-            advWrite(" user not found\n",0x990000)
+            advWrite("\nuser not found\n",0x990000)
       			modem.send(from, port, data)
           end
         end  
