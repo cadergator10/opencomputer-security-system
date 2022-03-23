@@ -3,6 +3,10 @@
 
 local securityData = {}
 
+function securityData.setUp()
+    
+end
+
 function securityData.checkPass(msg)
     
 end
