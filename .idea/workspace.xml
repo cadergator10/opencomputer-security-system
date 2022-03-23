@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="fc02fa2b-775b-42f6-88ae-65b34767494b" name="Changes" comment="" />
+    <list default="true" id="fc02fa2b-775b-42f6-88ae-65b34767494b" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/src/autoinstaller/autoinstaller.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/autoinstaller/autoinstaller.lua" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

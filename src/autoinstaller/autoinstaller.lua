@@ -234,8 +234,14 @@ local function runInstall()
         loopArray["bypassLock"] = tonumber(text)
         if editorSettings.type == "multi" then tmpTable[j] = loopArray else tmpTable = loopArray end
     end
-    sendMsg("All done with installer!",4)
-
+    text = sendMsg("All done with installer!","Would you like to start the computer now?","1 for yes, 2 for no",1)
+    editorSettings.start = false
+    if tonumber(text) == 1 then
+        sendMsg("Ok, will start computer.",4)
+        editorSettings.start = true
+    else
+        sendMsg("Ok, closing out.",4)
+    end
     return tmpTable
 end
 
@@ -275,10 +281,16 @@ local function oldFiles()
             settingData = runInstall()
             editorSettings.data = settingData
             saveTable(settingData,settingFileName)
-            sendMsg("Added the doors. It is recommended you check if it worked, as this is experimental.",4)
+            sendMsg("Added the doors. It is recommended you check if it worked, as this is experimental.")
         else
             sendMsg("error reading config file",4)
             os.exit()
+        end
+        if editorSettings.start == true then
+            sendMsg("Starting...",4)
+            os.execute(program)
+        else
+            sendMsg(4)
         end
     elseif tonumber(text) == 3 then
         if config.type == "single" then
@@ -289,17 +301,23 @@ local function oldFiles()
             text = sendMsg("What is the key for the door?",1)
             settingData[text] = nil
             saveTable(settingData,settingFileName)
-            sendMsg("Removed the door. It is recommended you check if it worked, as this is experimental.",4)
+            sendMsg("Removed the door. It is recommended you check if it worked, as this is experimental.")
         else
             sendMsg("error reading config file",4)
             os.exit()
+        end
+        if editorSettings.start == true then
+            sendMsg("Starting...",4)
+            os.execute(program)
+        else
+            sendMsg(4)
         end
     elseif tonumber(text) == 4 then --TEST: MultiDoor editing works now and doesn't erase it.
         if config.type == "single" then
             sendMsg("starting single door editing...")
             editorSettings.edit = true
             settingData = runInstall()
-            sendMsg("Old config should be overwritten. It is recommended to double check if it worked.",4)
+            sendMsg("Old config should be overwritten. It is recommended to double check if it worked.")
         else
             text = sendMsg("What is the key for the door you want to edit?",1)
             editorSettings.key = text
@@ -307,9 +325,15 @@ local function oldFiles()
             editorSettings.data = loadTable(settingFileName)
             sendMsg("Starting multi door editing on " .. editorSettings.key .. "...")
             settingData = runInstall()
-            sendMsg("Door should have been edited. It is recommended to double check if it worked.",4)
+            sendMsg("Door should have been edited. It is recommended to double check if it worked.")
         end
         saveTable(settingData,settingFileName)
+        if editorSettings.start == true then
+            sendMsg("Starting...",4)
+            os.execute(program)
+        else
+            sendMsg(4)
+        end
     elseif tonumber(text) == 5 then
         text = sendMsg("Are you sure you want to do this? New updates sometimes require manual changing of config.","1 for continue, 2 for cancel",1)
         if tonumber(text) == 1 then
@@ -331,7 +355,13 @@ local function oldFiles()
 
             end
         end
-        sendMsg(4)
+        text = sendMsg("all done! is set to " .. ser.serialize(config.cryptKey),"Would you like to start the computer now?","1 for yes, 2 for no",1)
+        if tonumber(text) == 1 then
+            sendMsg("Starting...",4)
+            os.execute(program)
+        else
+            sendMsg("Ok, closing out.",4)
+        end
     elseif tonumber(text) == 6 then
         sendMsg("there are 5 parameters, each requiring a number. Recommend doing 1 digit numbers cause I got no idea how this works lol")
         for i=1,5,1 do
@@ -339,7 +369,13 @@ local function oldFiles()
             config.cryptKey[i] = tonumber(text)
         end
         saveTable(config,configFileName)
-        sendMsg("all done! is set to " .. ser.serialize(config.cryptKey),4)
+        text = sendMsg("all done! is set to " .. ser.serialize(config.cryptKey),"Would you like to start the computer now?","1 for yes, 2 for no",1)
+        if tonumber(text) == 1 then
+            sendMsg("Starting...",4)
+            os.execute(program)
+        else
+            sendMsg("Ok, closing out.",4)
+        end
     end
     config = nil
 end
@@ -406,5 +442,10 @@ else
     end
     settingData = runInstall()
     saveTable(settingData,settingFileName)
-    print("Run " .. program .. " now to start door.")
+    if editorSettings.start == true then
+        print("Starting...")
+        os.execute(program)
+    else
+        print("Run " .. program .. " now to start door.")
+    end
 end
