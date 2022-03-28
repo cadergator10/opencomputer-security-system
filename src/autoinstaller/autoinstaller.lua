@@ -197,28 +197,28 @@ local function runInstall()
             end
             text = sendMsg("What should be read?" .. nextmsg,1)
             if tonumber(text) == 0 then
-                loopArray["cardRead"] = 6
+                loopArray["cardRead"] = "checkstaff"
                 loopArray["accessLevel"] = 0
                 sendMsg("No need to set access level. This mode doesn't require it :)")
             else
-                loopArray["cardRead"] = tonumber(text) + 6
-                if editorSettings.settings.type[loopArray.cardRead - 6] == "string" or editorSettings.settings.type == "-string" then
+                loopArray["cardRead"] = editorSettings.settings.calls[tonumber(text) + 6]
+                if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type == "-string" then
                     text = sendMsg("What is the string you would like to read? Enter text.",1)
                     loopArray["accessLevel"] = text
-                elseif editorSettings.settings.type[loopArray.cardRead - 6] == "bool" then
+                elseif editorSettings.settings.type[tonumber(text)] == "bool" then
                     loopArray["accessLevel"] = 0
                     sendMsg("No need to set access level. This mode doesn't require it :)")
-                elseif editorSettings.settings.type[loopArray.cardRead - 6] == "int" then
-                    if editorSettings.settings.above[loopArray.cardRead - 6] == true then
+                elseif editorSettings.settings.type[tonumber(text)] == "int" then
+                    if editorSettings.settings.above[tonumber(text)] == true then
                         text = sendMsg("What level and above should be required?",1)
                     else
                         text = sendMsg("what level exactly should be required?",1)
                     end
                     loopArray["accessLevel"] = tonumber(text)
-                elseif editorSettings.settings.type[loopArray.cardRead - 6] == "-int" then
+                elseif editorSettings.settings.type[tonumber(text)] == "-int" then
                     local nextmsg = "What group are you wanting to set?"
-                    for i=1,#editorSettings.settings.data[loopArray.cardRead - 6],1 do --TEST: Does grabbing loopArray again work as int
-                        nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[loopArray.cardRead - 6][i]
+                    for i=1,#editorSettings.settings.data[tonumber(text)],1 do --TEST: Does grabbing loopArray again work as int
+                        nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[tonumber(text)][i]
                     end
                     text = sendMsg(nextmsg,1)
                     loopArray["accessLevel"] = tonumber(text)

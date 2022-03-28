@@ -1,6 +1,6 @@
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "2.1.0"
+local doorVersion = "2.1.2"
 testR = true
 
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
@@ -14,7 +14,7 @@ local redColor = 0
 local delay = 5
 --Which term you want to have the door read.
 --0 = level; 1 = armory level; 2 = MTF; 3 = GOI; 4 = Security
-local cardRead = 0;
+local cardRead = "";
 
 local accessLevel = 2
 
@@ -181,7 +181,7 @@ else
     settingData["q"]["reader"] = ""
     settingData["q"]["redColor"] = 0
     settingData["q"]["delay"] = 5
-    settingData["q"]["cardRead"] = 0
+    settingData["q"]["cardRead"] = ""
     settingData["q"]["accessLevel"] = 1
     settingData["q"]["doorType"] = 2
     settingData["q"]["doorAddress"] = ""
@@ -192,7 +192,7 @@ else
     settingData["w"]["reader"] = ""
     settingData["w"]["redColor"] = 0
     settingData["w"]["delay"] = 5
-    settingData["w"]["cardRead"] = 0
+    settingData["w"]["cardRead"] = ""
     settingData["w"]["accessLevel"] = 1
     settingData["w"]["doorType"] = 2
     settingData["w"]["doorAddress"] = ""
@@ -216,6 +216,26 @@ end
   settingData = ttf.load("doorSettings.txt")
   extraConfig.version = version
   ttf.save(extraConfig,"extraConfig.txt")
+
+local checkBool = false
+modem.broadcast(modemPort,"autoInstallerQuery")
+local e,_,_,_,_,query = event.pull(3,"modem_message")
+if e ~= nil then
+  for key, value in pairs(settingData) do
+    if type(value.cardRead) == "number" then
+      checkBool = true
+      if value.cardRead ~= 6 then
+        settingData[key].cardRead = query.data.calls[settingData.cardRead - #baseVariables]
+      else
+        settingData[key].cardRead = "checkstaff"
+      end
+    end
+  end
+  if checkBool == true then
+    ttf.save(settingData,"doorSettings.txt")
+  end
+end
+checkBool = nil
 
 if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
@@ -274,6 +294,7 @@ while true do --TEST: Does this run well with autoinstaller?
         isOk = "ok"
    else
         print("MAG READER IS NOT SET UP! PLEASE FIX")
+        os.exit
    end
     
   local data = crypt(str, extraConfig.cryptKey, true)
@@ -289,6 +310,7 @@ while true do --TEST: Does this run well with autoinstaller?
           diagData["type"] = "multi"
           diagData["version"] = doorVersion
           diagData["key"] = keyed
+          diagData["num"] = 2
           local counter = 0
           for index in pairs(settingData) do
               counter = counter + 1
@@ -304,13 +326,8 @@ while true do --TEST: Does this run well with autoinstaller?
           end
           tmpTable["type"] = "multi"
           tmpTable["key"] = keyed
-          if cardRead == 6 then
-              data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-              modem.broadcast(modemPort, "checkstaff", data, bypassLock)
-          else
-              data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-              modem.broadcast(modemPort, varSettings.calls[cardRead - #baseVariables], data, bypassLock)
-          end
+          data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
+          modem.broadcast(modemPort, cardRead, data, bypassLock)
           local e, _, from, port, _, msg = event.pull(1, "modem_message")
           if e then
               data = crypt(msg, extraConfig.cryptKey, true)

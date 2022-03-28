@@ -1,6 +1,6 @@
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "2.1.0"
+local doorVersion = "2.1.2"
 local testR = true
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. 3 = rolldoor
 local doorType = 0
@@ -12,8 +12,8 @@ local redColor = 0
 --Delay before the door closes again
 local delay = 5
 --Which term you want to have the door read.
---0 = level; 1 = armory level; 2 = MTF; 3 = GOI; 4 = Security; 5 = Department
-local cardRead = 0;
+--is the Call
+local cardRead = "";
 
 --If cardRead = 0, then it is the card level.
 --If cardRead = 1, then it is the armory level.
@@ -193,7 +193,7 @@ else
     settingData["redSide"] = 0
     settingData["redColor"] = 0
     settingData["delay"] = 5
-    settingData["cardRead"] = 0
+    settingData["cardRead"] = ""
     settingData["accessLevel"] = 1
     settingData["toggle"] = 1
     settingData["forceOpen"] = 1
@@ -215,6 +215,19 @@ end
 	settingData = ttf.load("doorSettings.txt")
     extraConfig.version = version
     ttf.save(extraConfig,"extraConfig.txt")
+
+    if type(settingData.cardRead) == "number" then
+        if settingData.cardRead ~= 6 then
+            modem.broadcast(modemPort,"autoInstallerQuery")
+            local e,_,from,port,_,query = event.pull(3,"modem_message")
+            if e ~= nil then
+                settingData.cardRead = query.data.calls[settingData.cardRead - #baseVariables]
+            end
+        else
+            settingData.cardRead = "checkstaff"
+        end
+        ttf.save(settingData,"doorSettings.txt")
+    end
 
     if modem.isOpen(modemPort) == false then
         modem.open(modemPort)
@@ -242,31 +255,37 @@ end
 	forceOpen = settingData.forceOpen
 	bypassLock = settingData.bypassLock
 
-if cardRead <= #baseVariables then
-    if cardRead == 6 then
+    if cardRead == "checkstaff" then
         print("STAFF ONLY")
         print("")
     else
-        print("Code is either broken or config not set up right")
-        os.exit()
-    end
-else
-    local cardRead2 = cardRead - #baseVariables
-    print("Checking: " .. varSettings.var[cardRead2])
-    if varSettings.type[cardRead2] == "string" or varSettings.type[cardRead2] == "-string" then
-        print("Must be exactly " .. accessLevel)
-    elseif varSettings.type[cardRead2] == "int" then
-        if varSettings.above[cardRead2] == true then
-            print("Level " .. tostring(accessLevel) .. " or above required")
-        else
-            print("Level " .. tostring(accessLevel) .. " exactly required")
+        local cardRead2 = 0
+        for i=1,#varSettings.calls,1 do
+            if varSettings.calls[i] == cardRead then
+                cardRead2 = i
+                break
+            end
         end
-    elseif varSettings.type[cardRead2] == "-int" then
-        print("Must be group " .. varSettings.data[cardRead2][accessLevel] .. " to enter")
-    elseif varSettings.type[cardRead2] == "bool" then
-        print("Must have pass to enter")
+        if cardRead2 ~= 0 then
+            print("Checking: " .. varSettings.var[cardRead2])
+            if varSettings.type[cardRead2] == "string" or varSettings.type[cardRead2] == "-string" then
+                print("Must be exactly " .. accessLevel)
+            elseif varSettings.type[cardRead2] == "int" then
+                if varSettings.above[cardRead2] == true then
+                    print("Level " .. tostring(accessLevel) .. " or above required")
+                else
+                    print("Level " .. tostring(accessLevel) .. " exactly required")
+                end
+            elseif varSettings.type[cardRead2] == "-int" then
+                print("Must be group " .. varSettings.data[cardRead2][accessLevel] .. " to enter")
+            elseif varSettings.type[cardRead2] == "bool" then
+                print("Must have pass to enter")
+            end
+        else
+            print("Code is either broken or config not set up right")
+            os.exit()
+        end
     end
-end
 print("---------------------------------------------------------------------------")
  
 if modem.isOpen(modemPort) == false then
@@ -296,6 +315,7 @@ while true do --TEST: test if this functions well
         diagData["type"] = "single"
         diagData["version"] = doorVersion
         diagData["key"] = "NAN"
+        diagData["num"] = 2
         data = ser.serialize(diagData)
         modem.broadcast(diagPort, "diag", data)
     else
@@ -306,14 +326,8 @@ while true do --TEST: test if this functions well
         end
     tmpTable["type"] = "single"
     tmpTable["key"] = "none"
-    if cardRead == 6 then
-        data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-    	modem.broadcast(modemPort, "checkstaff", data, bypassLock)
-    else
-        data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-        modem.broadcast(modemPort, varSettings.calls[cardRead - #baseVariables], data, bypassLock)
-    end
-            
+    data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
+    modem.broadcast(modemPort, cardRead, data, bypassLock)
     local e, _, from, port, _, msg = event.pull(1, "modem_message")
     if e then
       data = crypt(msg, extraConfig.cryptKey, true)

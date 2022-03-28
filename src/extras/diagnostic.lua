@@ -70,7 +70,7 @@ end
 
 
 term.clear()
-print("Admin Diagnostic Tablet")
+print("Admin Diagnostic Tablet (2.#.# only)")
 print("Swipe an admin card on any security door to retrieve the door information")
 local num = 0
 while true do
@@ -101,22 +101,33 @@ while true do
         print("door name: " .. diagInfo["name"])
     end
     print("---Door's settings----")
-    temp = diagInfo["cardRead"] == 6 and "staff" or settings.data.label[diagInfo["cardRead"] - 6]
+    local cardRead2 = 0
+    if diagInfo["cardRead"] == "checkstaff" then
+      temp = "staff"
+    else
+      temp = "ERROR"
+      for i=1,#settings.data.label,1 do
+        if settings.data.calls[i] == diagInfo["cardRead"] then
+          temp = settings.data.label[i]
+          cardRead2 = i
+        end
+      end
+    end
     print("Pass type: " .. temp)
 
-    if diagInfo["cardRead"] == 6 then
+    if diagInfo["cardRead"] == "checkstaff" then
       print("***")
     else
-      if settings.data.type[diagInfo["cardRead"] - 6] == "string" or settings.data.type[diagInfo["cardRead"] - 6] == "-string" then
+      if settings.data.type[cardRead2] == "string" or settings.data.type[cardRead2] == "-string" then
         print("String input required: " .. diagInfo["accessLevel"])
-      elseif settings.data.type[diagInfo["cardRead"] - 6] == "int" then
-        if settings.data.above[diagInfo["cardRead"] - 6] == true then
+      elseif settings.data.type[cardRead2] == "int" then
+        if settings.data.above[cardRead2] == true then
           print("Level above " .. diagInfo["accessLevel"])
         else
           print("Level exactly " .. diagInfo["accessLevel"])
         end
-      elseif settings.data.type[diagInfo["cardRead"] - 6] == "-int" then
-        print("Group " .. settings.data.data[diagInfo["cardRead"] - 6][diagInfo["accessLevel"]])
+      elseif settings.data.type[cardRead2] == "-int" then
+        print("Group " .. settings.data.data[cardRead2][diagInfo["accessLevel"]])
       else
         print("***")
       end

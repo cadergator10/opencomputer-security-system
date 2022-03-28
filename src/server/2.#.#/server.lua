@@ -11,7 +11,7 @@ local term = require("term")
 local ios = require("io")
 local gpu = component.gpu
 
-local version = "2.1.1"
+local version = "2.1.2"
 
 local redstone = {}
 
