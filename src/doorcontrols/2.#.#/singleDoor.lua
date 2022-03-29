@@ -220,6 +220,7 @@ end
         if settingData.cardRead ~= 6 then
             modem.broadcast(modemPort,"autoInstallerQuery")
             local e,_,from,port,_,query = event.pull(3,"modem_message")
+	    query = ser.unserialize(query)
             if e ~= nil then
                 settingData.cardRead = query.data.calls[settingData.cardRead - #baseVariables]
             end
