@@ -226,7 +226,7 @@ if e ~= nil then
     if type(value.cardRead) == "number" then
       checkBool = true
       if value.cardRead ~= 6 then
-        settingData[key].cardRead = query.data.calls[settingData.cardRead - #baseVariables]
+        settingData[key].cardRead = query.data.calls[settingData[key].cardRead - #baseVariables]
       else
         settingData[key].cardRead = "checkstaff"
       end
