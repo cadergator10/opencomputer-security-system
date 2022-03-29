@@ -39,9 +39,10 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
     pastebin run cP70MhB0
     (If you have a 7.0 or earlier version of doorcontrol, run pastebin run X8M664ew to update to new version)
 
-----NOT NECESSARY FOR PROGRAM TO WORK: Diagnostic tablet: a special program that works with the new admin card to get info about a door and it's settings and if it works. It is best used with a tablet that has a tier 3 gpu, a wireless modem, and an internet card. When the admin card is scanned, it sends all the info of the computer to the tablet. It's most noteable use is with the multidoor computer, as it tells you if that magnetic card reader is connected to a door, what the key of the door is (if you want to edit door settings after first set up) and more.
+----Extra features: 
+   Diagnostic tablet: a special program that works with the new admin card to get info about a door and it's settings and if it works. It is best used with a tablet that has a tier 3 gpu, a wireless modem, and an internet card. When the admin card is scanned, it sends all the info of the computer to the tablet. It's most noteable use is with the multidoor computer, as it tells you if that magnetic card reader is connected to a door, what the key of the door is (if you want to edit door settings after first set up) and more.
 
-----ALSO NOT NECESSARY: Accelerated door setup program to put on a tablet. This helps accelerate multi-door setup time, as it is portable compared to moving back and forth between the pc and the door. Also, if your tablet has an analyzer with it, you can scan the blocks with the tablet instead of just entering the uuid manually (in beta)
+   Accelerated door setup program to put on a tablet. This helps accelerate multi-door setup time, as it is portable compared to moving back and forth between the pc and the door. Also, if your tablet has an analyzer with it, you can scan the blocks with the tablet instead of just entering the uuid manually (in beta)
 
 If you have any questions, don't hesitate to ask!
 
@@ -59,18 +60,22 @@ Beta Changelog:
 
 1.#.# Changelog:
 <ul>
-   <li>1.8.0: Updates to add cryptKey function to old system (added in new system) 3/15 </li>
+   <li>1.8.0: Updates to add cryptKey function to old system (added in new system) 3/15 </li>\
+   <li>1.8.1: Now sends it's type (type 1) to diag tablet. Although this is to ensure diag tablet won't crash because it isn't supported. 3/23</li>
 </ul>
 
 2.#.# Changelog:
 <ul>
-   <li>2.1.0: Completely from scratch work for door now out with full modular support! 3/15
+   <li>2.1.0: Completely from scratch work for door now out with full modular support! 3/15</li>
+   <li>2.1.1: Bug fixes I believe... 3/23</li>
+   <li>2.1.2: Door control bug fix: deleting a pass no longer breaks all doors. After update, doors should fix it themselves. 3/28</li>
 </ul>
 
 Future updates:
 <ol>
    <li>search through code to make sure every version number is up to date.</li>
    <li>Bug testing and making sure it is squeaky clean!</li>
+   <li>API to build your own programs that work with the server</li>
 </ol>
 
 Important information:

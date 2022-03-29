@@ -1,6 +1,6 @@
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "1.8.0"
+local doorVersion = "1.8.1"
 testR = true
 
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
@@ -266,8 +266,8 @@ while true do
   local data = crypt(str, extraConfig.cryptKey, true)
   if ev then
     if (data == adminCard) then
-            term.write("Admin card swiped. Sending diagnostics\n")
-            modem.open(diagPort)
+            term.write("Admin card swiped. Diagnostics not supported\n")
+            --[[modem.open(diagPort)
             local diagData = settingData[keyed]
             if diagData == nil then 
                 diagData = {}
@@ -276,13 +276,14 @@ while true do
             diagData["type"] = "multi"
             diagData["version"] = doorVersion
             diagData["key"] = keyed
+            diagData["num"] = 1
             local counter = 0
             for index in pairs(settingData) do
                 counter = counter + 1
             end
             diagData["entries"] = counter
             data = ser.serialize(diagData)
-            modem.broadcast(diagPort, "temp", data)
+            modem.broadcast(diagPort, "temp", data)]]
     else
     local tmpTable = ser.unserialize(data)
     term.write(tmpTable["name"] .. ":")

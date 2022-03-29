@@ -88,6 +88,7 @@ local function runInstall()
             times = editorSettings.times
         elseif editorSettings.key ~= nil then
             times = 1
+            tmpTable = editorSettings.data
         else
             text = sendMsg("Read the text carefully. Some of the inputs REQUIRE NUMBERS ONLY! Some require text.","The redSide is always 2, or back of the computer.","How many different doors are there?",1)
             times = tonumber(text)
@@ -196,28 +197,28 @@ local function runInstall()
             end
             text = sendMsg("What should be read?" .. nextmsg,1)
             if tonumber(text) == 0 then
-                loopArray["cardRead"] = 6
+                loopArray["cardRead"] = "checkstaff"
                 loopArray["accessLevel"] = 0
                 sendMsg("No need to set access level. This mode doesn't require it :)")
             else
-                loopArray["cardRead"] = tonumber(text) + 6
-                if editorSettings.settings.type[loopArray.cardRead - 6] == "string" or editorSettings.settings.type == "-string" then
+                loopArray["cardRead"] = editorSettings.settings.calls[tonumber(text) + 6]
+                if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type == "-string" then
                     text = sendMsg("What is the string you would like to read? Enter text.",1)
                     loopArray["accessLevel"] = text
-                elseif editorSettings.settings.type[loopArray.cardRead - 6] == "bool" then
+                elseif editorSettings.settings.type[tonumber(text)] == "bool" then
                     loopArray["accessLevel"] = 0
                     sendMsg("No need to set access level. This mode doesn't require it :)")
-                elseif editorSettings.settings.type[loopArray.cardRead - 6] == "int" then
-                    if editorSettings.settings.above[loopArray.cardRead - 6] == true then
+                elseif editorSettings.settings.type[tonumber(text)] == "int" then
+                    if editorSettings.settings.above[tonumber(text)] == true then
                         text = sendMsg("What level and above should be required?",1)
                     else
                         text = sendMsg("what level exactly should be required?",1)
                     end
                     loopArray["accessLevel"] = tonumber(text)
-                elseif editorSettings.settings.type[loopArray.cardRead - 6] == "-int" then
+                elseif editorSettings.settings.type[tonumber(text)] == "-int" then
                     local nextmsg = "What group are you wanting to set?"
-                    for i=1,#editorSettings.settings.data[loopArray.cardRead - 6],1 do --TEST: Does grabbing loopArray again work as int
-                        nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[loopArray.cardRead - 6][i]
+                    for i=1,#editorSettings.settings.data[tonumber(text)],1 do --TEST: Does grabbing loopArray again work as int
+                        nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[tonumber(text)][i]
                     end
                     text = sendMsg(nextmsg,1)
                     loopArray["accessLevel"] = tonumber(text)
@@ -233,8 +234,14 @@ local function runInstall()
         loopArray["bypassLock"] = tonumber(text)
         if editorSettings.type == "multi" then tmpTable[j] = loopArray else tmpTable = loopArray end
     end
-    sendMsg("All done with installer!",4)
-
+    text = sendMsg("All done with installer!","Would you like to start the computer now?","1 for yes, 2 for no",1)
+    editorSettings.start = false
+    if tonumber(text) == 1 then
+        sendMsg("Ok, will start computer.",4)
+        editorSettings.start = true
+    else
+        sendMsg("Ok, closing out.",4)
+    end
     return tmpTable
 end
 
@@ -242,21 +249,13 @@ local function oldFiles()
     term.clear()
     local config = loadTable(configFileName)
     if config == nil then
-        print("Error reading config file. Is this an up to date version?")
-        print("It is recommended to wipe and reinstall at this point")
+        sendMsg("Error reading config file. Is this an up to date version?","It is recommended to wipe and reinstall at this point",4)
     end
     editorSettings.type = config.type
-    print("Old files detected. Please select an option:")
-    print("1 = wipe all files (maybe)")
-    print("2 = add more doors (very experimental)")
-    print("3 = delete a door (very experimental)")
-    print("4 = change a door (not implemented yet)")
-    print("5 = update door")
-    print("6 = change cryptKey")
-    local text = term.read()
+    local text = sendMsg("Old files detected. Please select an option:","1 = wipe all files","2 = add more doors)","3 = delete a door","4 = change a door","5 = update door","6 = change cryptKey",1)
     if tonumber(text) == 1 then
         term.clear()
-        print("Deleting all files...")
+        sendMsg("Deleting all files...")
         local path = shell.getWorkingDirectory()
         fs.remove(path .. "/" .. program)
         fs.remove(path .. "/" .. tableToFileName)
@@ -264,79 +263,89 @@ local function oldFiles()
         if config ~= nil then fs.remove(path .. "/" .. configFileName) end
         local fill = io.open(settingFileName)
         if fill~=nil then
-            print("an error occured and some files may not have deleted.")
+            sendMsg("an error occured and some files may not have deleted.",4)
             fill:close()
         else
-            print("all done!")
+            sendMsg("all done!",4)
         end
     elseif tonumber(text) == 2 then
         if config.type == "single" then
-            print("you cannot add more doors as this is a single door. If you want to swap to a multidoor,")
-            print("wipe all files and reinstall as a multidoor.")
+            sendMsg("you cannot add more doors as this is a single door. If you want to swap to a multidoor,","wipe all files and reinstall as a multidoor.",4)
             os.exit()
         elseif config.type == "multi" then
             settingData = loadTable(settingFileName)
-            print("how many doors would you like to add?")
-            text = term.read()
+            text = sendMsg("how many doors would you like to add?",1)
             local num = tonumber(text)
             editorSettings.times = num
             editorSettings.data = settingData
             settingData = runInstall()
             editorSettings.data = settingData
             saveTable(settingData,settingFileName)
-            print("Added the doors. It is recommended you check if it worked, as this is experimental.")
+            sendMsg("Added the doors. It is recommended you check if it worked, as this is experimental.")
         else
-            print("error reading config file")
+            sendMsg("error reading config file",4)
             os.exit()
+        end
+        if editorSettings.start == true then
+            sendMsg("Starting...",4)
+            os.execute(program)
+        else
+            sendMsg(4)
         end
     elseif tonumber(text) == 3 then
         if config.type == "single" then
-            print("You cannot remove a door as this is a single door. This only works on a multidoor.")
-            print("If this is meant to be a multidoor, wipe all files and reinstall as a multidoor.")
+            sendMsg("You cannot remove a door as this is a single door. This only works on a multidoor.","If this is meant to be a multidoor, wipe all files and reinstall as a multidoor.",4)
             os.exit()
         elseif config.type == "multi" then
             settingData = loadTable(settingFileName)
-            print("What is the key for the door?")
-            text = term.read()
-            settingData[text:sub(1,-2)] = nil
+            text = sendMsg("What is the key for the door?",1)
+            settingData[text] = nil
             saveTable(settingData,settingFileName)
-            print("Removed the door. It is recommended you check if it worked, as this is experimental.")
+            sendMsg("Removed the door. It is recommended you check if it worked, as this is experimental.")
         else
-            print("error reading config file")
+            sendMsg("error reading config file",4)
             os.exit()
+        end
+        if editorSettings.start == true then
+            sendMsg("Starting...",4)
+            os.execute(program)
+        else
+            sendMsg(4)
         end
     elseif tonumber(text) == 4 then --TEST: MultiDoor editing works now and doesn't erase it.
         if config.type == "single" then
-            print("starting single door editing...")
+            sendMsg("starting single door editing...")
             editorSettings.edit = true
             settingData = runInstall()
-            print("Old config should be overwritten. It is recommended to double check if it worked.")
+            sendMsg("Old config should be overwritten. It is recommended to double check if it worked.")
         else
-            print("What is the key for the door you want to edit?")
-            text = term.read()
-            editorSettings.times = 1
-            editorSettings.key = text:sub(1,-2)
+            text = sendMsg("What is the key for the door you want to edit?",1)
+            editorSettings.key = text
             editorSettings.edit = true
             editorSettings.data = loadTable(settingFileName)
-            print("Starting multi door editing on " .. editorSettings.key .. "...")
+            sendMsg("Starting multi door editing on " .. editorSettings.key .. "...")
             settingData = runInstall()
-            print("Door should have been edited. It is recommended to double check if it worked.")
+            sendMsg("Door should have been edited. It is recommended to double check if it worked.")
         end
         saveTable(settingData,settingFileName)
+        if editorSettings.start == true then
+            sendMsg("Starting...",4)
+            os.execute(program)
+        else
+            sendMsg(4)
+        end
     elseif tonumber(text) == 5 then
-        print("Are you sure you want to do this? New updates sometimes require manual changing of config.")
-        print("1 for continue, 2 for cancel")
-        text = term.read()
+        text = sendMsg("Are you sure you want to do this? New updates sometimes require manual changing of config.","1 for continue, 2 for cancel",1)
         if tonumber(text) == 1 then
             if config.type == "single" then
-                print("downloading...")
+                sendMsg("downloading...")
                 if config.num == 1 then
                     os.execute("wget -f " .. singleCode[1] .. " " .. program)
                 else
                     os.execute("wget -f " .. singleCode[2] .. " " .. program)
                 end
             elseif config.type == "multi" then
-                print("downloading...")
+                sendMsg("downloading...")
                 if config.num == 1 then
                     os.execute("wget -f " .. multiCode[1] .. " " .. program)
                 else
@@ -346,15 +355,27 @@ local function oldFiles()
 
             end
         end
+        text = sendMsg("all done! is set to " .. ser.serialize(config.cryptKey),"Would you like to start the computer now?","1 for yes, 2 for no",1)
+        if tonumber(text) == 1 then
+            sendMsg("Starting...",4)
+            os.execute(program)
+        else
+            sendMsg("Ok, closing out.",4)
+        end
     elseif tonumber(text) == 6 then
-        print("there are 5 parameters, each requiring a number. Recommend doing 1 digit numbers cause I got no idea how this works lol")
+        sendMsg("there are 5 parameters, each requiring a number. Recommend doing 1 digit numbers cause I got no idea how this works lol")
         for i=1,5,1 do
-            print("enter param " .. i)
-            text = term.read()
+            text = sendMsg("enter param " .. i,1)
             config.cryptKey[i] = tonumber(text)
         end
         saveTable(config,configFileName)
-        print("all done! is set to " .. ser.serialize(config.cryptKey))
+        text = sendMsg("all done! is set to " .. ser.serialize(config.cryptKey),"Would you like to start the computer now?","1 for yes, 2 for no",1)
+        if tonumber(text) == 1 then
+            sendMsg("Starting...",4)
+            os.execute(program)
+        else
+            sendMsg("Ok, closing out.",4)
+        end
     end
     config = nil
 end
@@ -377,35 +398,37 @@ if editorSettings.num == 2 then editorSettings.settings = query.data end
 editorSettings.scanner = false
 editorSettings.accelerate = false
 term.clear()
-print("Checking files...")
+text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires the program here to be set up on a tablet with a modem: https://github.com/cadergator10/opensecurity-scp-security-system/blob/main/src/extras/acceleratedDoorSetup.lua","1 for yes, 2 for no",1) --TEST: does accelerated door setup work?
+if tonumber(text) == 1 then
+    local code = math.floor(math.random(1000,9999))
+    modem.open(code)
+    sendMsg("Code is:  " .. tostring(code),"Enter the code into the door setup tablet. In 60 seconds setup will cancel.")
+    local e, _, from, port, _, msg, barcode = event.pull(60, "modem_message")
+    if e then
+        modem.send(from,port,"connected")
+        term.clear()
+        sendMsg("Connection successful! All prompts will be on the tablet now on.")
+        os.sleep(1)
+        editorSettings.scanner = barcode
+        editorSettings.accelerate = true
+        editorSettings.from = from
+        editorSettings.port = port
+    else
+        modem.close(code)
+        print("Setup cancelled")
+        os.exit()
+    end
+else
+    sendMsg("Normal setup initiating.")
+end
+term.clear()
+sendMsg("Checking files...")
 local text
 local fill = io.open(program,"r")
 if fill~=nil then
     fill:close()
     oldFiles()
 else
-    term.clear()
-    text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires the program here to be set up on a tablet with a modem: https://github.com/cadergator10/opensecurity-scp-security-system/blob/main/src/extras/acceleratedDoorSetup.lua","1 for yes, 2 for no",1) --TEST: does accelerated door setup work?
-    if tonumber(text) == 1 then
-        local code = math.floor(math.random(1000,9999))
-        modem.open(code)
-        sendMsg("Code is:  " .. tostring(code),"Enter the code into the door setup tablet. In 60 seconds setup will cancel.")
-        local e, _, from, port, _, msg, barcode = event.pull(60, "modem_message")
-        if e then
-            modem.send(from,port,"connected")
-            term.clear()
-            sendMsg("Connection successful! All prompts will be on the tablet now on.")
-            os.sleep(1)
-            editorSettings.scanner = barcode
-            editorSettings.accelerate = true
-        else
-            modem.close(code)
-            print("Setup cancelled")
-            os.exit()
-        end
-    else
-        sendMsg("Normal setup initiating.")
-    end
     term.clear()
     text = sendMsg("What kind of door do you want? 1 for single, 2 for multi",1)
     if tonumber(text) == 1 then
@@ -419,5 +442,10 @@ else
     end
     settingData = runInstall()
     saveTable(settingData,settingFileName)
-    print("Run " .. program .. " now to start door.")
+    if editorSettings.start == true then
+        print("Starting...")
+        os.execute(program)
+    else
+        print("Run " .. program .. " now to start door.")
+    end
 end

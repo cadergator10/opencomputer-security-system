@@ -3,6 +3,7 @@ local term = require("term")
 local io = require("io")
 local ser = require("serialization")
 local fs = require("filesystem")
+local event = require("event")
 local modem = component.modem
 
 term.clear()
@@ -27,15 +28,15 @@ if e then
             term.write(data)
         elseif msg == "getInput" then
             text = term.read()
-            modem.send(from,port,text)
+            modem.send(from,port,text:sub(1,-2))
         elseif msg == "clearTerm" then
             term.clear()
         elseif msg == "terminate" then
             stayIn = false
         elseif msg == "analyzer" then
             print("Scan the device with your tablet")
-            text = event.pull("tablet_use")
-            modem.send(from,port,text)
+            _, text = event.pull("tablet_use")
+            modem.send(from,port,text.analyzed[1].address)
         end
     end
     print("Finished")
