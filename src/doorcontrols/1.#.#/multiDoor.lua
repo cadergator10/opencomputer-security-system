@@ -266,8 +266,8 @@ while true do
   local data = crypt(str, extraConfig.cryptKey, true)
   if ev then
     if (data == adminCard) then
-            term.write("Admin card swiped. Sending diagnostics\n")
-            modem.open(diagPort)
+            term.write("Admin card swiped. Diagnostics not supported\n")
+            --[[modem.open(diagPort)
             local diagData = settingData[keyed]
             if diagData == nil then 
                 diagData = {}
@@ -283,7 +283,7 @@ while true do
             end
             diagData["entries"] = counter
             data = ser.serialize(diagData)
-            modem.broadcast(diagPort, "temp", data)
+            modem.broadcast(diagPort, "temp", data)]]
     else
     local tmpTable = ser.unserialize(data)
     term.write(tmpTable["name"] .. ":")

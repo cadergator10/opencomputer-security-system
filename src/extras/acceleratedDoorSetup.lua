@@ -28,7 +28,7 @@ if e then
             term.write(data)
         elseif msg == "getInput" then
             text = term.read()
-            modem.send(from,port,text)
+            modem.send(from,port,text:sub(1,-2))
         elseif msg == "clearTerm" then
             term.clear()
         elseif msg == "terminate" then
