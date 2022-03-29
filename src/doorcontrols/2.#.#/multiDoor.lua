@@ -220,6 +220,7 @@ end
 local checkBool = false
 modem.broadcast(modemPort,"autoInstallerQuery")
 local e,_,_,_,_,query = event.pull(3,"modem_message")
+query = ser.unserialize(query)
 if e ~= nil then
   for key, value in pairs(settingData) do
     if type(value.cardRead) == "number" then
