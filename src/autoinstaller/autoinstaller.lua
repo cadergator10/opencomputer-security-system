@@ -201,7 +201,7 @@ local function runInstall()
                 loopArray["accessLevel"] = 0
                 sendMsg("No need to set access level. This mode doesn't require it :)")
             else
-                loopArray["cardRead"] = editorSettings.settings.calls[tonumber(text) + 6]
+                loopArray["cardRead"] = editorSettings.settings.calls[tonumber(text)]
                 if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type == "-string" then
                     text = sendMsg("What is the string you would like to read? Enter text.",1)
                     loopArray["accessLevel"] = text
