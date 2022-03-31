@@ -77,6 +77,7 @@ Future updates:
    <li>Bug testing and making sure it is squeaky clean!</li>
    <li>API to build your own programs that work with the server</li>
    <li>Remote control program for 2.#.# systems
+   <li>Advanced pass system for doorcontrols with multiple passes allowed through a door, multiple requirements, etc.
 </ol>
 
 Important information:
