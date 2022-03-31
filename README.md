@@ -48,7 +48,8 @@ If you have any questions, don't hesitate to ask!
 
 <a href="https://www.youtube.com/watch?v=Ww2zGUjsZXo&list=PLJjS9EiCaZUUc1ZqsKekK1_S46aFl-682">Tutorial playlist here</a>
 
-![image](https://user-images.githubusercontent.com/75097681/153966751-f94d255d-88a6-4b9a-8212-936b8a735a97.png)
+![2022-03-31_18 17 37](https://user-images.githubusercontent.com/75097681/161160569-b7cc527d-f03e-4b8a-8c1c-ba9df040ddf7.png)
+![2022-03-31_18 17 25](https://user-images.githubusercontent.com/75097681/161160580-5213b4f9-2f69-4f06-ae74-f48a20d6c1c4.png)
 ![image](https://user-images.githubusercontent.com/75097681/153966774-ddea0e15-01ef-47db-a975-8f0b3b63fed0.png)
 
 Beta Changelog:
