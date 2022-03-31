@@ -1,6 +1,6 @@
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "2.1.2"
+local doorVersion = "2.2.0"
 local testR = true
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. 3 = rolldoor
 local doorType = 0
@@ -12,13 +12,8 @@ local redColor = 0
 --Delay before the door closes again
 local delay = 5
 --Which term you want to have the door read.
---is the Call
+--is an array of calls. Info way below
 local cardRead = "";
-
---If cardRead = 0, then it is the card level.
---If cardRead = 1, then it is the armory level.
---If cardRead = 5, then it is the department. 1=SD, 2=ScD, 3=MD, 4=E&T, 5=O5 (any department door)
-local accessLevel = 2
 
 --toggle=0: it will automatically close after being opened.
 --toggle=1: it will stay open/closed when opened.
@@ -39,6 +34,7 @@ local ser = require("serialization")
 local term = require("term")
 local process = require("process")
 local computer = component.computer
+local uuid = require("uuid")
  
 local magReader = component.os_magreader
  
@@ -188,17 +184,8 @@ local fill = io.open("doorSettings.txt", "r")
 if fill~=nil then 
     io.close(fill)
 else 
-    settingData["name"] = "single door placeholder"
-	settingData["doorType"] = 0
-    settingData["redSide"] = 0
-    settingData["redColor"] = 0
-    settingData["delay"] = 5
-    settingData["cardRead"] = ""
-    settingData["accessLevel"] = 1
-    settingData["toggle"] = 1
-    settingData["forceOpen"] = 1
-    settingData["bypassLock"] = 0
-    ttf.save(settingData,"doorSettings.txt")
+    print("No doorSettings.txt detected. Reinstall")
+    os.exit()
 end
 fill = io.open("extraConfig.txt","r")
 if fill ~= nil then
@@ -217,17 +204,28 @@ end
     ttf.save(extraConfig,"extraConfig.txt")
 
     if type(settingData.cardRead) == "number" then
-        if settingData.cardRead ~= 6 then
-            modem.broadcast(modemPort,"autoInstallerQuery")
-            local e,_,from,port,_,query = event.pull(3,"modem_message")
-            if e ~= nil then
-                settingData.cardRead = query.data.calls[settingData.cardRead - #baseVariables]
-            end
-        else
-            settingData.cardRead = "checkstaff"
+        modem.broadcast(modemPort,"autoInstallerQuery")
+        local e,_,from,port,_,query = event.pull(3,"modem_message")
+        if e ~= nil then
+            settingData.cardRead = settingData.cardRead == 6 and "checkstaff" or query.data.calls[settingData.cardRead - #baseVariables]
         end
         ttf.save(settingData,"doorSettings.txt")
     end
+    if type(settingData.cardRead) ~= "table" then
+        local t1, t2 = settingData.cardRead, settingData.accessLevel
+        settingData.accessLevel = nil
+        settingData.cardRead = {}
+        settingData.cardRead[1] = {["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
+        ttf.save(settingData,"doorSettings.txt")
+    end
+    --[[
+        New cardRead will be able to handle multiple passes and distinguish between them
+        uuid is the identifier for that pos (alt to index), call is the old cardRead, param is the old accessLevel, and request is the call type. Data is extra info along with request
+        supreme = having this lets you in no matter what (like staff) nothing for data.
+        reject = passes not allowed to ever enter through the door (unless staff of course) nothing for data.
+        add = must have this as well as qualify for another pass. nothing for data.
+        base = like supreme, except it links to add passes. data is an array with the uuids for the passes that add to it.
+    ]]
 
     if modem.isOpen(modemPort) == false then
         modem.open(modemPort)
@@ -250,41 +248,45 @@ end
 	redColor = settingData.redColor
 	delay = settingData.delay
 	cardRead = settingData.cardRead
-	accessLevel = settingData.accessLevel
 	toggle = settingData.toggle
 	forceOpen = settingData.forceOpen
 	bypassLock = settingData.bypassLock
 
-    if cardRead == "checkstaff" then
-        print("STAFF ONLY")
-        print("")
-    else
-        local cardRead2 = 0
-        for i=1,#varSettings.calls,1 do
-            if varSettings.calls[i] == cardRead then
-                cardRead2 = i
-                break
-            end
-        end
-        if cardRead2 ~= 0 then
-            print("Checking: " .. varSettings.var[cardRead2])
-            if varSettings.type[cardRead2] == "string" or varSettings.type[cardRead2] == "-string" then
-                print("Must be exactly " .. accessLevel)
-            elseif varSettings.type[cardRead2] == "int" then
-                if varSettings.above[cardRead2] == true then
-                    print("Level " .. tostring(accessLevel) .. " or above required")
-                else
-                    print("Level " .. tostring(accessLevel) .. " exactly required")
-                end
-            elseif varSettings.type[cardRead2] == "-int" then
-                print("Must be group " .. varSettings.data[cardRead2][accessLevel] .. " to enter")
-            elseif varSettings.type[cardRead2] == "bool" then
-                print("Must have pass to enter")
-            end
+    if #cardRead == 1 then
+        if cardRead[1].call == "checkstaff" then
+            print("STAFF ONLY")
+            print("")
         else
-            print("Code is either broken or config not set up right")
-            os.exit()
+            local cardRead2 = 0
+            for i=1,#varSettings.calls,1 do
+                if varSettings.calls[i] == cardRead[1].call then
+                    cardRead2 = i
+                    break
+                end
+            end
+            if cardRead2 ~= 0 then
+                print("Checking: " .. varSettings.var[cardRead2])
+                if varSettings.type[cardRead2] == "string" or varSettings.type[cardRead2] == "-string" then
+                    print("Must be exactly " .. accessLevel)
+                elseif varSettings.type[cardRead2] == "int" then
+                    if varSettings.above[cardRead2] == true then
+                        print("Level " .. tostring(accessLevel) .. " or above required")
+                    else
+                        print("Level " .. tostring(accessLevel) .. " exactly required")
+                    end
+                elseif varSettings.type[cardRead2] == "-int" then
+                    print("Must be group " .. varSettings.data[cardRead2][accessLevel] .. " to enter")
+                elseif varSettings.type[cardRead2] == "bool" then
+                    print("Must have pass to enter")
+                end
+            else
+                print("Code is either broken or config not set up right")
+                os.exit()
+            end
         end
+    else
+        print("Multi-Pass Single Door")
+        print("Length: " .. #cardRead)
     end
 print("---------------------------------------------------------------------------")
  

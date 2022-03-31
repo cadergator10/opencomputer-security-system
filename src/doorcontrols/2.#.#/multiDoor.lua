@@ -13,10 +13,8 @@ local redColor = 0
 --Delay before the door closes again
 local delay = 5
 --Which term you want to have the door read.
---0 = level; 1 = armory level; 2 = MTF; 3 = GOI; 4 = Security
+--Changed heavilly to table of passes. Info in singleDoor
 local cardRead = "";
-
-local accessLevel = 2
 
 local forceOpen = 1
 local bypassLock = 0
@@ -175,31 +173,8 @@ local fill = io.open("doorSettings.txt", "r")
 if fill~=nil then 
     io.close(fill) 
 else 
-    settingData["q"] = {}
-    settingData["w"] = {}
-    settingData["q"]["name"] = "door 1 placeholder"
-    settingData["q"]["reader"] = ""
-    settingData["q"]["redColor"] = 0
-    settingData["q"]["delay"] = 5
-    settingData["q"]["cardRead"] = ""
-    settingData["q"]["accessLevel"] = 1
-    settingData["q"]["doorType"] = 2
-    settingData["q"]["doorAddress"] = ""
-    settingData["q"]["toggle"] = 0
-    settingData["q"]["forceOpen"] = 1
-    settingData["q"]["bypassLock"] = 0
-    settingData["w"]["name"] = "door 2 placeholder"
-    settingData["w"]["reader"] = ""
-    settingData["w"]["redColor"] = 0
-    settingData["w"]["delay"] = 5
-    settingData["w"]["cardRead"] = ""
-    settingData["w"]["accessLevel"] = 1
-    settingData["w"]["doorType"] = 2
-    settingData["w"]["doorAddress"] = ""
-    settingData["w"]["toggle"] = 0
-    settingData["w"]["forceOpen"] = 1
-    settingData["w"]["bypassLock"] = 0
-    ttf.save(settingData,"doorSettings.txt")
+  print("No doorSettings.txt detected. Reinstall")
+  os.exit()
 end
 fill = io.open("extraConfig.txt","r")
 if fill ~= nil then
@@ -229,6 +204,12 @@ if e ~= nil then
       else
         settingData[key].cardRead = "checkstaff"
       end
+    end
+    if type(value.cardRead) ~= "table" then
+      local t1, t2 = settingData[key].cardRead, settingData[key].accessLevel
+        settingData[key].accessLevel = nil
+        settingData[key].cardRead = {}
+        settingData[key].cardRead[1] = {["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
     end
   end
   if checkBool == true then
@@ -266,7 +247,7 @@ process.info().data.signal = function(...)
   os.exit()
 end
     
-while true do --TEST: Does this run well with autoinstaller?
+while true do --TEST: Does the new cardRead system work? (test after server finishes)
   if modem.isOpen(modemPort) == false then
   modem.open(modemPort)
   end
@@ -285,7 +266,6 @@ while true do --TEST: Does this run well with autoinstaller?
       	redColor = settingData[keyed].redColor
         delay = settingData[keyed].delay 
         cardRead = settingData[keyed].cardRead
-        accessLevel = settingData[keyed].accessLevel
         doorType = settingData[keyed].doorType
         doorAddress = settingData[keyed].doorAddress
         toggle = settingData[keyed].toggle

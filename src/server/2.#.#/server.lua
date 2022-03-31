@@ -158,7 +158,7 @@ end
 redstone = {}
 redstone["lock"] = false
 redstone["forceopen"] = false
-while true do
+while true do --TODO: Add new pass system check to this
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end
