@@ -223,7 +223,7 @@ end
         uuid is the identifier for that pos (alt to index), call is the old cardRead, param is the old accessLevel, and request is the call type. Data is extra info along with request
         supreme = having this lets you in no matter what (like staff) nothing for data.
         reject = passes not allowed to ever enter through the door (unless staff of course) nothing for data.
-        add = must have this as well as qualify for another pass. nothing for data.
+        add = must have this as well as qualify for another pass. multiple base variables can use the same add. nothing for data.
         base = like supreme, except it links to add passes. data is an array with the uuids for the passes that add to it.
     ]]
 

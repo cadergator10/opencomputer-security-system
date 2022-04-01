@@ -100,6 +100,15 @@ end
 
 --------account functions
 
+function getPassID(command)
+  for i=1,#userTable.settings.calls,1 do
+    if command == userTable.settings.calls[i] then
+      return true, i
+    end
+  end
+  return false
+end
+
 function getVar(var,user)
    for key, value in pairs(userTable) do
     if value.uuid == user then
@@ -109,10 +118,37 @@ function getVar(var,user)
    return "Nil "..var
 end
 
-function checkVar(var,user)
-  for key, value in pairs(userTable) do
+function checkVar(rule,user,index)
+  if userTable.settings.type[index] == "string" or userTable.settings.type[index] == "-string" then
+    return user[userTable.settings.var[index]] == rule.param
+  elseif userTable.settings.type[index] == "int" or userTable.settings.type[index] == "-int" then
+    if userTable.settings.above[index] == false or userTable.settings.type[index] == "-int" then
+      return user[userTable.settings.var[index]] == rule.param
+    else
+      return user[userTable.settings.var[index]] >= rule.param
+    end
+  elseif userTable.settings.type[index] == "bool" then
+    return user[userTable.settings.var[index]]
+  end
+  return false
+end
+--return true, not value.blocked, value[var], value.staff
+function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
+  for key, value in pairs(userTable) do--TODO: FInish this
     if value.uuid == user then
-      return true, not value.blocked, value[var], value.staff
+      for i=1,#rules,1 do
+        if rules[i].request == "supreme" then
+          local e,call = getPassID(rules[i].call)
+          if e then
+            local good = checkVar(rules[i],value,call)
+            if good then
+
+            else
+
+            end
+          end
+        end
+      end
     end
   end
   return false
