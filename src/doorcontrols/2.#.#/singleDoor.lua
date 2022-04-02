@@ -215,16 +215,16 @@ end
         local t1, t2 = settingData.cardRead, settingData.accessLevel
         settingData.accessLevel = nil
         settingData.cardRead = {}
-        settingData.cardRead[1] = {["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
+        settingData.cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
         ttf.save(settingData,"doorSettings.txt")
     end
     --[[
         New cardRead will be able to handle multiple passes and distinguish between them
         uuid is the identifier for that pos (alt to index), call is the old cardRead, param is the old accessLevel, and request is the call type. Data is extra info along with request
-        supreme = having this lets you in no matter what (like staff) nothing for data.
-        reject = passes not allowed to ever enter through the door (unless staff of course) nothing for data.
+        supreme = having this lets you in no matter what (like staff) nothing for data. reject will do nothing if they have a pass that is supreme.
+        reject = passes not allowed to ever enter through the door (unless staff of course or they have a supreme pass) nothing for data.
         add = must have this as well as qualify for another pass. multiple base variables can use the same add. nothing for data.
-        base = like supreme, except it links to add passes. data is an array with the uuids for the passes that add to it.
+        base = like supreme, except it links to add passes. data is an array with the uuids for the passes that add to it. (there doesnt have to be any adds if not needed, as base is affected by reject)
     ]]
 
     if modem.isOpen(modemPort) == false then

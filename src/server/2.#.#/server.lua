@@ -134,17 +134,61 @@ function checkVar(rule,user,index)
 end
 --return true, not value.blocked, value[var], value.staff
 function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
+  local label,color = "will be set",0x000000
   for key, value in pairs(userTable) do--TODO: FInish this
     if value.uuid == user then
+      local skipBase = false
+      for i=1,#rules,1 do
+        if rules[i].request == "reject" then
+          local e, call = getPassID(rules[i].call)
+          if e then
+            local good = checkVar(rules[i],value,call)
+            if good then
+              label,color = "Denied: var " .. userTable.settings.var[call] .. " is rejected", 0xFF0000 --TODO: set the color to right red
+              skipBase = true
+              break
+            end
+          end
+        end
+      end
+      if ~skipBase then
+        for i=1,#rules,1 do
+          if rules[i].request == "base" then
+            local e, call = getPassID(rules[i].call)
+            if e then
+              local good = checkVar(rules[i],value,call)
+              if good then
+                label,color = "Accepted by base var " .. userTable.settings.var[call], 0x00FF00
+                local isGood = true
+                for j=1,#rules[i].data,1 do
+                  e, call = getPassID(rules[i].data[j])
+                  if e then
+                    good = checkVar(rules[i],value,call)
+                    if good == false then
+                      isGood = false
+                      label,color = "Denied: did not meet base requirements", 0xFF0000
+                      break
+                    end
+                  end
+                end
+                if isGood then
+                  return true, not value.blocked, true, value.staff,label,color
+                end
+              end
+            end
+          end
+        end
+      end
       for i=1,#rules,1 do
         if rules[i].request == "supreme" then
           local e,call = getPassID(rules[i].call)
           if e then
             local good = checkVar(rules[i],value,call)
             if good then
-
+              label,color = "Accepted by supreme var " .. userTable.settings.var[call], 0x00FF00
+              return true, not value.blocked, true, value.staff,label,color
             else
-
+              return true, not value.blocked, false, value.staff,label,color
             end
           end
         end
@@ -317,7 +361,7 @@ while true do --TODO: Add new pass system check to this
           end--IMPORTANT: Hello
         end
       else
-        local bool isRealCommand = false --TEST: verify this all functions maybe please??????
+        local bool isRealCommand = false --FIXME: Set this to work with new system
         for i=1,#userTable.settings.calls,1 do
           if command == userTable.settings.calls[i] then
             if lockDoors == true and bypassLock ~= 1 then
