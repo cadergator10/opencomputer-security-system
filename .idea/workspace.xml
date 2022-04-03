@@ -3,7 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="fc02fa2b-775b-42f6-88ae-65b34767494b" name="Changes" comment="Changes">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/doorcontrols/2.#.#/singleDoor.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/doorcontrols/2.#.#/singleDoor.lua" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/autoinstaller/autoinstaller.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/autoinstaller/autoinstaller.lua" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/database/MineOS/2.#.#/MineOSDatabase.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/database/MineOS/2.#.#/MineOSDatabase.lua" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/doorcontrols/2.#.#/multiDoor.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/doorcontrols/2.#.#/multiDoor.lua" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/extras/diagnostic.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/extras/diagnostic.lua" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/server/2.#.#/server.lua" beforeDir="false" afterPath="$PROJECT_DIR$/src/server/2.#.#/server.lua" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

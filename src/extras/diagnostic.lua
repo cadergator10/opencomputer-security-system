@@ -93,7 +93,7 @@ while true do
     end
     print("Pass type: " .. temp)
 
-    if diagInfo["cardRead"] == "checkstaff" then
+    --[[if diagInfo["cardRead"] == "checkstaff" then
       print("***")
     else
       if settings.data.type[cardRead2] == "string" or settings.data.type[cardRead2] == "-string" then
@@ -104,13 +104,14 @@ while true do
         else
           print("Level exactly " .. diagInfo["accessLevel"])
         end
-      elseif settings.data.type[cardRead2] == "-int" then
-        print("Group " .. settings.data.data[cardRead2][diagInfo["accessLevel"]])
-      else
+      elseif settings.data.type[cardRead2] == "-int" then]]
+        --print("Group " .. settings.data.data[cardRead2][diagInfo["accessLevel"]])
+      --[[else
         print("***")
       end
-    end
-
+    end]]
+    print("Rule amount: " .. #diagInfo.cardRead)
+    print("(might add ability to see all rules in future update)")
     print("Door type: " .. doorTypeTypes[diagInfo["doorType"] + 1])
     if diagInfo["doorType"] == 1 then
         if diagInfo["type"] == "multi" then

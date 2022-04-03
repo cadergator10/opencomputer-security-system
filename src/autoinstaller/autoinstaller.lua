@@ -5,6 +5,7 @@ local ser = require("serialization")
 local fs = require("filesystem")
 local shell = require("shell")
 local event = require("event")
+local uuid = require("uuid")
 local modem = component.modem
 local modemPort = 199
 
@@ -81,6 +82,7 @@ local function runInstall()
     local tmpTable = {}
     local times = 1
     local text = ""
+    if editorSettings.num == 2 then sendMsg("NOTICE! Pass overhaul for 2.#.# systems. Please refer to wiki on github","as I should have put a how to there.") end
     if editorSettings.type == "multi" then
         os.execute("wget -f " .. multiCode[editorSettings.num] .. " " .. program)
         if editorSettings.times ~= nil then
@@ -189,45 +191,86 @@ local function runInstall()
                 loopArray["accessLevel"] = 0
                 sendMsg("No need to set access level. This mode doesn't require it :)")
             end
-        else
-            --TEST: Will new autoinstaller work with new 2.#.# system
-            local nextmsg = "What should be read? 0 = staff,"
+        else --BEGINNING OF 2.0.0 -----------------------------------------------------
+            --TEST: Does this run and work? Test it before publishing to main branch
+            local readLoad = {}
+            sendMsg("Remember how many of each pass you want before you start.","type something and enter to continue",1)
+            readLoad.add = tonumber(sendMsg("How many add passes do you want to add?","remember multiple base passes can use the same add pass",1))
+            readLoad.base = tonumber(sendMsg("How many base passes do you want to add?",1))
+            readLoad.reject = tonumber(sendMsg("How many reject passes do you want to add?","These don't affect supreme passes",1))
+            readLoad.supreme = tonumber(sendMsg("How many supreme passes do you want to add?",1))
+            loopArray.cardRead = {}
+            local nextmsg = {}
+            nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
             for i=1,#editorSettings.settings.var,1 do
                 nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.label[i]
             end
-            text = sendMsg("What should be read?" .. nextmsg,1)
-            if tonumber(text) == 0 then
-                loopArray["cardRead"] = "checkstaff"
-                loopArray["accessLevel"] = 0
-                sendMsg("No need to set access level. This mode doesn't require it :)")
-            else
-                loopArray["cardRead"] = editorSettings.settings.calls[tonumber(text) + 6]
-                if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type == "-string" then
-                    text = sendMsg("What is the string you would like to read? Enter text.",1)
-                    loopArray["accessLevel"] = text
-                elseif editorSettings.settings.type[tonumber(text)] == "bool" then
-                    loopArray["accessLevel"] = 0
-                    sendMsg("No need to set access level. This mode doesn't require it :)")
-                elseif editorSettings.settings.type[tonumber(text)] == "int" then
-                    if editorSettings.settings.above[tonumber(text)] == true then
-                        text = sendMsg("What level and above should be required?",1)
-                    else
-                        text = sendMsg("what level exactly should be required?",1)
-                    end
-                    loopArray["accessLevel"] = tonumber(text)
-                elseif editorSettings.settings.type[tonumber(text)] == "-int" then
-                    local nextmsg = "What group are you wanting to set?"
-                    for i=1,#editorSettings.settings.data[tonumber(text)],1 do --TEST: Does grabbing loopArray again work as int
-                        nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[tonumber(text)][i]
-                    end
-                    text = sendMsg(nextmsg,1)
-                    loopArray["accessLevel"] = tonumber(text)
+            local passFunc = function(type,num)
+                local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
+                local text = sendMsg(nextmsg.beg..type..nextmsg.mid..num..nextmsg.back,1)
+                if tonumber(text) == 0 then
+                    newRules.call = "checkstaff"
+                    newRules.param = 0
+                    sendMsg("No need for extra parameter. This mode doesn't require it :)")
                 else
-                    sendMsg("error in cardRead area for num 2")
-                    loopArray["accessLevel"] = 0
+                    newRules["tempint"] = tonumber(text)
+                    newRules["call"] = editorSettings.settings.calls[tonumber(text) + 6]
+                    if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type == "-string" then
+                        text = sendMsg("What is the string you would like to read? Enter text.",1)
+                        newRules["param"] = text
+                    elseif editorSettings.settings.type[tonumber(text)] == "bool" then
+                        newRules["param"] = 0
+                        sendMsg("No need for extra parameter. This mode doesn't require it :)")
+                    elseif editorSettings.settings.type[tonumber(text)] == "int" then
+                        if editorSettings.settings.above[tonumber(text)] == true then
+                            text = sendMsg("What level and above should be required?",1)
+                        else
+                            text = sendMsg("what level exactly should be required?",1)
+                        end
+                        newRules["param"] = tonumber(text)
+                    elseif editorSettings.settings.type[tonumber(text)] == "-int" then
+                        local nextmsg = "What group are you wanting to set?"
+                        for i=1,#editorSettings.settings.data[tonumber(text)],1 do --TEST: Does grabbing loopArray again work as int
+                            nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[tonumber(text)][i]
+                        end
+                        text = sendMsg(nextmsg,1)
+                        newRules["param"] = tonumber(text)
+                    else
+                        sendMsg("error in cardRead area for num 2")
+                        newRules["param"] = 0
+                    end
                 end
+                return newRules
             end
-        end
+            for i=1,readLoad.add,1 do
+                local rule = passFunc("add",i)
+                table.insert(loopArray.cardRead,rule)
+            end
+            local addNum = #loopArray
+            for i=1,readLoad.base,1 do
+                local rule = passFunc("base",i)
+                text = tonumber(sendMsg("How many add passes do you want to link?",1))
+                if text ~= 0 then
+                    local nextAdd = "Which pass do you want to add? "
+                    for j=1,addNum,1 do
+                        nextAdd = nextAdd .. ", " .. j .. " = " .. editorSettings.settings.label[loopArray.cardRead[j].tempint]
+                    end
+                    for j=1,text,1 do
+                        text = tonumber(sendMsg(nextAdd,1))
+                        table.insert(rule.data,loopArray.cardRead[text].uuid)
+                    end
+                end
+                table.insert(loopArray.cardRead,rule)
+            end
+            for i=1,readLoad.reject,1 do
+                local rule = passFunc("reject",i)
+                table.insert(loopArray.cardRead,rule)
+            end
+            for i=1,readLoad.supreme,1 do
+                local rule = passFunc("supreme",i)
+                table.insert(loopArray.cardRead,rule)
+            end
+        end --END OF 2.0.0 -----------------------------------------------------
         text = sendMsg("Is this door opened whenever all doors are asked to open? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is yes",1)
         loopArray["forceOpen"] = tonumber(text)
         text = sendMsg("Is this door immune to lock door? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is no",1)

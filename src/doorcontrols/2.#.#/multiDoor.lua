@@ -1,6 +1,6 @@
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "2.1.2"
+local doorVersion = "2.2.0"
 testR = true
 
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
@@ -209,7 +209,7 @@ if e ~= nil then
       local t1, t2 = settingData[key].cardRead, settingData[key].accessLevel
         settingData[key].accessLevel = nil
         settingData[key].cardRead = {}
-        settingData[key].cardRead[1] = {["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
+        settingData[key].cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
     end
   end
   if checkBool == true then
