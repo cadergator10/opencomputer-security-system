@@ -206,6 +206,7 @@ end
     if type(settingData.cardRead) == "number" then
         modem.broadcast(modemPort,"autoInstallerQuery")
         local e,_,from,port,_,query = event.pull(3,"modem_message")
+        query = ser.unserialize(query)
         if e ~= nil then
             settingData.cardRead = settingData.cardRead == 6 and "checkstaff" or query.data.calls[settingData.cardRead - #baseVariables]
         end
@@ -329,7 +330,7 @@ while true do --TEST: test if this functions well
     tmpTable["type"] = "single"
     tmpTable["key"] = "none"
     data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-    modem.broadcast(modemPort, cardRead, data, bypassLock)
+    modem.broadcast(modemPort, "checkRules", data, bypassLock)
     local e, _, from, port, _, msg = event.pull(1, "modem_message")
     if e then
       data = crypt(msg, extraConfig.cryptKey, true)

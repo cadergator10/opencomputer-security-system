@@ -38,6 +38,7 @@ local ser = require("serialization")
 local term = require("term")
 local thread = require("thread")
 local process = require("process")
+local uuid = require("uuid")
 local computer = component.computer
  
 local magReader = component.os_magreader
@@ -195,17 +196,19 @@ end
 local checkBool = false
 modem.broadcast(modemPort,"autoInstallerQuery")
 local e,_,_,_,_,query = event.pull(3,"modem_message")
+query = ser.unserialize(query)
 if e ~= nil then
   for key, value in pairs(settingData) do
     if type(value.cardRead) == "number" then
       checkBool = true
       if value.cardRead ~= 6 then
-        settingData[key].cardRead = query.data.calls[settingData.cardRead - #baseVariables]
+        settingData[key].cardRead = query.data.calls[settingData[key].cardRead - #baseVariables]
       else
         settingData[key].cardRead = "checkstaff"
       end
     end
     if type(value.cardRead) ~= "table" then
+      checkBool = true
       local t1, t2 = settingData[key].cardRead, settingData[key].accessLevel
         settingData[key].accessLevel = nil
         settingData[key].cardRead = {}
@@ -309,7 +312,7 @@ while true do --TEST: Does the new cardRead system work? (test after server fini
           tmpTable["type"] = "multi"
           tmpTable["key"] = keyed
           data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-          modem.broadcast(modemPort, cardRead, data, bypassLock)
+          modem.broadcast(modemPort, "checkRules", data, bypassLock)
           local e, _, from, port, _, msg = event.pull(1, "modem_message")
           if e then
               data = crypt(msg, extraConfig.cryptKey, true)
