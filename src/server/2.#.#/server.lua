@@ -106,7 +106,8 @@ function getPassID(command)
       return true, i
     end
   end
-  return false
+  if command == "checkStaff" then
+  return command == "checkStaff" and true or false, command == "checkStaff" and 0 or false
 end
 
 function getVar(var,user)
@@ -119,16 +120,20 @@ function getVar(var,user)
 end
 
 function checkVar(rule,user,index)
-  if userTable.settings.type[index] == "string" or userTable.settings.type[index] == "-string" then
-    return user[userTable.settings.var[index]] == rule.param
-  elseif userTable.settings.type[index] == "int" or userTable.settings.type[index] == "-int" then
-    if userTable.settings.above[index] == false or userTable.settings.type[index] == "-int" then
+  if index ~= 0 then
+    if userTable.settings.type[index] == "string" or userTable.settings.type[index] == "-string" then
       return user[userTable.settings.var[index]] == rule.param
-    else
-      return user[userTable.settings.var[index]] >= rule.param
+    elseif userTable.settings.type[index] == "int" or userTable.settings.type[index] == "-int" then
+      if userTable.settings.above[index] == false or userTable.settings.type[index] == "-int" then
+        return user[userTable.settings.var[index]] == rule.param
+      else
+        return user[userTable.settings.var[index]] >= rule.param
+      end
+    elseif userTable.settings.type[index] == "bool" then
+      return user[userTable.settings.var[index]]
     end
-  elseif userTable.settings.type[index] == "bool" then
-    return user[userTable.settings.var[index]]
+  else
+    return user.staff
   end
   return false
 end
@@ -144,7 +149,7 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
           if e then
             local good = checkVar(rules[i],value,call)
             if good then
-              label,color = "Denied: var " .. userTable.settings.var[call] .. " is rejected", 0xFF0000 --TODO: set the color to right red
+              label,color = "Denied: var " .. call ~= 0 and userTable.settings.var[call] or "staff" .. " is rejected", 0xFF0000 --TODO: set the color to right red
               skipBase = true
               break
             end
@@ -158,7 +163,7 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
             if e then
               local good = checkVar(rules[i],value,call)
               if good then
-                label,color = "Accepted by base var " .. userTable.settings.var[call], 0x00FF00
+                label,color = "Accepted by base var " .. call ~= 0 and userTable.settings.var[call] or "staff", 0x00FF00
                 local isGood = true
                 for j=1,#rules[i].data,1 do
                   e, call = getPassID(rules[i].data[j])
@@ -185,7 +190,7 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
           if e then
             local good = checkVar(rules[i],value,call)
             if good then
-              label,color = "Accepted by supreme var " .. userTable.settings.var[call], 0x00FF00
+              label,color = "Accepted by supreme var " .. call ~= 0 and userTable.settings.var[call] or "staff", 0x00FF00
               return true, not value.blocked, true, value.staff,label,color
             else
               return true, not value.blocked, false, value.staff,label,color
@@ -299,37 +304,6 @@ while true do --TODO: Add new pass system check to this
       end
     end
     redstone = newRed
-  elseif command == "checkstaff" then
-    if false == true then
-      advWrite("WHY DOES THIS RUN??? IM SAD :(\n",0xFF0000)
-      data = crypt("locked", settingTable.cryptKey)
-      modem.send(from, port, data)
-    else
-      local currentDoor = getDoorInfo(data.type,from,data.key)
-      advWrite("-Checking if user " .. thisUserName .. " is Staff to access " .. currentDoor.name .. ":",0xFFFF80)
-      local cu, isBlocked, isStaff = checkStaff(data.uuid)
-      if cu == true then
-        if isBlocked == false then
-          data = crypt("false", settingTable.cryptKey)
-          advWrite("\nuser is blocked\n",0xFF0000)
-          modem.send(from, port, data)
-        else
-          if isStaff == true then
-            data = crypt("true", settingTable.cryptKey)
-            advWrite("\naccess granted\n",0x00FF00)
-            modem.send(from, port, data)
-          else
-            data = crypt("false", settingTable.cryptKey)
-            advWrite("\naccess denied\n",0xFF0000)
-            modem.send(from, port, data)
-          end
-        end
-      else
-        data = crypt("false", settingTable.cryptKey)
-        advWrite("\nuser not found\n",0x990000)
-        modem.send(from, port, data)
-      end
-    end
   elseif command == "checkLinked" then
     if false == true then
       gpu.setForeground(0xFF0000)

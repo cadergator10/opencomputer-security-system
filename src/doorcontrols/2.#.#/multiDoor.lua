@@ -28,8 +28,6 @@ local adminCard = "admincard"
 
 local modemPort = 199
 local diagPort = 180
-
---Done with it local serverSend = {"checkuser","checkarmor","checkMtf","checkgoi","checksec","checkdepartment","checkint","checkstaff"}
   
 local component = require("component")
 local gpu = component.gpu
