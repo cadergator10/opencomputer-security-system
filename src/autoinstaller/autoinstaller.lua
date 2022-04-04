@@ -203,7 +203,7 @@ local function runInstall()
             local nextmsg = {}
             nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
             for i=1,#editorSettings.settings.var,1 do
-                nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.label[i]
+                nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. editorSettings.settings.label[i]
             end
             local passFunc = function(type,num)
                 local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
@@ -214,7 +214,7 @@ local function runInstall()
                     sendMsg("No need for extra parameter. This mode doesn't require it :)")
                 else
                     newRules["tempint"] = tonumber(text)
-                    newRules["call"] = editorSettings.settings.calls[tonumber(text) + 6]
+                    newRules["call"] = editorSettings.settings.calls[tonumber(text)]
                     if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type == "-string" then
                         text = sendMsg("What is the string you would like to read? Enter text.",1)
                         newRules["param"] = text
@@ -246,8 +246,8 @@ local function runInstall()
                 local rule = passFunc("add",i)
                 table.insert(loopArray.cardRead,rule)
             end
-            local addNum = #loopArray
-            for i=1,readLoad.base,1 do
+            local addNum = #loopArray.cardRead
+            for i=1,readLoad.base,1 do --Show all add passes :(
                 local rule = passFunc("base",i)
                 text = tonumber(sendMsg("How many add passes do you want to link?",1))
                 if text ~= 0 then

@@ -106,7 +106,6 @@ function getPassID(command)
       return true, i
     end
   end
-  if command == "checkStaff" then
   return command == "checkStaff" and true or false, command == "checkStaff" and 0 or false
 end
 
@@ -156,7 +155,7 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
           end
         end
       end
-      if ~skipBase then
+      if skipBase == false then
         for i=1,#rules,1 do
           if rules[i].request == "base" then
             local e, call = getPassID(rules[i].call)
@@ -341,10 +340,10 @@ while true do --TODO: Add new pass system check to this
       modem.send(from, port, data)
     else
       local currentDoor = getDoorInfo(data.type,from,data.key)
-      advWrite("-Checking user " .. thisUserName .. "'s credentials on currentDoor.name",0xFFFF80)
+      advWrite("-Checking user " .. thisUserName .. "'s credentials on" .. currentDoor.name,0xFFFF80)
       local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
       if cu then
-        if ~isBlocked then
+        if isBlocked == false then
           if varCheck then
             data = crypt("true", settingTable.cryptKey)
             advWrite("\n" .. label .. "\n",color)
