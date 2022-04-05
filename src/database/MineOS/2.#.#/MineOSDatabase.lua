@@ -426,7 +426,7 @@ function addVarYesCall()
   window:remove()
 end
 
---TEST: Check if this successfully adds and removes variables.
+--TODO: Add the ability to edit passes
 function addVarCallback()
   addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)

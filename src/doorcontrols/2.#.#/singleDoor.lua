@@ -302,7 +302,7 @@ process.info().data.signal = function(...)
   os.exit()
 end    
 
-while true do --TEST: test if this functions well
+while true do
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end

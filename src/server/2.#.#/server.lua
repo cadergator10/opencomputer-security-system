@@ -139,7 +139,7 @@ end
 --return true, not value.blocked, value[var], value.staff
 function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
   local label,color = "will be set",0x000000
-  for key, value in pairs(userTable) do--TODO: FInish this
+  for key, value in pairs(userTable) do
     if value.uuid == user then
       local skipBase = false
       for i=1,#rules,1 do
@@ -148,7 +148,7 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
           if e then
             local good = checkVar(rules[i],value,call)
             if good then
-              label,color = "Denied: var " .. call ~= 0 and userTable.settings.var[call] or "staff" .. " is rejected", 0xFF0000 --TODO: set the color to right red
+              label,color = "Denied: var " .. call ~= 0 and userTable.settings.var[call] or "staff" .. " is rejected", 0xFF0000
               skipBase = true
               break
             end
@@ -162,7 +162,7 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
             if e then
               local good = checkVar(rules[i],value,call)
               if good then
-                label,color = "Accepted by base var " .. call ~= 0 and userTable.settings.var[call] or "staff", 0x00FF00
+                label,color = "Accepted by base var " .. call ~= 0 and userTable.settings.var[call] or "staff", 0x00B600
                 local isGood = true
                 for j=1,#rules[i].data,1 do
                   e, call = getPassID(rules[i].data[j])
@@ -242,7 +242,7 @@ end
 redstone = {}
 redstone["lock"] = false
 redstone["forceopen"] = false
-while true do --TODO: Add new pass system check to this
+while true do
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end
@@ -343,7 +343,7 @@ while true do --TODO: Add new pass system check to this
       advWrite("-Checking user " .. thisUserName .. "'s credentials on" .. currentDoor.name,0xFFFF80)
       local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
       if cu then
-        if isBlocked == false then
+        if isBlocked then
           if varCheck then
             data = crypt("true", settingTable.cryptKey)
             advWrite("\n" .. label .. "\n",color)

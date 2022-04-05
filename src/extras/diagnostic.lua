@@ -32,7 +32,7 @@ local function exportstring( s )
     return s
 end
 
-print("Sending query to server...") --TEST: Does this work with 1.#.# and 2.#.# (not og systems)
+print("Sending query to server...")
 modem.open(modemPort)
 modem.broadcast(modemPort,"autoInstallerQuery")
 local e,_,_,_,_,msg = event.pull(3,"modem_message")
