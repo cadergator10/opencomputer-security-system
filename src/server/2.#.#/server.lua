@@ -100,10 +100,20 @@ end
 
 --------account functions
 
-function getPassID(command)
+function getPassID(command,rules)
+  local bill
+  if rules ~= nil then
+    for i=1,#rules,1 do
+      if rules[i].uuid == command then
+        command = rules[i].call
+        bill = i
+        break
+      end
+    end
+  end
   for i=1,#userTable.settings.calls,1 do
     if command == userTable.settings.calls[i] then
-      return true, i
+      return true, i, bill
     end
   end
   return command == "checkStaff" and true or false, command == "checkStaff" and 0 or false
@@ -120,6 +130,7 @@ end
 
 function checkVar(rule,user,index)
   if index ~= 0 then
+    index = index - 6
     if userTable.settings.type[index] == "string" or userTable.settings.type[index] == "-string" then
       return user[userTable.settings.var[index]] == rule.param
     elseif userTable.settings.type[index] == "int" or userTable.settings.type[index] == "-int" then
@@ -148,7 +159,7 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
           if e then
             local good = checkVar(rules[i],value,call)
             if good then
-              label,color = "Denied: var " .. call ~= 0 and userTable.settings.var[call] or "staff" .. " is rejected", 0xFF0000
+              label,color = call ~= 0 and "Denied: var " .. userTable.settings.label[call] .. " is rejected" or "Denied: var staff" .. " is rejected", 0xFF0000
               skipBase = true
               break
             end
@@ -162,12 +173,13 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
             if e then
               local good = checkVar(rules[i],value,call)
               if good then
-                label,color = "Accepted by base var " .. call ~= 0 and userTable.settings.var[call] or "staff", 0x00B600
+                label,color = call ~= 0 and "Accepted by base var " .. userTable.settings.label[call] or "Accepted by base var" .. "staff", 0x00B600
                 local isGood = true
                 for j=1,#rules[i].data,1 do
-                  e, call = getPassID(rules[i].data[j])
+                  local bill
+                  e, call, bill = getPassID(rules[i].data[j],rules)
                   if e then
-                    good = checkVar(rules[i],value,call)
+                    good = checkVar(rules[bill],value,call)
                     if good == false then
                       isGood = false
                       label,color = "Denied: did not meet base requirements", 0xFF0000
@@ -189,7 +201,7 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
           if e then
             local good = checkVar(rules[i],value,call)
             if good then
-              label,color = "Accepted by supreme var " .. call ~= 0 and userTable.settings.var[call] or "staff", 0x00FF00
+              label,color = call ~= 0 and "Accepted by supreme var " .. userTable.settings.label[call] or "Accepted by supreme var " .. "staff", 0x00FF00
               return true, not value.blocked, true, value.staff,label,color
             else
               return true, not value.blocked, false, value.staff,label,color
