@@ -2,7 +2,7 @@
 
 <a href="https://oc.cil.li/topic/994-security-system-for-opensecurity">This was built off of DustPuppy's system here</a>
 
-Version 1.#.# of the security system was originally built for the <a href="https://www.technicpack.net/modpack/site-91.1622979">Site 91</a> modpack official server, but I made it public so others could enjoy it. It is obsolete as well and will not receive as many updates.
+Version 1.#.# of the security system was originally built for the <a href="https://www.technicpack.net/modpack/site-91.1622979">Site 91</a> modpack official server, but I made it public so others could enjoy it. It is obsolete as well and is discontinued with the diagnostic tablet and future QOL updates.
 Version 2.#.# is an entire remake of the entire system and is mine. It is not for redistribution as your own. It is the fully modular system.
 
 Go to bottom for a changelog, future changes, and some extra information about how to use the system
@@ -48,7 +48,8 @@ If you have any questions, don't hesitate to ask!
 
 <a href="https://www.youtube.com/watch?v=Ww2zGUjsZXo&list=PLJjS9EiCaZUUc1ZqsKekK1_S46aFl-682">Tutorial playlist here</a>
 
-![image](https://user-images.githubusercontent.com/75097681/153966751-f94d255d-88a6-4b9a-8212-936b8a735a97.png)
+![2022-03-31_18 17 37](https://user-images.githubusercontent.com/75097681/161160569-b7cc527d-f03e-4b8a-8c1c-ba9df040ddf7.png)
+![2022-03-31_18 17 25](https://user-images.githubusercontent.com/75097681/161160580-5213b4f9-2f69-4f06-ae74-f48a20d6c1c4.png)
 ![image](https://user-images.githubusercontent.com/75097681/153966774-ddea0e15-01ef-47db-a975-8f0b3b63fed0.png)
 
 Beta Changelog:
@@ -76,8 +77,11 @@ Future updates:
    <li>search through code to make sure every version number is up to date.</li>
    <li>Bug testing and making sure it is squeaky clean!</li>
    <li>API to build your own programs that work with the server</li>
+   <li>Remote control program for 2.#.# systems
+   <li>Advanced pass system for doorcontrols with multiple passes allowed through a door, multiple requirements, etc.
 </ol>
 
 Important information:
    The first number of a security system update is a full system update, which can possibly break previous systems. The second is a small update that doesn't involve updating every single device. Second number should be able to be mixed and matched (eg a 7.1 device works with a 7.0 server), but the first cannot (8.0 device SHOULD/WILL NOT work with a 7.0 device.)
    1.#.# ARE NEVER COMPATABLE WITH 2.#.# VERSIONS!
+   Future quality of life updates are not going to be compatable with 1.#.# if extra work is needed. (if you really want it, you can always add it in yourself and submit a pull request)
