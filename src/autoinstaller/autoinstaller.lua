@@ -82,7 +82,8 @@ local function runInstall()
     local tmpTable = {}
     local times = 1
     local text = ""
-    if editorSettings.num == 2 then sendMsg("NOTICE! Pass overhaul for 2.#.# systems. Please refer to wiki on github","as I should have put a how to there.") end
+    if editorSettings.num == 2 then editorSettings.x = tonumber(sendMsg("NOTICE! Pass overhaul for 2.#.# systems. Please refer to wiki on github","as I should have put a how to there.","Would you like to use the simple pass setup or new advanced one?","1 for simple, 2 for advanced",1)) end
+    sendMsg(4)
     if editorSettings.type == "multi" then
         os.execute("wget -f " .. multiCode[editorSettings.num] .. " " .. program)
         if editorSettings.times ~= nil then
@@ -271,23 +272,24 @@ local function runInstall()
                     local rule = passFunc("supreme",i)
                     table.insert(loopArray.cardRead,rule)
                 end
-            else
+            else --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
                 local nextmsg = "What should be read? 0 = staff,"
                 for i=1,#editorSettings.settings.var,1 do
                     nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.label[i]
                 end
-                text = sendMsg("What should be read?" .. nextmsg,1)
+                text = sendMsg(nextmsg,1)
+                loopArray["cardRead"] = {{["uuid"]=uuid.next()["call"]="",["param"]=0,["request"]="supreme",["data"]=false}}
                 if tonumber(text) == 0 then
-                    loopArray["cardRead"] = "checkstaff"
-                    loopArray["accessLevel"] = 0
+                    loopArray["cardRead"][1].call = "checkStaff"
+                    loopArray["cardRead"][1].param = 0
                     sendMsg("No need to set access level. This mode doesn't require it :)")
                 else
-                    loopArray["cardRead"] = editorSettings.settings.calls[tonumber(text)]
-                    if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type == "-string" then
+                    loopArray["cardRead"][1].call = editorSettings.settings.calls[tonumber(text)]
+                    if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type[tonumber(text)] == "-string" then
                         text = sendMsg("What is the string you would like to read? Enter text.",1)
-                        loopArray["accessLevel"] = text
+                        loopArray["cardRead"][1].param = text
                     elseif editorSettings.settings.type[tonumber(text)] == "bool" then
-                        loopArray["accessLevel"] = 0
+                        loopArray["cardRead"][1].param = 0
                         sendMsg("No need to set access level. This mode doesn't require it :)")
                     elseif editorSettings.settings.type[tonumber(text)] == "int" then
                         if editorSettings.settings.above[tonumber(text)] == true then
@@ -295,17 +297,17 @@ local function runInstall()
                         else
                             text = sendMsg("what level exactly should be required?",1)
                         end
-                        loopArray["accessLevel"] = tonumber(text)
+                        loopArray["cardRead"][1].param = tonumber(text)
                     elseif editorSettings.settings.type[tonumber(text)] == "-int" then
                         local nextmsg = "What group are you wanting to set?"
                         for i=1,#editorSettings.settings.data[tonumber(text)],1 do --TEST: Does grabbing loopArray again work as int
                             nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[tonumber(text)][i]
                         end
                         text = sendMsg(nextmsg,1)
-                        loopArray["accessLevel"] = tonumber(text)
+                        loopArray["cardRead"][1].param = tonumber(text)
                     else
                         sendMsg("error in cardRead area for num 2")
-                        loopArray["accessLevel"] = 0
+                        loopArray["cardRead"][1].param = 0
                     end
                 end
             end
