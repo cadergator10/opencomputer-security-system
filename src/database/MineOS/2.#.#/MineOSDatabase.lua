@@ -37,7 +37,7 @@ If type is -int, [1] = minus button, [2] = plus button, [3] = value label, [4] =
 ----------
  
 local prgName = "Security database"
-local version = "v2.1.0"
+local version = "v2.2.0"
  
 local modem
  
@@ -426,7 +426,7 @@ function addVarYesCall()
   window:remove()
 end
 
---TEST: Check if this successfully adds and removes variables.
+--TODO: Add the ability to edit passes
 function addVarCallback()
   addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)

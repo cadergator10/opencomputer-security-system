@@ -1,4 +1,3 @@
-local cryptKey = {1, 2, 3, 4, 5}
 local diagPort = 180
 local modemPort = 199
 
@@ -22,27 +21,6 @@ local function convert( chars, dist, inv )
   return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
 end
  
- 
-local function crypt(str,k,inv)
-  local enc= "";
-  for i=1,#str do
-    if(#str-k[5] >= i or not inv)then
-      for inc=0,3 do
-    if(i%4 == inc)then
-      enc = enc .. convert(string.sub(str,i,i),k[inc+1],inv);
-      break;
-    end
-      end
-    end
-  end
-  if(not inv)then
-    for i=1,k[5] do
-      enc = enc .. string.char(math.random(32,126));
-    end
-  end
-  return enc;
-end
- 
 --// exportstring( string )
 --// returns a "Lua" portable version of the string
 local function exportstring( s )
@@ -54,7 +32,7 @@ local function exportstring( s )
     return s
 end
 
-print("Sending query to server...") --TEST: Does this work with 1.#.# and 2.#.# (not og systems)
+print("Sending query to server...")
 modem.open(modemPort)
 modem.broadcast(modemPort,"autoInstallerQuery")
 local e,_,_,_,_,msg = event.pull(3,"modem_message")
@@ -115,7 +93,7 @@ while true do
     end
     print("Pass type: " .. temp)
 
-    if diagInfo["cardRead"] == "checkstaff" then
+    --[[if diagInfo["cardRead"] == "checkstaff" then
       print("***")
     else
       if settings.data.type[cardRead2] == "string" or settings.data.type[cardRead2] == "-string" then
@@ -126,13 +104,14 @@ while true do
         else
           print("Level exactly " .. diagInfo["accessLevel"])
         end
-      elseif settings.data.type[cardRead2] == "-int" then
-        print("Group " .. settings.data.data[cardRead2][diagInfo["accessLevel"]])
-      else
+      elseif settings.data.type[cardRead2] == "-int" then]]
+        --print("Group " .. settings.data.data[cardRead2][diagInfo["accessLevel"]])
+      --[[else
         print("***")
       end
-    end
-
+    end]]
+    print("Rule amount: " .. #diagInfo.cardRead)
+    print("(might add ability to see all rules in future update)")
     print("Door type: " .. doorTypeTypes[diagInfo["doorType"] + 1])
     if diagInfo["doorType"] == 1 then
         if diagInfo["type"] == "multi" then
