@@ -130,7 +130,6 @@ end
 
 function checkVar(rule,user,index)
   if index ~= 0 then
-    index = index - 6
     if userTable.settings.type[index] == "string" or userTable.settings.type[index] == "-string" then
       return user[userTable.settings.var[index]] == rule.param
     elseif userTable.settings.type[index] == "int" or userTable.settings.type[index] == "-int" then
@@ -204,6 +203,9 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
               label,color = call ~= 0 and "Accepted by supreme var " .. userTable.settings.label[call] or "Accepted by supreme var " .. "staff", 0x00FF00
               return true, not value.blocked, true, value.staff,label,color
             else
+              if label == "will be set" then
+                label,color = "Denied: does not have any required passes",0xFF0000
+              end
               return true, not value.blocked, false, value.staff,label,color
             end
           end
@@ -231,15 +233,6 @@ function getDoorInfo(type,id,key)
     end
   end
   return nil
-end
-
-function checkStaff(user)
-  for key, value in pairs(userTable) do
-    if value.uuid == user then
-      return true, not value.blocked, value.staff
-    end
-  end
-  return false
 end
 
 function checkLink(user)
@@ -352,7 +345,7 @@ while true do
       modem.send(from, port, data)
     else
       local currentDoor = getDoorInfo(data.type,from,data.key)
-      advWrite("-Checking user " .. thisUserName .. "'s credentials on" .. currentDoor.name,0xFFFF80)
+      advWrite("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80)
       local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
       if cu then
         if isBlocked then

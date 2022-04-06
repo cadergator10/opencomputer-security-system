@@ -275,7 +275,7 @@ local function runInstall()
                     nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.label[i]
                 end
                 text = sendMsg(nextmsg,1)
-                loopArray["cardRead"] = {{["uuid"]=uuid.next()["call"]="",["param"]=0,["request"]="supreme",["data"]=false}}
+                loopArray["cardRead"] = {{["uuid"]=uuid.next(),["call"]="",["param"]=0,["request"]="supreme",["data"]=false}}
                 if tonumber(text) == 0 then
                     loopArray["cardRead"][1].call = "checkStaff"
                     loopArray["cardRead"][1].param = 0

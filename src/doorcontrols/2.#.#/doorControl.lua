@@ -83,9 +83,21 @@ local function convert( chars, dist, inv )
   function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH)
     if(toggleH == 0) then
       if(doorTypeH == 0 or doorTypeH == 3)then
-        component.proxy(doorAddressH).open()
-        os.sleep(delayH)
-        component.proxy(doorAddressH).close()
+        if doorAddressH ~= true then
+          component.proxy(doorAddressH).open()
+          os.sleep(delayH)
+          component.proxy(doorAddressH).close()
+        else
+          if doorTypeH == 0 then
+            component.os_doorcontroller.open()
+            os.sleep(delayH)
+            component.os_doorcontroller.close()
+          else
+            component.os_rolldoorcontroller.open()
+            os.sleep(delayH)
+            component.os_rolldoorcontroller.close()
+          end
+        end
       elseif(doorTypeH == 1)then
         component.redstone.setOutput(redSideH,15)
         os.sleep(delayH)
@@ -99,7 +111,15 @@ local function convert( chars, dist, inv )
       end
     else
       if(doorTypeH == 0 or doorTypeH == 3)then
-        component.proxy(doorAddressH).toggle()
+        if doorAddressH ~= true then
+          component.proxy(doorAddressH).toggle()
+        else
+          if doorTypeH == 0 then
+            component.os_doorcontroller.toggle()
+          else
+            component.os_rolldoorcontroller.toggle()
+          end
+        end
       elseif(doorTypeH == 1)then
         if(component.redstone.getOutput(redSideH) == 0) then
             component.redstone.setOutput(redSideH,15)
@@ -177,11 +197,11 @@ local function convert( chars, dist, inv )
         if data.id == component.list("modem")[1] then
           if extraConfig.type == "single" then
             if data.type == "base" then
-              openDoor(delay,redColor,doorType == 0 and component.list("os_doorcontroller")[1] or doorType == 3 and component.list("os_rolldoorcontroller")[1] or nil,toggle,doorType,redSide)
+              openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,toggle,doorType,redSide)
             elseif data.type == "toggle" then
-              openDoor(delay,redColor,doorType == 0 and component.list("os_doorcontroller")[1] or doorType == 3 and component.list("os_rolldoorcontroller")[1] or nil,1,doorType,redSide)
+              openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,1,doorType,redSide)
             elseif data.type == "delay" then
-              openDoor(data.delay,redColor,doorType == 0 and component.list("os_doorcontroller")[1] or doorType == 3 and component.list("os_rolldoorcontroller")[1] or nil,0,doorType,redSide)
+              openDoor(data.delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,0,doorType,redSide)
             end
           else
             if data.type == "base" then
@@ -305,15 +325,15 @@ if extraConfig.type == "single" then
       if cardRead2 ~= 0 then
         print("Checking: " .. varSettings.var[cardRead2])
         if varSettings.type[cardRead2] == "string" or varSettings.type[cardRead2] == "-string" then
-          print("Must be exactly " .. accessLevel)
+          print("Must be exactly " .. cardRead[1].param)
         elseif varSettings.type[cardRead2] == "int" then
           if varSettings.above[cardRead2] == true then
-            print("Level " .. tostring(accessLevel) .. " or above required")
+            print("Level " .. tostring(cardRead[1].param) .. " or above required")
           else
-            print("Level " .. tostring(accessLevel) .. " exactly required")
+            print("Level " .. tostring(cardRead[1].param) .. " exactly required")
           end
         elseif varSettings.type[cardRead2] == "-int" then
-          print("Must be group " .. varSettings.data[cardRead2][accessLevel] .. " to enter")
+          print("Must be group " .. varSettings.data[cardRead2][cardRead[1].param] .. " to enter")
         elseif varSettings.type[cardRead2] == "bool" then
           print("Must have pass to enter")
         end
@@ -347,19 +367,19 @@ while true do
     modem.open(modemPort)
   end
   ev, address, user, str, uuid, data = event.pull("magData")
-  isOk = "ok"
+  local isOk = "ok"
+  local keyed = nil
   if extraConfig.type == "multi" then
-    local keyed = nil
     for key, valuedd in pairs(settingData) do
       if(valuedd.reader == address) then
         keyed = key
       end
     end
-    local isOk = "incorrect magreader"
+    isOk = "incorrect magreader"
     if(keyed ~= nil)then
       term.write(settingData[keyed].redColor)
       redColor = settingData[keyed].redColor
-      delay = settingData[keyed].delay 
+      delay = settingData[keyed].delay
       cardRead = settingData[keyed].cardRead
       doorType = settingData[keyed].doorType
       doorAddress = settingData[keyed].doorAddress
@@ -415,7 +435,7 @@ while true do
           term.write("Access granted\n")
           computer.beep()
           if extraConfig.type == "single" then
-            openDoor(delay,redColor,doorType == 0 and component.list("os_doorcontroller")[1] or doorType == 3 and component.list("os_rolldoorcontroller")[1] or nil,toggle,doorType,redSide)
+            openDoor(delay,redColor,true,toggle,doorType,redSide)
           else
             thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide)
           end
