@@ -70,15 +70,14 @@ Beta Changelog:
    <li>2.1.0: Completely from scratch work for door now out with full modular support! 3/15</li>
    <li>2.1.1: Bug fixes I believe... 3/23</li>
    <li>2.1.2: Door control bug fix: deleting a pass no longer breaks all doors. After update, doors should fix it themselves. 3/28</li>
+   <li>2.2.0: Multiple Pass update: You can now use multiple passes on the same door control, with advanced checks and such! 4/6</li>
 </ul>
 
 Future updates:
 <ol>
    <li>search through code to make sure every version number is up to date.</li>
-   <li>Bug testing and making sure it is squeaky clean!</li>
    <li>API to build your own programs that work with the server</li>
-   <li>Remote control program for 2.#.# systems
-   <li>Advanced pass system for doorcontrols with multiple passes allowed through a door, multiple requirements, etc.
+   <li>Remote control program for 2.#.# systems</li>
 </ol>
 
 Important information:
