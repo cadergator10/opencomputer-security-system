@@ -14,8 +14,8 @@ local tableToFileName = "tableToFile.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
 local tableToFileCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/libraries/tableToFile.lua"
-local singleCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/singleDoor.lua"}
-local multiCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/multiDoor.lua"}
+local singleCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/doorControl.lua"}
+local multiCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/doorControl.lua"}
 local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
 
 local settingData = {}
@@ -85,7 +85,6 @@ local function runInstall()
     if editorSettings.num == 2 then editorSettings.x = tonumber(sendMsg("NOTICE! Pass overhaul for 2.#.# systems. Please refer to wiki on github","as I should have put a how to there.","Would you like to use the simple pass setup or new advanced one?","1 for simple, 2 for advanced",1)) end
     sendMsg(4)
     if editorSettings.type == "multi" then
-        os.execute("wget -f " .. multiCode[editorSettings.num] .. " " .. program)
         if editorSettings.times ~= nil then
             tmpTable = editorSettings.data
             times = editorSettings.times
@@ -96,8 +95,6 @@ local function runInstall()
             text = sendMsg("Read the text carefully. Some of the inputs REQUIRE NUMBERS ONLY! Some require text.","The redSide is always 2, or back of the computer.","How many different doors are there?",1)
             times = tonumber(text)
         end
-    else
-        os.execute("wget -f " .. singleCode[editorSettings.num] .. " " .. program)
     end
     os.execute("wget -f " .. tableToFileCode .. " " .. tableToFileName)
 
@@ -518,8 +515,10 @@ else
     text = sendMsg("What kind of door do you want? 1 for single, 2 for multi",1)
     if tonumber(text) == 1 then
         editorSettings.type = "single"
+        os.execute("wget -f " .. singleCode[editorSettings.num] .. " " .. program)
     elseif tonumber(text) == 2 then
         editorSettings.type = "multi"
+        os.execute("wget -f " .. multiCode[editorSettings.num] .. " " .. program)
     else
         term.clear()
         sendMsg("Not an answer:" .. text)

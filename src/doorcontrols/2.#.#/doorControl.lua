@@ -119,35 +119,55 @@ local function convert( chars, dist, inv )
   end
 
   local function update(msg, localAddress, remoteAddress, port, distance, msg, data) --TODO: Move code from all door types here & make it work as single or multi door.
-    if testR == true then
+    if (testR == true) then
       data = crypt(data, extraConfig.cryptKey, true)
       if msg == "forceopen" then
-        local keyed = nil
-        if data == "open" then
-          for key, valued in pairs(settingData) do
-            if valued.forceOpen ~= 0 then
-              if valued.doorType == 0 then
-                component.proxy(valued.doorAddress).open()
-              elseif valued.doorType == 1 then
-                print("potentially broken door at key " .. key .. ": set to redstone")
-              elseif valued.doorType == 2 then
-                component.redstone.setBundledOutput(redSide, { [valued.redColor] = 255})
-              elseif valued.doorType == 3 then
-                component.proxy(valued.doorAddress).open()
-              end
+        if extraConfig.type == "single" then
+          if(doorType == 0)then
+            if data == "open" then
+              component.os_doorcontroller.open()
+            else
+              component.os_doorcontroller.close()
+            end
+          elseif(doorType == 1)then
+            component.redstone.setOutput(redSide,data == "open" and 15 or 0)
+          elseif(doorType == 2)then
+            component.redstone.setBundledOutput(redSide, { [redColor] = data == "open" and 255 or 0 } )
+          else
+            if data == "open" then
+              component.os_rolldoorcontroller.open()
+            else
+              component.os_rolldoorcontroller.close()
             end
           end
         else
-          for key, valued in pairs(settingData) do
-            if valued.forceOpen ~= 0 then
-              if valued.doorType == 0 then
-                component.proxy(valued.doorAddress).close()
-              elseif valued.doorType == 1 then
-                print("potentially broken door at key " .. key .. ": set to redstone")
-              elseif valued.doorType == 2 then
-                component.redstone.setBundledOutput(redSide, { [valued.redColor] = 0})
-              elseif valued.doorType == 3 then
-                component.proxy(valued.doorAddress).close()
+          local keyed = nil
+          if data == "open" then
+            for key, valued in pairs(settingData) do
+              if valued.forceOpen ~= 0 then
+                if valued.doorType == 0 then
+                  component.proxy(valued.doorAddress).open()
+                elseif valued.doorType == 1 then
+                  print("potentially broken door at key " .. key .. ": set to redstone")
+                elseif valued.doorType == 2 then
+                  component.redstone.setBundledOutput(redSide, { [valued.redColor] = 255})
+                elseif valued.doorType == 3 then
+                  component.proxy(valued.doorAddress).open()
+                end
+              end
+            end
+          else
+            for key, valued in pairs(settingData) do
+              if valued.forceOpen ~= 0 then
+                if valued.doorType == 0 then
+                  component.proxy(valued.doorAddress).close()
+                elseif valued.doorType == 1 then
+                  print("potentially broken door at key " .. key .. ": set to redstone")
+                elseif valued.doorType == 2 then
+                  component.redstone.setBundledOutput(redSide, { [valued.redColor] = 0})
+                elseif valued.doorType == 3 then
+                  component.proxy(valued.doorAddress).close()
+                end
               end
             end
           end
@@ -155,14 +175,265 @@ local function convert( chars, dist, inv )
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
         data = ser.unserialize(data)
         if data.id == component.list("modem")[1] then
-          if data.type == "base" then
-            thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, settingData[data.key].redSide)
-          elseif data.type == "toggle" then
-            thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, settingData[data.key].redSide)
-          elseif data.type == "delay" then
-            thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, settingData[data.key].redSide)
+          if extraConfig.type == "single" then
+            if data.type == "base" then
+              openDoor(delay,redColor,doorType == 0 and component.list("os_doorcontroller")[1] or doorType == 3 and component.list("os_rolldoorcontroller")[1] or nil,toggle,doorType,redSide)
+            elseif data.type == "toggle" then
+              openDoor(delay,redColor,doorType == 0 and component.list("os_doorcontroller")[1] or doorType == 3 and component.list("os_rolldoorcontroller")[1] or nil,1,doorType,redSide)
+            elseif data.type == "delay" then
+              openDoor(data.delay,redColor,doorType == 0 and component.list("os_doorcontroller")[1] or doorType == 3 and component.list("os_rolldoorcontroller")[1] or nil,0,doorType,redSide)
+            end
+          else
+            if data.type == "base" then
+              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, settingData[data.key].redSide)
+            elseif data.type == "toggle" then
+              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, settingData[data.key].redSide)
+            elseif data.type == "delay" then
+              thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, settingData[data.key].redSide)
+            end
           end
         end
       end
     end
   end
+
+term.clear()
+local fill = io.open("doorSettings.txt", "r")
+if fill~=nil then 
+  io.close(fill) 
+else 
+  print("No doorSettings.txt detected. Reinstall door control")
+  os.exit()
+end
+fill = io.open("extraConfig.txt","r")
+if fill ~= nil then
+  io.close(fill)
+else
+  print("No config detected. Reinstall door control")
+end
+
+extraConfig = ttf.load("extraConfig.txt")
+settingData = ttf.load("doorSettings.txt")
+extraConfig.version = version
+ttf.save(extraConfig,"extraConfig.txt")
+
+local checkBool = false
+modem.broadcast(modemPort,"autoInstallerQuery")
+local e,_,_,_,_,query = event.pull(3,"modem_message")
+query = ser.unserialize(query)
+if e ~= nil then
+  if extraConfig.type == "single" then
+    if type(settingData.cardRead) == "number" then
+      modem.broadcast(modemPort,"autoInstallerQuery")
+      local e,_,from,port,_,query = event.pull(3,"modem_message")
+      query = ser.unserialize(query)
+      if e ~= nil then
+          settingData.cardRead = settingData.cardRead == 6 and "checkstaff" or query.data.calls[settingData.cardRead - #baseVariables]
+      end
+      ttf.save(settingData,"doorSettings.txt")
+    end
+    if type(settingData.cardRead) ~= "table" then
+        local t1, t2 = settingData.cardRead, settingData.accessLevel
+        settingData.accessLevel = nil
+        settingData.cardRead = {}
+        settingData.cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
+        ttf.save(settingData,"doorSettings.txt")
+    end
+  else
+    for key, value in pairs(settingData) do
+      if type(value.cardRead) == "number" then
+        checkBool = true
+        if value.cardRead ~= 6 then
+          settingData[key].cardRead = query.data.calls[settingData[key].cardRead - #baseVariables]
+        else
+          settingData[key].cardRead = "checkstaff"
+        end
+      end
+      if type(value.cardRead) ~= "table" then
+        checkBool = true
+        local t1, t2 = settingData[key].cardRead, settingData[key].accessLevel
+          settingData[key].accessLevel = nil
+          settingData[key].cardRead = {}
+          settingData[key].cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
+      end
+    end
+    if checkBool == true then
+      ttf.save(settingData,"doorSettings.txt")
+    end
+  end
+end
+checkBool = nil
+
+if modem.isOpen(modemPort) == false then
+  modem.open(modemPort)
+end
+
+fill = {}
+fill["type"] = extraConfig.type
+fill["data"] = settingData
+modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+local got, _, _, _, _, fill = event.pull(2, "modem_message")
+if got then
+  varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
+else
+  print("Failed to receive confirmation from server")
+  os.exit()
+end
+got = nil
+
+if extraConfig.type == "single" then
+  doorType = settingData.doorType
+	redSide = settingData.redSide
+	redColor = settingData.redColor
+	delay = settingData.delay
+	cardRead = settingData.cardRead
+	toggle = settingData.toggle
+	forceOpen = settingData.forceOpen
+	bypassLock = settingData.bypassLock
+  if #cardRead == 1 then
+    if cardRead[1].call == "checkstaff" then
+      print("STAFF ONLY")
+      print("")
+    else
+      local cardRead2 = 0
+      for i=1,#varSettings.calls,1 do
+        if varSettings.calls[i] == cardRead[1].call then
+          cardRead2 = i
+          break
+        end
+      end
+      if cardRead2 ~= 0 then
+        print("Checking: " .. varSettings.var[cardRead2])
+        if varSettings.type[cardRead2] == "string" or varSettings.type[cardRead2] == "-string" then
+          print("Must be exactly " .. accessLevel)
+        elseif varSettings.type[cardRead2] == "int" then
+          if varSettings.above[cardRead2] == true then
+            print("Level " .. tostring(accessLevel) .. " or above required")
+          else
+            print("Level " .. tostring(accessLevel) .. " exactly required")
+          end
+        elseif varSettings.type[cardRead2] == "-int" then
+          print("Must be group " .. varSettings.data[cardRead2][accessLevel] .. " to enter")
+        elseif varSettings.type[cardRead2] == "bool" then
+          print("Must have pass to enter")
+        end
+      else
+        print("Code is either broken or config not set up right")
+        os.exit()
+      end
+    end
+  else
+      print("Multi-Pass Single Door")
+      print("Length: " .. #cardRead)
+  end
+else
+  print("Multi-Door Control terminal")
+end
+print("---------------------------------------------------------------------------")
+
+if modem.isOpen(modemPort) == false then
+  modem.open(modemPort)
+end
+event.listen("modem_message", update)
+process.info().data.signal = function(...)
+  print("caught hard interrupt")
+  event.ignore("modem_message", update)
+  testR = false
+  os.exit()
+end
+
+while true do
+  if modem.isOpen(modemPort) == false then
+    modem.open(modemPort)
+  end
+  ev, address, user, str, uuid, data = event.pull("magData")
+  isOk = "ok"
+  if extraConfig.type == "multi" then
+    local keyed = nil
+    for key, valuedd in pairs(settingData) do
+      if(valuedd.reader == address) then
+        keyed = key
+      end
+    end
+    local isOk = "incorrect magreader"
+    if(keyed ~= nil)then
+      term.write(settingData[keyed].redColor)
+      redColor = settingData[keyed].redColor
+      delay = settingData[keyed].delay 
+      cardRead = settingData[keyed].cardRead
+      doorType = settingData[keyed].doorType
+      doorAddress = settingData[keyed].doorAddress
+      toggle = settingData[keyed].toggle
+      forceOpen = settingData[keyed].forceOpen
+      bypassLock = settingData[keyed].bypassLock
+      isOk = "ok"
+    else
+      print("MAG READER IS NOT SET UP! PLEASE FIX")
+      os.exit()
+    end
+  end
+  local data = crypt(str, extraConfig.cryptKey, true)
+  if ev then
+    if (data == adminCard) then
+      term.write("Admin card swiped. Sending diagnostics\n")
+      modem.open(diagPort)
+      local diagData = extraConfig.type == "multi" and settingData[keyed] or settingData
+      if diagData == nil then
+        diagData = {}
+      end
+      diagData["status"] = isOk
+      diagData["type"] = extraConfig.type
+      diagData["version"] = doorVersion
+      diagData["key"] = extraConfig.type == "multi" and keyed or nil
+      diagData["num"] = 2
+      local counter = 0
+      if extraConfig.type == "multi" then
+        for index in pairs(settingData) do
+          counter = counter + 1
+        end
+        diagData["entries"] = counter
+      end
+      data = ser.serialize(diagData)
+      modem.broadcast(diagPort, "diag", data)
+    else
+      if keyed == nil and extraConfig.type == "multi" then
+        os.exit()
+      end
+      local tmpTable = ser.unserialize(data)
+      term.write(tmpTable["name"] .. ":")
+      if modem.isOpen(modemPort) == false then
+        modem.open(modemPort)
+      end
+      tmpTable["type"] = extraConfig.type
+      tmpTable["key"] = extraConfig.type == "multi" and keyed or nil
+      data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
+      modem.broadcast(modemPort, "checkRules", data, bypassLock)
+      local e, _, from, port, _, msg = event.pull(1, "modem_message")
+      if e then
+        data = crypt(msg, extraConfig.cryptKey, true)
+        if data == "true" then
+          term.write("Access granted\n")
+          computer.beep()
+          if extraConfig.type == "single" then
+            openDoor(delay,redColor,doorType == 0 and component.list("os_doorcontroller")[1] or doorType == 3 and component.list("os_rolldoorcontroller")[1] or nil,toggle,doorType,redSide)
+          else
+            thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide)
+          end
+        elseif data == "false" then
+          term.write("Access denied\n")
+          computer.beep()
+          computer.beep()
+        elseif data == "locked" then
+          term.write("Doors have been locked\n")
+          computer.beep()
+          computer.beep()
+          computer.beep()
+        else
+          term.write("Unknown command\n")
+        end
+      else
+        term.write("server timeout\n")
+      end
+    end
+  end
+end

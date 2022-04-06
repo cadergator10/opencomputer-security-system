@@ -297,7 +297,7 @@ while true do --TEST: Does the new cardRead system work? (test after server fini
           end
           diagData["entries"] = counter
           data = ser.serialize(diagData)
-          modem.broadcast(diagPort, "temp", data)
+          modem.broadcast(diagPort, "diag", data)
       else
           if keyed == nil then
             os.exit()
