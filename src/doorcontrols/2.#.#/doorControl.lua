@@ -194,7 +194,7 @@ local function convert( chars, dist, inv )
         end
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
         data = ser.unserialize(data)
-        if data.id == component.list("modem")[1] then
+        if data.id == component.modem.address then
           if extraConfig.type == "single" then
             if data.type == "base" then
               openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,toggle,doorType,redSide)
