@@ -83,7 +83,7 @@ local function runInstall()
     local times = 1
     local text = ""
     if editorSettings.num == 2 then editorSettings.x = tonumber(sendMsg("NOTICE! Pass overhaul for 2.#.# systems. Please refer to wiki on github","as I should have put a how to there.","Would you like to use the simple pass setup or new advanced one?","1 for simple, 2 for advanced",1)) end
-    sendMsg(4)
+    sendMsg(3)
     if editorSettings.type == "multi" then
         if editorSettings.times ~= nil then
             tmpTable = editorSettings.data
