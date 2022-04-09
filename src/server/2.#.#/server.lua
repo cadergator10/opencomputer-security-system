@@ -116,7 +116,7 @@ function getPassID(command,rules)
       return true, i, bill
     end
   end
-  return command == "checkStaff" and true or false, command == "checkStaff" and 0 or false
+  return command == "checkstaff" and true or false, command == "checkstaff" and 0 or false
 end
 
 function getVar(var,user)
@@ -149,8 +149,10 @@ end
 --return true, not value.blocked, value[var], value.staff
 function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
   local label,color = "will be set",0x000000
+	local foundOne = false
   for key, value in pairs(userTable) do
     if value.uuid == user then
+			foundOne = true
       local skipBase = false
       for i=1,#rules,1 do
         if rules[i].request == "reject" then
@@ -202,18 +204,20 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
             if good then
               label,color = call ~= 0 and "Accepted by supreme var " .. userTable.settings.label[call] or "Accepted by supreme var " .. "staff", 0x00FF00
               return true, not value.blocked, true, value.staff,label,color
-            else
-              if label == "will be set" then
-                label,color = "Denied: does not have any required passes",0xFF0000
-              end
-              return true, not value.blocked, false, value.staff,label,color
             end
           end
         end
       end
     end
   end
-  return false
+  if foundOne then
+		if label == "will be set" then
+    	label,color = "Denied: does not have any required passes",0xFF0000
+    end
+    return true, not value.blocked, false, value.staff,label,color
+  else
+		return false
+  end
 end
 
 function getDoorInfo(type,id,key)
