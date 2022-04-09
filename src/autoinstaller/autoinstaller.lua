@@ -277,7 +277,7 @@ local function runInstall()
                 text = sendMsg(nextmsg,1)
                 loopArray["cardRead"] = {{["uuid"]=uuid.next(),["call"]="",["param"]=0,["request"]="supreme",["data"]=false}}
                 if tonumber(text) == 0 then
-                    loopArray["cardRead"][1].call = "checkStaff"
+                    loopArray["cardRead"][1].call = "checkstaff"
                     loopArray["cardRead"][1].param = 0
                     sendMsg("No need to set access level. This mode doesn't require it :)")
                 else
