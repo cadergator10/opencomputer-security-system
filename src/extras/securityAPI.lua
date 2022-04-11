@@ -81,7 +81,7 @@ local function convert( chars, dist, inv )
 
   --------Called Functions
 
-  function security.setup()
+  function security.setup() --TEST: make sure that this works.
     local fill = io.open("extraConfig.txt", "r")
     if fill ~= nil then
       io.close(fill)
@@ -135,7 +135,7 @@ local function convert( chars, dist, inv )
         text = sendMsg(nextmsg,1)
         settingData.cardRead = {{["uuid"]=uuid.next(),["call"]="",["param"]=0,["request"]="supreme",["data"]=false}}
         if tonumber(text) == 0 then
-          settingData.cardRead[1].call = "checkStaff"
+          settingData.cardRead[1].call = "checkstaff"
           settingData.cardRead[1].param = 0
           sendMsg("No need to set access level. This mode doesn't require it :)")
         else
@@ -172,7 +172,7 @@ local function convert( chars, dist, inv )
         readLoad.base = tonumber(sendMsg("How many base passes do you want to add?",1))
         readLoad.reject = tonumber(sendMsg("How many reject passes do you want to add?","These don't affect supreme passes",1))
         readLoad.supreme = tonumber(sendMsg("How many supreme passes do you want to add?",1))
-        loopArray.cardRead = {}
+        settingData.cardRead = {}
         local nextmsg = {}
         nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
         for i=1,#settingData.cardRead.var,1 do
@@ -217,31 +217,31 @@ local function convert( chars, dist, inv )
         end
         for i=1,readLoad.add,1 do
             local rule = passFunc("add",i)
-            table.insert(loopArray.cardRead,rule)
+            table.insert(settingData.cardRead,rule)
         end
-        local addNum = #loopArray.cardRead
+        local addNum = #settingData.cardRead
         for i=1,readLoad.base,1 do
             local rule = passFunc("base",i)
             text = tonumber(sendMsg("How many add passes do you want to link?",1))
             if text ~= 0 then
                 local nextAdd = "Which pass do you want to add? "
                 for j=1,addNum,1 do
-                    nextAdd = nextAdd .. ", " .. j .. " = " .. settingData.cardRead.label[loopArray.cardRead[j].tempint]
+                    nextAdd = nextAdd .. ", " .. j .. " = " .. settingData.cardRead.label[settingData.cardRead[j].tempint]
                 end
                 for j=1,text,1 do
                     text = tonumber(sendMsg(nextAdd,1))
-                    table.insert(rule.data,loopArray.cardRead[text].uuid)
+                    table.insert(rule.data,settingData.cardRead[text].uuid)
                 end
             end
-            table.insert(loopArray.cardRead,rule)
+            table.insert(settingData.cardRead,rule)
         end
         for i=1,readLoad.reject,1 do
             local rule = passFunc("reject",i)
-            table.insert(loopArray.cardRead,rule)
+            table.insert(settingData.cardRead,rule)
         end
         for i=1,readLoad.supreme,1 do
             local rule = passFunc("supreme",i)
-            table.insert(loopArray.cardRead,rule)
+            table.insert(settingData.cardRead,rule)
         end
       end
       saveTable(settingData,"securitySettings.txt")
@@ -249,19 +249,31 @@ local function convert( chars, dist, inv )
     term.clear()
     settingData = loadTable("securitySettings.txt")
     extraConfig = loadTable("extraConfig.txt")
+    fill = {}
+    fill["type"] = "single"
+    fill["data"] = settingData
+    modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+    local got, _, _, _, _, fill = event.pull(2, "modem_message")
+    if got then
+      varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
+    else
+      print("Failed to receive confirmation from server")
+      os.exit()
+    end
+    got = nil
   end
 
-  function security.checkPass(str,port,loc)
+  function security.checkPass(str,loc)
     local data = crypt(str,extraConfig.cryptKey,true)
     local tmpTable = ser.unserialize(data)
     tmpTable["type"] = "single"
     data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
     if loc ~= nil then
-        modem.send(loc,port,"checkRules",data,true)
+        modem.send(loc,modemPort,"checkRules",data,true)
     else
-        modem.broadcast(port,"checkRules",data,true)
+        modem.broadcast(modemPort,"checkRules",data,true)
     end
-    modem.open(port)
+    modem.open(modemPort)
     local e, _, from, port, _, msg = event.pull(1, "modem_message")
     if e then
         data = crypt(msg, extraConfig.cryptKey, true)
@@ -271,7 +283,7 @@ local function convert( chars, dist, inv )
             return true, false
         end
     else
-
+      return false, "timed out"
     end
   end
 
