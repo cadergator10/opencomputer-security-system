@@ -113,7 +113,7 @@ local function convert( chars, dist, inv )
       term.clear()
       settingData = {}
       print("First time pass setup")
-      print("Would you like to use the simple pass setup or new advanced one?","1 for simple, 2 for advanced")
+      print("Would you like to use the simple pass setup or new advanced one? 1 for simple, 2 for advanced")
       local text = term.read()
       modem.open(modemPort)
       modem.broadcast(modemPort,"autoInstallerQuery")
@@ -132,46 +132,55 @@ local function convert( chars, dist, inv )
         for i=1,#query.data.var,1 do
           nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.label[i]
         end
-        text = sendMsg(nextmsg,1)
+        print(nextmsg)
+        text = term.read()
         settingData.cardRead = {{["uuid"]=uuid.next(),["call"]="",["param"]=0,["request"]="supreme",["data"]=false}}
         if tonumber(text) == 0 then
           settingData.cardRead[1].call = "checkstaff"
           settingData.cardRead[1].param = 0
-          sendMsg("No need to set access level. This mode doesn't require it :)")
+          print("No need to set access level. This mode doesn't require it :)")
         else
           settingData.cardRead[1].call = query.data.calls[tonumber(text)]
           if query.data.type[tonumber(text)] == "string" or query.data.type[tonumber(text)] == "-string" then
-            text = sendMsg("What is the string you would like to read? Enter text.",1)
-            settingData.cardRead[1].param = text
+            print("What is the string you would like to read? Enter text.")
+            text = term.read()
+            settingData.cardRead[1].param = text:sub(1,-2)
           elseif query.data.type[tonumber(text)] == "bool" then
             settingData.cardRead[1].param = 0
-            sendMsg("No need to set access level. This mode doesn't require it :)")
+            print("No need to set access level. This mode doesn't require it :)")
           elseif query.data.type[tonumber(text)] == "int" then
             if query.data.above[tonumber(text)] == true then
-              text = sendMsg("What level and above should be required?",1)
+              print("What level and above should be required?")
             else
-              text = sendMsg("what level exactly should be required?",1)
+              print("what level exactly should be required?")
             end
+            text = term.read()
             settingData.cardRead[1].param = tonumber(text)
           elseif query.data.type[tonumber(text)] == "-int" then
             local nextmsg = "What group are you wanting to set?"
             for i=1,#query.data.data[tonumber(text)],1 do
               nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.data[tonumber(text)][i]
             end
-            text = sendMsg(nextmsg,1)
+            print(nextmsg)
+            text = term.read()
             settingData.cardRead[1].param = tonumber(text)
           else
-            sendMsg("error in cardRead area for num 2")
+            print("error in cardRead area for num 2")
             settingData.cardRead[1].param = 0
           end
         end
       else
         local readLoad = {}
-        sendMsg("Remember how many of each pass you want before you start.","Press enter to continue",1)
-        readLoad.add = tonumber(sendMsg("How many add passes do you want to add?","remember multiple base passes can use the same add pass",1))
-        readLoad.base = tonumber(sendMsg("How many base passes do you want to add?",1))
-        readLoad.reject = tonumber(sendMsg("How many reject passes do you want to add?","These don't affect supreme passes",1))
-        readLoad.supreme = tonumber(sendMsg("How many supreme passes do you want to add?",1))
+        print("Remember how many of each pass you want before you start.","Press enter to continue")
+        term.read() text = term.read()
+        print("How many add passes do you want to add?","remember multiple base passes can use the same add pass")
+        readLoad.add = tonumber(term.read())
+        print("How many base passes do you want to add?")
+        readLoad.base = tonumber(term.read())
+        print("How many reject passes do you want to add?","These don't affect supreme passes")
+        readLoad.reject = tonumber(term.read())
+        print("How many supreme passes do you want to add?")
+        readLoad.supreme = tonumber(term.read())
         settingData.cardRead = {}
         local nextmsg = {}
         nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
@@ -180,36 +189,39 @@ local function convert( chars, dist, inv )
         end
         local passFunc = function(type,num)
         local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
-        local text = sendMsg(nextmsg.beg..type..nextmsg.mid..num..nextmsg.back,1)
+        local text = print(nextmsg.beg..type..nextmsg.mid..num..nextmsg.back,1)
         if tonumber(text) == 0 then
           newRules.call = "checkstaff"
           newRules.param = 0
-          sendMsg("No need for extra parameter. This mode doesn't require it :)")
+          print("No need for extra parameter. This mode doesn't require it :)")
         else
           newRules["tempint"] = tonumber(text)
           newRules["call"] = settingData.cardRead.calls[tonumber(text)]
           if settingData.cardRead.type[tonumber(text)] == "string" or settingData.cardRead.type == "-string" then
-            text = sendMsg("What is the string you would like to read? Enter text.",1)
-            newRules["param"] = text
+            print("What is the string you would like to read? Enter text.")
+            text = term.read()
+            newRules["param"] = text:sub(1,-2)
           elseif settingData.cardRead.type[tonumber(text)] == "bool" then
             newRules["param"] = 0
-            sendMsg("No need for extra parameter. This mode doesn't require it :)")
+            print("No need for extra parameter. This mode doesn't require it :)")
           elseif settingData.cardRead.type[tonumber(text)] == "int" then
             if settingData.cardRead.above[tonumber(text)] == true then
-              text = sendMsg("What level and above should be required?",1)
+              print("What level and above should be required?")
             else
-              text = sendMsg("what level exactly should be required?",1)
+              print("what level exactly should be required?")
             end
+            text = term.read()
             newRules["param"] = tonumber(text)
           elseif settingData.cardRead.type[tonumber(text)] == "-int" then
             local nextmsg = "What group are you wanting to set?"
             for i=1,#settingData.cardRead.data[tonumber(text)],1 do
               nextmsg = nextmsg .. ", " .. i .. " = " .. settingData.cardRead.data[tonumber(text)][i]
             end
-            text = sendMsg(nextmsg,1)
+            print(nextmsg)
+            text = term.read()
             newRules["param"] = tonumber(text)
           else
-            sendMsg("error in cardRead area for num 2")
+            print("error in cardRead area for num 2")
             newRules["param"] = 0
           end
         end
@@ -222,14 +234,16 @@ local function convert( chars, dist, inv )
         local addNum = #settingData.cardRead
         for i=1,readLoad.base,1 do
             local rule = passFunc("base",i)
-            text = tonumber(sendMsg("How many add passes do you want to link?",1))
+            print("How many add passes do you want to link?")
+            text = tonumber(term.read())
             if text ~= 0 then
                 local nextAdd = "Which pass do you want to add? "
                 for j=1,addNum,1 do
                     nextAdd = nextAdd .. ", " .. j .. " = " .. settingData.cardRead.label[settingData.cardRead[j].tempint]
                 end
                 for j=1,text,1 do
-                    text = tonumber(sendMsg(nextAdd,1))
+                    print(nextAdd)
+                    text = tonumber(term.read())
                     table.insert(rule.data,settingData.cardRead[text].uuid)
                 end
             end
