@@ -185,8 +185,8 @@ local function convert( chars, dist, inv )
         settingData.cardRead = {}
         local nextmsg = {}
         nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
-        for i=1,#settingData.cardRead.var,1 do
-          nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. settingData.cardRead.label[i]
+        for i=1,#query.data.var,1 do
+          nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. query.cardRead.label[i]
         end
         local passFunc = function(type,num)
         local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
@@ -197,26 +197,26 @@ local function convert( chars, dist, inv )
           print("No need for extra parameter. This mode doesn't require it :)")
         else
           newRules["tempint"] = tonumber(text)
-          newRules["call"] = settingData.cardRead.calls[tonumber(text)]
-          if settingData.cardRead.type[tonumber(text)] == "string" or settingData.cardRead.type == "-string" then
+          newRules["call"] = query.data.calls[tonumber(text)]
+          if query.data.type[tonumber(text)] == "string" or query.data.type == "-string" then
             print("What is the string you would like to read? Enter text.")
             text = term.read()
             newRules["param"] = text:sub(1,-2)
-          elseif settingData.cardRead.type[tonumber(text)] == "bool" then
+          elseif query.data.type[tonumber(text)] == "bool" then
             newRules["param"] = 0
             print("No need for extra parameter. This mode doesn't require it :)")
-          elseif settingData.cardRead.type[tonumber(text)] == "int" then
-            if settingData.cardRead.above[tonumber(text)] == true then
+          elseif query.data.type[tonumber(text)] == "int" then
+            if query.data.above[tonumber(text)] == true then
               print("What level and above should be required?")
             else
               print("what level exactly should be required?")
             end
             text = term.read()
             newRules["param"] = tonumber(text)
-          elseif settingData.cardRead.type[tonumber(text)] == "-int" then
+          elseif query.data.type[tonumber(text)] == "-int" then
             local nextmsg = "What group are you wanting to set?"
-            for i=1,#settingData.cardRead.data[tonumber(text)],1 do
-              nextmsg = nextmsg .. ", " .. i .. " = " .. settingData.cardRead.data[tonumber(text)][i]
+            for i=1,#query.data.data[tonumber(text)],1 do
+              nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.data[tonumber(text)][i]
             end
             print(nextmsg)
             text = term.read()
@@ -240,7 +240,7 @@ local function convert( chars, dist, inv )
             if text ~= 0 then
                 local nextAdd = "Which pass do you want to add? "
                 for j=1,addNum,1 do
-                    nextAdd = nextAdd .. ", " .. j .. " = " .. settingData.cardRead.label[settingData.cardRead[j].tempint]
+                    nextAdd = nextAdd .. ", " .. j .. " = " .. query.data.label[settingData.cardRead[j].tempint]
                 end
                 for j=1,text,1 do
                     print(nextAdd)
