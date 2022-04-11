@@ -173,7 +173,7 @@ local function convert( chars, dist, inv )
       else
         local readLoad = {}
         print("Remember how many of each pass you want before you start.","Press enter to continue")
-        term.read() text = term.read()
+        term.read()
         print("How many add passes do you want to add?","remember multiple base passes can use the same add pass")
         readLoad.add = tonumber(term.read())
         print("How many base passes do you want to add?")
