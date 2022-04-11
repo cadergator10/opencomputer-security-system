@@ -149,10 +149,10 @@ end
 --return true, not value.blocked, value[var], value.staff
 function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
   local label,color = "will be set",0x000000
-	local foundOne = false
+  local foundOne = false
   for key, value in pairs(userTable) do
     if value.uuid == user then
-			foundOne = true
+      foundOne = true
       local skipBase = false
       for i=1,#rules,1 do
         if rules[i].request == "reject" then
@@ -208,16 +208,15 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
           end
         end
       end
+      if foundOne then
+        if label == "will be set" then
+          label,color = "Denied: does not have any required passes",0xFF0000
+        end
+        return true, not value.blocked, false, value.staff,label,color
+      end
     end
   end
-  if foundOne then
-		if label == "will be set" then
-    	label,color = "Denied: does not have any required passes",0xFF0000
-    end
-    return true, not value.blocked, false, value.staff,label,color
-  else
-		return false
-  end
+  return false
 end
 
 function getDoorInfo(type,id,key)
