@@ -186,11 +186,12 @@ local function convert( chars, dist, inv )
         local nextmsg = {}
         nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
         for i=1,#query.data.var,1 do
-          nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. query.cardRead.label[i]
+          nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. query.data.label[i]
         end
         local passFunc = function(type,num)
         local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
-        local text = print(nextmsg.beg..type..nextmsg.mid..num..nextmsg.back,1)
+        print(nextmsg.beg..type..nextmsg.mid..num..nextmsg.back)
+        text = term.read()
         if tonumber(text) == 0 then
           newRules.call = "checkstaff"
           newRules.param = 0
