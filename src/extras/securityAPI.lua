@@ -127,6 +127,7 @@ local function convert( chars, dist, inv )
         print("Server is a 1.#.# version, which isn't supported!")
         os.exit()
       end
+      settingData.name = "Test Security API"
       if tonumber(text) == 1 then
         local nextmsg = "What should be read? 0 = staff,"
         for i=1,#query.data.var,1 do
