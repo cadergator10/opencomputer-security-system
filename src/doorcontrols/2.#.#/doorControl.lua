@@ -237,6 +237,10 @@ settingData = ttf.load("doorSettings.txt")
 extraConfig.version = version
 ttf.save(extraConfig,"extraConfig.txt")
 
+if modem.isOpen(modemPort) == false then
+  modem.open(modemPort)
+end
+
 local checkBool = false
 modem.broadcast(modemPort,"autoInstallerQuery")
 local e,_,_,_,_,query = event.pull(3,"modem_message")
@@ -283,10 +287,6 @@ if e ~= nil then
   end
 end
 checkBool = nil
-
-if modem.isOpen(modemPort) == false then
-  modem.open(modemPort)
-end
 
 fill = {}
 fill["type"] = extraConfig.type
