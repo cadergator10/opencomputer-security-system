@@ -44,6 +44,8 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
 
    Accelerated door setup program to put on a tablet. This helps accelerate multi-door setup time, as it is portable compared to moving back and forth between the pc and the door. Also, if your tablet has an analyzer with it, you can scan the blocks with the tablet instead of just entering the uuid manually (in beta)
 
+   Security API so you can make your own programs that sync with the security system! ex. swipe a card and check its permissions, and if true, perform a function.
+
 If you have any questions, don't hesitate to ask!
 
 <a href="https://www.youtube.com/watch?v=Ww2zGUjsZXo&list=PLJjS9EiCaZUUc1ZqsKekK1_S46aFl-682">Tutorial playlist here</a>
@@ -71,12 +73,13 @@ Beta Changelog:
    <li>2.1.1: Bug fixes I believe... 3/23</li>
    <li>2.1.2: Door control bug fix: deleting a pass no longer breaks all doors. After update, doors should fix it themselves. 3/28</li>
    <li>2.2.0: Multiple Pass update: You can now use multiple passes on the same door control, with advanced checks and such! 4/6</li>
+   <li>2.2.0 Side update 1: Created the securityAPI. Information in wiki 4/11
+   <li>2.2.0 Side update 2: Improved diagnostic tablet with a simple user interface; Moved accelerated door setup code to the diagnostic tablet
 </ul>
 
 Future updates:
 <ol>
-   <li>search through code to make sure every version number is up to date.</li>
-   <li>API to build your own programs that work with the server</li>
+   <li>Ability to edit variables to an extent, and add breaksafe for editing groups (groups are linked to a certain name instead of index in list.</li>
    <li>Remote control program for 2.#.# systems</li>
 </ol>
 
