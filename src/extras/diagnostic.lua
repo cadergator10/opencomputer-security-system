@@ -1,3 +1,4 @@
+--------Base APIS and variables
 local diagPort = 180
 local modemPort = 199
 
@@ -7,6 +8,10 @@ local modem = component.modem
 local ser = require ("serialization")
 local term = require("term")
 local ios = require("io")
+local kb = require("keyboard")
+local thread = require("thread")
+
+--------Extra Arrays
 
 local toggleTypes = {"not toggleable","toggleable"}
 local doorTypeTypes = {"Door Control","Redstone dust","Bundled Cable","Rolldoor"}
@@ -17,177 +22,165 @@ local bypassLockTypes = {"",""}
 
 local settings
 
+local lengthNum = 0
+
+local diagt = nil
+--------Base Functions
+
 local function convert( chars, dist, inv )
-  return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
-end
- 
---// exportstring( string )
---// returns a "Lua" portable version of the string
-local function exportstring( s )
-    s = string.format( "%q",s )
-    -- to replace
-    s = string.gsub( s,"\\\n","\\n" )
-    s = string.gsub( s,"\r","\\r" )
-    s = string.gsub( s,string.char(26),"\"..string.char(26)..\"" )
-    return s
+    return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
+  end
+   
+  --// exportstring( string )
+  --// returns a "Lua" portable version of the string
+  local function exportstring( s )
+      s = string.format( "%q",s )
+      -- to replace
+      s = string.gsub( s,"\\\n","\\n" )
+      s = string.gsub( s,"\r","\\r" )
+      s = string.gsub( s,string.char(26),"\"..string.char(26)..\"" )
+      return s
+  end
+
+  function waitNumInput(ev, p1, p2, p3, p4, p5)
+    local char = tonumber(keyboard.keys[p3])
+    if char > 0 then
+        if char <= lengthNum then
+            event.push("numInput",char)
+            lengthNum = 0
+        end
+    end
 end
 
-print("Sending query to server...")
-modem.open(modemPort)
-modem.broadcast(modemPort,"autoInstallerQuery")
-local e,_,_,_,_,msg = event.pull(3,"modem_message")
-modem.close(modemPort)
-if e == nil then
-    print("No query received. Assuming old server system is in place and will not work")
+function setGui(pos, text)
+    term.setCursor(pos)
+    term.write(text)
+end
+
+  --------Program Function
+
+function accsetup()
+    term.clear()
+    print("Enter 4 digit code")
+    local text = term.read()
+    local code = tonumber(text)
+    modem.open(code)
+    --local temp = {}
+    --temp["analyzer"]=component.isAvailable("barcode_reader")
+    modem.broadcast(code,"link",component.isAvailable("barcode_reader"))
+    print("linking...")
+    local e, _, from, port, _, msg = event.pull(3, "modem_message")
+    if e then
+        print("successful link")
+        local stayIn = true
+        while stayIn do
+            local data
+            e, _, from, port, _, msg, data = event.pull("modem_message")
+            if msg == "print" then
+                print(data)
+            elseif msg == "write" then
+                term.write(data)
+            elseif msg == "getInput" then
+                text = term.read()
+                modem.send(from,port,text:sub(1,-2))
+            elseif msg == "clearTerm" then
+                term.clear()
+            elseif msg == "terminate" then
+                stayIn = false
+            elseif msg == "analyzer" then
+                print("Scan the device with your tablet")
+                _, text = event.pull("tablet_use")
+                modem.send(from,port,text.analyzed[1].address)
+            end
+        end
+        print("Finished")
+        modem.close(code)
+    else
+        modem.close(code)
+        print("failed to link")
+    end
     os.exit()
-else
-  print("Query received")
-  settings = ser.unserialize(msg)
-  
 end
 
+function diagThr(num,diagInfo)
+    local nextVar = 0
+    ::Beg::
+    print(num ~= 0 and "Door # " .. num or "Scan a door to start")
+    if num == 0 then 
+        local t = thread.current()
+        t:kill()
+    end
+    print("1. Main Door Info")
+    print("2. Entire door Info (coming soon)")
+    print("3. Pass Rules")
+    lengthNum = 3
+    _, nextVar = event.pull("numInput")
+    if numInput == 1 then
+        goto type1
+    elseif numInput == 2 then
+        goto type2
+    elseif numInput == 3 then
+        goto type3
+    end
+    ::type1::
+        term.clear()
+        print("All the info will be here")
+        print("Click the screen to go back to menu")
+        event.pull("touch")
+        goto Beg
+    ::type2::
+        term.clear()
+        print("Entire door will be here")
+        print("Click the screen to go back to menu")
+        event.pull("touch")
+        goto Beg
+    ::type3::
+        term.clear()
+        print("Rule passes will be here")
+        print("Click the screen to go back to menu")
+        event.pull("touch")
+        goto Beg
+end
+
+function diagnostics()
+    term.clear()
+    local num = 0
+    while true do
+        if modem.isOpen(diagPort) == false then
+            modem.open(diagPort)
+        end
+
+        local _, _, from, port, _, command, msg = event.pull("modem_message")
+        local data = msg
+        local diagInfo = ser.unserialize(data)
+        local temp
+        num = num + 1
+        if diagThr ~= nil then
+            diagThr:kill()
+        end
+        diagThr = thread.create(diagThr,num,diagInfo)
+    end
+end
+
+--------Startup Code
+
+event.listen("key_down", waitNumInput)
+process.info().data.signal = function(...)
+  print("caught hard interrupt")
+  event.ignore("modem_message", update)
+  testR = false
+  os.exit()
+end
 
 term.clear()
-print("Admin Diagnostic Tablet (2.#.# only)")
-print("Swipe an admin card on any security door to retrieve the door information")
-local num = 0
-while true do
-  if modem.isOpen(diagPort) == false then
-    modem.open(diagPort)
-  end
-  
-  local _, _, from, port, _, command, msg = event.pull("modem_message")
-  local data = msg
-  local diagInfo = ser.unserialize(data)
-  local temp
-  num = num + 1
-  term.clear()
-  print("Retrieved new door information # " .. num)
-  print("--Main Computer info--")
-  print("door status = " .. diagInfo["status"])
-  print("door type = " .. diagInfo["type"])
-  print("door update version = " .. diagInfo["version"])
-    
-  if diagInfo["status"] ~= "incorrect magreader" then
-        if diagInfo["type"] == "multi" then
-        print("number of door entries: " .. diagInfo["entries"])
-        print("door's key: " .. diagInfo["key"])
-        print("door name: " .. diagInfo["name"])
-    else
-        print("***")
-        print("***")
-        print("door name: " .. diagInfo["name"])
-    end
-    print("---Door's settings----")
-    local cardRead2 = 0
-    if diagInfo["cardRead"] == "checkstaff" then
-      temp = "staff"
-    else
-      temp = "ERROR"
-      for i=1,#settings.data.label,1 do
-        if settings.data.calls[i] == diagInfo["cardRead"] then
-          temp = settings.data.label[i]
-          cardRead2 = i
-        end
-      end
-    end
-    print("Pass type: " .. temp)
-
-    --[[if diagInfo["cardRead"] == "checkstaff" then
-      print("***")
-    else
-      if settings.data.type[cardRead2] == "string" or settings.data.type[cardRead2] == "-string" then
-        print("String input required: " .. diagInfo["accessLevel"])
-      elseif settings.data.type[cardRead2] == "int" then
-        if settings.data.above[cardRead2] == true then
-          print("Level above " .. diagInfo["accessLevel"])
-        else
-          print("Level exactly " .. diagInfo["accessLevel"])
-        end
-      elseif settings.data.type[cardRead2] == "-int" then]]
-        --print("Group " .. settings.data.data[cardRead2][diagInfo["accessLevel"]])
-      --[[else
-        print("***")
-      end
-    end]]
-    print("Rule amount: " .. #diagInfo.cardRead)
-    print("(might add ability to see all rules in future update)")
-    print("Door type: " .. doorTypeTypes[diagInfo["doorType"] + 1])
-    if diagInfo["doorType"] == 1 then
-        if diagInfo["type"] == "multi" then
-            print("Redstone Output Side: " .. redSideTypes[3])
-        	print("***")
-        else
-            print("Redstone Output Side: " .. redSideTypes[diagInfo["redSide"] + 1])
-        	print("***")
-        end
-    elseif diagInfo["doorType"] == 2 then
-        if diagInfo["type"] == "multi" then
-            print("Redstone Output Side: " .. redSideTypes[3])
-        	print("Redstone Output Color: " .. redColorTypes[diagInfo["redColor"] + 1])
-        else
-            print("Redstone Output Side: " .. redSideTypes[diagInfo["redSide"] + 1])
-        	print("Redstone Output Color: " .. redColorTypes[diagInfo["redColor"] + 1])
-        end
-    else
-        print("***")
-        print("***")
-    end
-    print("Toggle Door: " .. toggleTypes[diagInfo["toggle"] + 1])
-    if diagInfo["toggle"] == 0 then
-        print("Delay: " .. diagInfo["delay"])
-    else
-        print("***")
-    end
-    if diagInfo["forceOpen"] == nil then
-            print("Opens when forceopen called: " .. forceOpenTypes[2])
-    else
-            print("Opens when forceopen called: " .. forceOpenTypes[diagInfo["forceOpen"] + 1])
-    end
-    if diagInfo["bypassLock"] == nil then
-            print("Bypasses door lock: " .. forceOpenTypes[1])
-    else
-            print("Bypasses door lock: " .. forceOpenTypes[diagInfo["bypassLock"] + 1])
-    end
-  print("-Component Addresses--")
-        if diagInfo["type"] == "multi" then
-            if diagInfo["doorType"] == 0 then
-                print("Reader Address: " .. diagInfo["reader"])
-                print("Doorcontrol Address: " .. diagInfo["doorAddress"])
-            elseif diagInfo["doorType"] == 3 then
-                print("Reader Address: " .. diagInfo["reader"])
-                print("RollDoor Address: " .. diagInfo["doorAddress"])
-            else
-				      print("Reader Address: " .. diagInfo["reader"])
-           		print("***")
-            end
-        else
-           print("***")
-           print("***")
-        end
-  else
-        if diagInfo["type"] == "multi" then
-        print("number of door entries: " .. diagInfo["entries"])
-        print("***")
-    else
-        print("***")
-        print("***")
-    end
-  print("---Door's settings----")
-    print("***")
-    print("***")
-    print("***")
-    print("***")
-    print("***")
-    print("***")
-    print("***")
-    print("***")
-    print("***")
-  print("-Component Addresses--")
-  print("***")
-  print("***")
-  end
-    
-  print("--------------------")
-  print("Scan another security door to retrieve it's door information")
+local nextVar = 0
+print("Which app would you like to run?")
+print("1. Diagnostics")
+print("2. Accelerated door setup")
+lengthNum = 2
+_, nextVar = event.pull("numInput")
+if nextVar == 1 then
+    diagnostics()
+elseif nextVar == 2 then
+    accsetup()
 end

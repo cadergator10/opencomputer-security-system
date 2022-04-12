@@ -138,7 +138,7 @@ local function convert( chars, dist, inv )
     end
   end
 
-  local function update(msg, localAddress, remoteAddress, port, distance, msg, data) --TODO: Move code from all door types here & make it work as single or multi door.
+  local function update(_, localAddress, remoteAddress, port, distance, msg, data) --TODO: Move code from all door types here & make it work as single or multi door.
     if (testR == true) then
       data = crypt(data, extraConfig.cryptKey, true)
       if msg == "forceopen" then
