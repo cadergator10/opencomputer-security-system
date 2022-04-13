@@ -19,6 +19,9 @@ local redSideTypes = {"bottom","top","back","front","right","left"}
 local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}
 local forceOpenTypes = {"False","True"}
 local bypassLockTypes = {"",""}
+local passTypes = {["string"]="Inputtable String",["-string"]="Hidden String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
+
+local supportedVersions = {"2.2.0","2.2.1","2.3.0"}
 
 local settings
 
@@ -54,8 +57,28 @@ end
 
 function setGui(pos, text)
     term.setCursor(pos)
+    term.clearLine()
     term.write(text)
 end
+
+function getPassID(command,rules)
+    local bill
+    if rules ~= nil then
+      for i=1,#rules,1 do
+        if rules[i].uuid == command then
+          command = rules[i].call
+          bill = i
+          break
+        end
+      end
+    end
+    for i=1,#settings.data.calls,1 do
+      if command == settings.data.calls[i] then
+        return true, i, bill
+      end
+    end
+    return command == "checkstaff" and true or false, command == "checkstaff" and 0 or false
+  end
 
   --------Program Function
 
@@ -105,10 +128,20 @@ end
 function diagThr(num,diagInfo)
     local nextVar = 0
     ::Beg::
+    term.clear()
     print(num ~= 0 and "Door # " .. num or "Scan a door to start")
     if num == 0 then 
         local t = thread.current()
         t:kill()
+    end
+    local works = false
+    for i=1,#supportedVersions,1 do
+        if supportedVersions[i] == diagInfo.version then
+            works = true
+        end
+    end
+    if works = false then
+        print("Door is version " .. diagInfo.version .. " which is unsupported")
     end
     print("1. Main Door Info")
     print("2. Entire door Info (coming soon)")
@@ -124,7 +157,49 @@ function diagThr(num,diagInfo)
     end
     ::type1::
         term.clear()
-        print("All the info will be here")
+        print("--Main Computer info--")
+        print("door status = " .. diagInfo["status"])
+        print("door type = " .. diagInfo["type"])
+        print("door update version = " .. diagInfo["version"])
+        if diagInfo["status"] ~= "incorrect magreader" then
+            if diagInfo["type"] == "multi" then
+                print("number of door entries: " .. diagInfo["entries"])
+                print("door's key: " .. diagInfo["key"])
+                print("door name: " .. diagInfo["name"])
+            else
+                print("***")
+                print("***")
+                print("door name: " .. diagInfo["name"])
+            end
+            print("-Component Addresses--")
+            if diagInfo["type"] == "multi" then
+                if diagInfo["doorType"] == 0 then
+                    print("Reader Address: " .. diagInfo["reader"])
+                    print("Doorcontrol Address: " .. diagInfo["doorAddress"])
+                elseif diagInfo["doorType"] == 3 then
+                    print("Reader Address: " .. diagInfo["reader"])
+                    print("RollDoor Address: " .. diagInfo["doorAddress"])
+                else
+				    print("Reader Address: " .. diagInfo["reader"])
+           		    print("***")
+                end
+            else
+                print("***")
+                print("***")
+            end
+        else
+            if diagInfo["type"] == "multi" then
+                print("number of door entries: " .. diagInfo["entries"])
+            else
+                print("***")
+            end
+            print("***")
+            print("***")
+            print("-Component Addresses--")
+            print("***")
+            print("***")
+        end
+        print("--------------------")
         print("Click the screen to go back to menu")
         event.pull("touch")
         goto Beg
@@ -136,9 +211,71 @@ function diagThr(num,diagInfo)
         goto Beg
     ::type3::
         term.clear()
-        print("Rule passes will be here")
-        print("Click the screen to go back to menu")
-        event.pull("touch")
+        local num = 1
+        local pageChange = function(set,pos)
+            if set == false then
+                if pos then
+                    if num < #diagInfo.cardRead then
+                        num = num + 1
+                    end
+                else
+                    if num > 1 then
+                        num = num - 1
+                    end
+                end
+            else
+                num = set
+            end
+            term.clear()
+            setGui(1,"Page" .. num .. "/" .. #diagInfo.cardRead)
+            setGui(2,"Use left and right to change pages")
+            setGui(3,"Click the screen to go back to menu")
+            setGui(4,"")
+            local t = getPassID(diagInfo.cardRead[num].call)
+            setGui(5,"Pass name: " .. settings.data.label[t])
+            setGui(6,"Pass type: " .. passTypes[settings.data.type[t]])
+            if settings.data.type[t] == "string" or settings.data.type[t] == "-string" then
+                setGui(6,"Requires exact string: " .. diagInfo.cardRead[num].param)
+            elseif settings.data.type[t] == "int" or settings.data.type[t] == "-int" then
+                if settings.data.above[t] == true and settings.data.type[t] == "int" then
+                    setGui(6,"Requires level above: " .. diagInfo.cardRead[num].param)
+                else
+                    if settings.data.type[t] == "-int" then
+                        setGui(6,"Requires group: " .. settings.data.data[t][diagInfo.cardRead[num].param])
+                    else
+                        setGui(6,"Requires exact level: " .. diagInfo.cardRead[num].param)
+                    end
+                end
+            elseif settings.data.type[t] == "bool" then
+                setGui(6,"No extra parameters")
+            end
+            setGui(7,"Rule Type: " .. diagInfo.cardRead[num].request)
+            if diagInfo.cardRead[num].request == "base" and #diagInfo.cardRead[num].data > 0 then
+                setGui(8,"")
+                setGui(9,"Requires " .. #diagInfo.cardRead[num].data .. " Add passes")
+                for i=1,#diagInfo.cardRead[num].data,1 do
+                    local p = getPassID(diagInfo.cardRead[num].data[i],diagInfo.cardRead)
+                    setGui(i + 9,settings.data.label[t] .. " | " .. passTypes[settings.data.type[t]])
+                end
+            end
+        end
+        pageChange(1)
+        local pickle = true
+        while pickle do
+            local ev, p1, p2, p3 = event.pullMultiple("touch","key_down")
+            if ev == "touch" then
+                pickle = false
+            else
+                local char = keyboard.keys[p3]
+                if char == "left" then
+                    pageChange(false,false)
+                    os.sleep(1)
+                elseif char == "right" then
+                    pageChange(false,true)
+                    os.sleep(1)
+                end
+            end
+        end
         goto Beg
 end
 
@@ -163,6 +300,20 @@ function diagnostics()
 end
 
 --------Startup Code
+
+term.clear()
+print("Sending query to server...")
+modem.open(modemPort)
+modem.broadcast(modemPort,"autoInstallerQuery")
+local e,_,_,_,_,msg = event.pull(3,"modem_message")
+modem.close(modemPort)
+if e == nil then
+    print("No query received. Assuming old server system is in place and will not work")
+    os.exit()
+else
+  print("Query received")
+  settings = ser.unserialize(msg)
+end
 
 event.listen("key_down", waitNumInput)
 process.info().data.signal = function(...)
