@@ -8,7 +8,7 @@ local modem = component.modem
 local ser = require ("serialization")
 local term = require("term")
 local ios = require("io")
-local kb = require("keyboard")
+local keyboard = require("keyboard")
 local thread = require("thread")
 local process = require("process")
 
@@ -47,7 +47,7 @@ local function convert( chars, dist, inv )
   end
 
 function setGui(pos, text)
-    term.setCursor(pos)
+    term.setCursor(1,pos)
     term.clearLine()
     term.write(text)
 end
@@ -120,8 +120,9 @@ function diagThr(num,diagInfo)
     local nextVar = 0
     ::Beg::
     term.clear()
-    print(num ~= 0 and "Door # " .. num or "Scan a door to start")
-    if num == 0 then 
+    print("Door # " .. num)
+    if num == 0 then
+        print("Scan a door to start")
         local t = thread.current()
         t:kill()
     end
@@ -222,32 +223,36 @@ function diagThr(num,diagInfo)
             setGui(2,"Use left and right to change pages")
             setGui(3,"Click the screen to go back to menu")
             setGui(4,"")
-            local t = getPassID(diagInfo.cardRead[num].call)
-            setGui(5,"Pass name: " .. settings.data.label[t])
-            setGui(6,"Pass type: " .. passTypes[settings.data.type[t]])
-            if settings.data.type[t] == "string" or settings.data.type[t] == "-string" then
-                setGui(6,"Requires exact string: " .. diagInfo.cardRead[num].param)
-            elseif settings.data.type[t] == "int" or settings.data.type[t] == "-int" then
-                if settings.data.above[t] == true and settings.data.type[t] == "int" then
-                    setGui(6,"Requires level above: " .. diagInfo.cardRead[num].param)
-                else
-                    if settings.data.type[t] == "-int" then
-                        setGui(6,"Requires group: " .. settings.data.data[t][diagInfo.cardRead[num].param])
+            local a, t = getPassID(diagInfo.cardRead[num].call)
+            if a then
+                setGui(5,"Pass name: " .. settings.data.label[t])
+                setGui(6,"Pass type: " .. passTypes[settings.data.type[t]])
+                if settings.data.type[t] == "string" or settings.data.type[t] == "-string" then
+                    setGui(6,"Requires exact string: " .. diagInfo.cardRead[num].param)
+                elseif settings.data.type[t] == "int" or settings.data.type[t] == "-int" then
+                    if settings.data.above[t] == true and settings.data.type[t] == "int" then
+                        setGui(6,"Requires level above: " .. diagInfo.cardRead[num].param)
                     else
-                        setGui(6,"Requires exact level: " .. diagInfo.cardRead[num].param)
+                        if settings.data.type[t] == "-int" then
+                            setGui(6,"Requires group: " .. settings.data.data[t][diagInfo.cardRead[num].param])
+                        else
+                            setGui(6,"Requires exact level: " .. diagInfo.cardRead[num].param)
+                        end
+                    end
+                elseif settings.data.type[t] == "bool" then
+                    setGui(6,"No extra parameters")
+                end
+                setGui(7,"Rule Type: " .. diagInfo.cardRead[num].request)
+                if diagInfo.cardRead[num].request == "base" and #diagInfo.cardRead[num].data > 0 then
+                    setGui(8,"")
+                    setGui(9,"Requires " .. #diagInfo.cardRead[num].data .. " Add passes")
+                    for i=1,#diagInfo.cardRead[num].data,1 do
+                        local p = getPassID(diagInfo.cardRead[num].data[i],diagInfo.cardRead)
+                        setGui(i + 9,settings.data.label[t] .. " | " .. passTypes[settings.data.type[t]])
                     end
                 end
-            elseif settings.data.type[t] == "bool" then
-                setGui(6,"No extra parameters")
-            end
-            setGui(7,"Rule Type: " .. diagInfo.cardRead[num].request)
-            if diagInfo.cardRead[num].request == "base" and #diagInfo.cardRead[num].data > 0 then
-                setGui(8,"")
-                setGui(9,"Requires " .. #diagInfo.cardRead[num].data .. " Add passes")
-                for i=1,#diagInfo.cardRead[num].data,1 do
-                    local p = getPassID(diagInfo.cardRead[num].data[i],diagInfo.cardRead)
-                    setGui(i + 9,settings.data.label[t] .. " | " .. passTypes[settings.data.type[t]])
-                end
+            else
+                setGui(5,"Failed at line 226 or so")
             end
         end
         pageChange(1)
@@ -283,10 +288,10 @@ function diagnostics()
         local diagInfo = ser.unserialize(data)
         local temp
         num = num + 1
-        if diagThr ~= nil then
-            diagThr:kill()
+        if diagt ~= nil then
+            diagt:kill()
         end
-        diagThr = thread.create(diagThr,num,diagInfo)
+        diagt = thread.create(diagThr,num,diagInfo)
     end
 end
 
