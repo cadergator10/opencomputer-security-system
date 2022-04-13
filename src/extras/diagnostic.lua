@@ -116,7 +116,7 @@ function accsetup()
     os.exit()
 end
 
-function diagThr(num,diagInfo)
+function diagThr(num,diagInfo) --TODO: When there are no doors, it prints nothing. FIX IT FIX IT FIX IT
     local nextVar = 0
     ::Beg::
     term.clear()
@@ -243,7 +243,7 @@ function diagThr(num,diagInfo)
                     setGui(6,"No extra parameters")
                 end
                 setGui(7,"Rule Type: " .. diagInfo.cardRead[num].request)
-                if diagInfo.cardRead[num].request == "base" and #diagInfo.cardRead[num].data > 0 then
+                if diagInfo.cardRead[num].request == "base" and #diagInfo.cardRead[num].data > 0 then --FIXME: Shows base variable, not all the add variables
                     setGui(8,"")
                     setGui(9,"Requires " .. #diagInfo.cardRead[num].data .. " Add passes")
                     for i=1,#diagInfo.cardRead[num].data,1 do
