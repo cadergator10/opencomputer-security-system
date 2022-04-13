@@ -46,19 +46,6 @@ local function convert( chars, dist, inv )
       return s
   end
 
-function waitNumInput()
-    while true do
-        local ev, p1, p2, p3, p4, p5 = event.pull("key_down")
-        local char = tonumber(keyboard.keys[p3])
-        if char > 0 then
-            if char <= lengthNum then
-                event.push("numInput",char)
-                lengthNum = 0
-            end
-        end
-    end
-end
-
 function setGui(pos, text)
     term.setCursor(pos)
     term.clearLine()
@@ -319,12 +306,18 @@ else
   settings = ser.unserialize(msg)
 end
 
-local paa = thread.create(waitNumInput)
-process.info().data.signal = function(...)
-  print("caught hard interrupt")
-  paa:kill()
-  os.exit()
-end
+thread.create(function()
+    while true do
+        local ev, p1, p2, p3, p4, p5 = event.pull("key_down")
+        local char = tonumber(keyboard.keys[p3])
+        if char > 0 then
+            if char <= lengthNum then
+                event.push("numInput",char)
+                lengthNum = 0
+            end
+        end
+    end
+end)
 
 term.clear()
 local nextVar = 0
