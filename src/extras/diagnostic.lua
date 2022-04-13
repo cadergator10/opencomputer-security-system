@@ -10,6 +10,7 @@ local term = require("term")
 local ios = require("io")
 local kb = require("keyboard")
 local thread = require("thread")
+local process = require("process")
 
 --------Extra Arrays
 
@@ -25,7 +26,7 @@ local supportedVersions = {"2.2.0","2.2.1","2.3.0"}
 
 local settings
 
-local lengthNum = 0
+lengthNum = 0
 
 local diagt = nil
 --------Base Functions
@@ -45,12 +46,15 @@ local function convert( chars, dist, inv )
       return s
   end
 
-  function waitNumInput(ev, p1, p2, p3, p4, p5)
-    local char = tonumber(keyboard.keys[p3])
-    if char > 0 then
-        if char <= lengthNum then
-            event.push("numInput",char)
-            lengthNum = 0
+function waitNumInput()
+    while true do
+        local ev, p1, p2, p3, p4, p5 = event.pull("key_down")
+        local char = tonumber(keyboard.keys[p3])
+        if char > 0 then
+            if char <= lengthNum then
+                event.push("numInput",char)
+                lengthNum = 0
+            end
         end
     end
 end
@@ -140,7 +144,7 @@ function diagThr(num,diagInfo)
             works = true
         end
     end
-    if works = false then
+    if works == false then
         print("Door is version " .. diagInfo.version .. " which is unsupported")
     end
     print("1. Main Door Info")
@@ -148,11 +152,11 @@ function diagThr(num,diagInfo)
     print("3. Pass Rules")
     lengthNum = 3
     _, nextVar = event.pull("numInput")
-    if numInput == 1 then
+    if nextVar == 1 then
         goto type1
-    elseif numInput == 2 then
+    elseif nextVar == 2 then
         goto type2
-    elseif numInput == 3 then
+    elseif nextVar == 3 then
         goto type3
     end
     ::type1::
@@ -315,11 +319,10 @@ else
   settings = ser.unserialize(msg)
 end
 
-event.listen("key_down", waitNumInput)
+local paa = thread.create(waitNumInput)
 process.info().data.signal = function(...)
   print("caught hard interrupt")
-  event.ignore("modem_message", update)
-  testR = false
+  paa:kill()
   os.exit()
 end
 
