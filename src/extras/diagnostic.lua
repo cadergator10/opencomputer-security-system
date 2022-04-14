@@ -116,13 +116,12 @@ function accsetup()
     os.exit()
 end
 
-function diagThr(num,diagInfo) --TODO: When there are no doors, it prints nothing. FIX IT FIX IT FIX IT
+function diagThr(num,diagInfo)
     local nextVar = 0
     ::Beg::
     term.clear()
-    print("Door # " .. num)
+    print(num ~= 0 and "Door # " .. num or "Scan a door to start")
     if num == 0 then
-        print("Scan a door to start")
         local t = thread.current()
         t:kill()
     end
@@ -243,12 +242,12 @@ function diagThr(num,diagInfo) --TODO: When there are no doors, it prints nothin
                     setGui(6,"No extra parameters")
                 end
                 setGui(7,"Rule Type: " .. diagInfo.cardRead[num].request)
-                if diagInfo.cardRead[num].request == "base" and #diagInfo.cardRead[num].data > 0 then --FIXME: Shows base variable, not all the add variables
+                if diagInfo.cardRead[num].request == "base" and #diagInfo.cardRead[num].data > 0 then
                     setGui(8,"")
                     setGui(9,"Requires " .. #diagInfo.cardRead[num].data .. " Add passes")
                     for i=1,#diagInfo.cardRead[num].data,1 do
                         local p = getPassID(diagInfo.cardRead[num].data[i],diagInfo.cardRead)
-                        setGui(i + 9,settings.data.label[t] .. " | " .. passTypes[settings.data.type[t]])
+                        setGui(i + 9,settings.data.label[p] .. " | " .. passTypes[settings.data.type[p]])
                     end
                 end
             else
@@ -278,6 +277,7 @@ end
 function diagnostics()
     term.clear()
     local num = 0
+    diagt = thread.create(diagThr,num)
     while true do
         if modem.isOpen(diagPort) == false then
             modem.open(diagPort)
