@@ -2,7 +2,7 @@
 
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "2.2.0"
+local doorVersion = "2.2.1"
 testR = true
 
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
@@ -406,6 +406,7 @@ while true do
       diagData["version"] = doorVersion
       diagData["key"] = extraConfig.type == "multi" and keyed or nil
       diagData["num"] = 2
+      diagData["entireDoor"] = extraConfig.type == "multi" and settingData or nil
       local counter = 0
       if extraConfig.type == "multi" then
         for index in pairs(settingData) do
