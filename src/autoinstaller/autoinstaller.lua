@@ -190,7 +190,6 @@ local function runInstall()
                 sendMsg("No need to set access level. This mode doesn't require it :)")
             end
         else --BEGINNING OF 2.0.0 -----------------------------------------------------
-            --TEST: Does this run and work? Test it before publishing to main branch
             if editorSettings.x == 2 then
                 local readLoad = {}
                 sendMsg("Remember how many of each pass you want before you start.","type something and enter to continue",1)
@@ -297,7 +296,7 @@ local function runInstall()
                         loopArray["cardRead"][1].param = tonumber(text)
                     elseif editorSettings.settings.type[tonumber(text)] == "-int" then
                         local nextmsg = "What group are you wanting to set?"
-                        for i=1,#editorSettings.settings.data[tonumber(text)],1 do --TEST: Does grabbing loopArray again work as int
+                        for i=1,#editorSettings.settings.data[tonumber(text)],1 do
                             nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[tonumber(text)][i]
                         end
                         text = sendMsg(nextmsg,1)
