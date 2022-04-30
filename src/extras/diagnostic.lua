@@ -85,7 +85,7 @@ function pageChange(pos,length,call,...)
             end
         end
     else
-        pageNum = set
+        pageNum = pos
     end
     call(...)
 end
@@ -104,47 +104,48 @@ function doorDiag(isMain,diagInfo2) --TEST: Test if this functions on main and e
         print("")
     end
     if isMain == true then
-    print("--Main Computer info--")
-    print(isMain == true and "door status = " .. diagInfo2["status"] or "***")
-    print("door type = " .. diagInfo2["type"])
-    print("door update version = " .. diagInfo2["version"])
-    if diagInfo2["status"] ~= "incorrect magreader" then
-        if diagInfo2["type"] == "multi" then
-            print("number of door entries: " .. diagInfo2["entries"])
-            print("door's key: " .. diagInfo2["key"])
-            print("door name: " .. diagInfo2["name"])
-        else
-            print("***")
-            print("***")
-            print("door name: " .. diagInfo2["name"])
-        end
-        print("-Component Addresses--")
-        if diagInfo2["type"] == "multi" then
-            if diagInfo2["doorType"] == 0 then
-                print("Reader Address: " .. diagInfo2["reader"])
-                print("Doorcontrol Address: " .. diagInfo2["doorAddress"])
-            elseif diagInfo2["doorType"] == 3 then
-                print("Reader Address: " .. diagInfo2["reader"])
-                print("RollDoor Address: " .. diagInfo2["doorAddress"])
+        print("--Main Computer info--")
+        print(isMain == true and "door status = " .. diagInfo2["status"] or "***")
+        print("door type = " .. diagInfo2["type"])
+        print("door update version = " .. diagInfo2["version"])
+        if diagInfo2["status"] ~= "incorrect magreader" then
+            if diagInfo2["type"] == "multi" then
+                print("number of door entries: " .. diagInfo2["entries"])
+                print("door's key: " .. diagInfo2["key"])
+                print("door name: " .. diagInfo2["name"])
             else
-                print("Reader Address: " .. diagInfo2["reader"])
+                print("***")
+                print("***")
+                print("door name: " .. diagInfo2["name"])
+            end
+            print("-Component Addresses--")
+            if diagInfo2["type"] == "multi" then
+                if diagInfo2["doorType"] == 0 then
+                    print("Reader Address: " .. diagInfo2["reader"])
+                    print("Doorcontrol Address: " .. diagInfo2["doorAddress"])
+                elseif diagInfo2["doorType"] == 3 then
+                    print("Reader Address: " .. diagInfo2["reader"])
+                    print("RollDoor Address: " .. diagInfo2["doorAddress"])
+                else
+                    print("Reader Address: " .. diagInfo2["reader"])
+                    print("***")
+                end
+            else
+                print("***")
                 print("***")
             end
         else
+            if diagInfo2["type"] == "multi" then
+                print("number of door entries: " .. diagInfo2["entries"])
+            else
+                print("***")
+            end
+            print("***")
+            print("***")
+            print("-Component Addresses--")
             print("***")
             print("***")
         end
-    else
-        if diagInfo2["type"] == "multi" then
-            print("number of door entries: " .. diagInfo2["entries"])
-        else
-            print("***")
-        end
-        print("***")
-        print("***")
-        print("-Component Addresses--")
-        print("***")
-        print("***")
     end
 end
 
@@ -214,8 +215,8 @@ function diagThr(num,diagInfo)
     end
     print("1. Main Door Info")
     print("2. Pass Rules")
-    if diagInfo.version == "2.2.1" then print("3. Entire door Info") end
-    lengthNum = diagInfo.version == "2.2.1" and 3 or 2
+    if diagInfo.version == "2.2.1" and diagInfo.type == "multi" then print("3. Entire door Info") end
+    lengthNum = diagInfo.version == "2.2.1" and diagInfo.type == "multi" and 3 or 2
     _, nextVar = event.pull("numInput")
     if nextVar == 1 then
         goto mainInfo
@@ -225,13 +226,16 @@ function diagThr(num,diagInfo)
         goto allInfo
     end
     ::mainInfo::
+    do
         term.clear()
         doorDiag(true,diagInfo)
         print("--------------------")
         print("Click the screen to go back to menu")
         event.pull("touch")
         goto Beg
+    end
     ::allInfo::
+    do
         local indexed = {}
         for key, _ in pairs(diagInfo["entireDoor"]) do
             table.insert(indexed,key)
@@ -255,7 +259,9 @@ function diagThr(num,diagInfo)
             end
         end
         goto Beg
+    end
     ::passRules::
+    do
         term.clear()
         local passChange = function()
             term.clear()
@@ -287,8 +293,12 @@ function diagThr(num,diagInfo)
                     setGui(8,"")
                     setGui(9,"Requires " .. #diagInfo.cardRead[pageNum].data .. " Add passes")
                     for i=1,#diagInfo.cardRead[pageNum].data,1 do
-                        local p = getPassID(diagInfo.cardRead[pageNum].data[i],diagInfo.cardRead)
-                        setGui(i + 9,settings.data.label[p] .. " | " .. passTypes[settings.data.type[p]])
+                        local q,p = getPassID(diagInfo.cardRead[pageNum].data[i],diagInfo.cardRead)
+                        if q then
+                            setGui(i + 9,settings.data.label[p] .. " | " .. passTypes[settings.data.type[p]])
+                        else
+                            setGui(i + 9,"Error (pass might be missing)")
+                        end
                     end
                 end
             else
@@ -313,6 +323,7 @@ function diagThr(num,diagInfo)
             end
         end
         goto Beg
+    end
 end
 
 function diagnostics()
@@ -356,15 +367,16 @@ thread.create(function()
     while true do
         local ev, p1, p2, p3, p4, p5 = event.pull("key_down")
         local char = tonumber(keyboard.keys[p3])
-        if char > 0 then
-            if char <= lengthNum then
-                event.push("numInput",char)
-                lengthNum = 0
+        if char ~= nil then
+            if char > 0 then
+                if char <= lengthNum then
+                    event.push("numInput",char)
+                    lengthNum = 0
+                end
             end
         end
     end
 end)
-
 term.clear()
 local nextVar = 0
 print("Which app would you like to run?")
