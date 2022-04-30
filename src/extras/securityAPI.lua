@@ -81,7 +81,7 @@ local function convert( chars, dist, inv )
 
   --------Called Functions
 
-  function security.setup() --TEST: make sure that this works.
+  function security.setup()
     local fill = io.open("extraConfig.txt", "r")
     if fill ~= nil then
       io.close(fill)
