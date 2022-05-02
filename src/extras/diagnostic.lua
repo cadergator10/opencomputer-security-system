@@ -19,10 +19,10 @@ local doorTypeTypes = {"Door Control","Redstone dust","Bundled Cable","Rolldoor"
 local redSideTypes = {"bottom","top","back","front","right","left"}
 local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}
 local forceOpenTypes = {"False","True"}
-local bypassLockTypes = {"",""}
+local bypassLockTypes = {"False","True"}
 local passTypes = {["string"]="Inputtable String",["-string"]="Hidden String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"2.2.0","2.2.1"}
+local supportedVersions = {"2.2.0","2.2.1","2.3.0"}
 
 local settings
 
@@ -90,7 +90,7 @@ function pageChange(pos,length,call,...)
     call(...)
 end
 
-function doorDiag(isMain,diagInfo2) --TEST: Test if this functions on main and entire door mode.
+function doorDiag(isMain,diagInfo2) --TODO: Add all the diagnostic information (toggle, redtype, etc.)
     if isMain == false then
         local diagInfo3 = diagInfo["entireDoor"][diagInfo2[pageNum]]
         diagInfo3["type"] = extraConfig.type
@@ -215,8 +215,12 @@ function diagThr(num,diagInfo)
     end
     print("1. Main Door Info")
     print("2. Pass Rules")
-    if diagInfo.version == "2.2.1" and diagInfo.type == "multi" then print("3. Entire door Info") end
-    lengthNum = diagInfo.version == "2.2.1" and diagInfo.type == "multi" and 3 or 2
+    local lengthMe = 2
+    if diagInfo.version ~= "2.2.0" and diagInfo.type == "multi" then
+        lengthMe = 1
+        print(lengthMe .. ". Entire door Info") 
+    end
+    lengthNum = lengthMe
     _, nextVar = event.pull("numInput")
     if nextVar == 1 then
         goto mainInfo
@@ -293,9 +297,9 @@ function diagThr(num,diagInfo)
                     setGui(8,"")
                     setGui(9,"Requires " .. #diagInfo.cardRead[pageNum].data .. " Add passes")
                     for i=1,#diagInfo.cardRead[pageNum].data,1 do
-                        local q,p = getPassID(diagInfo.cardRead[pageNum].data[i],diagInfo.cardRead)
+                        local q,p,r = getPassID(diagInfo.cardRead[pageNum].data[i],diagInfo.cardRead)
                         if q then
-                            setGui(i + 9,settings.data.label[p] .. " | " .. passTypes[settings.data.type[p]])
+                            setGui(i + 9,settings.data.label[p] .. " | " .. passTypes[settings.data.type[p]] .. " | " .. diagInfo.cardRead[r].param)
                         else
                             setGui(i + 9,"Error (pass might be missing)")
                         end
@@ -336,14 +340,107 @@ function diagnostics()
         end
 
         local _, _, from, port, _, command, msg = event.pull("modem_message")
-        local data = msg
-        local diagInfo = ser.unserialize(data)
-        local temp
+        local diagInfo = ser.unserialize(msg)
         num = num + 1
         if diagt ~= nil then
             diagt:kill()
         end
         diagt = thread.create(diagThr,num,diagInfo)
+    end
+end
+
+function doorediting() --TODO: Make an editing program for the diagnostic tablet
+    term.clear()
+    setGui(1,"Scan the door you would like to edit")
+    setGui(2,"If the door is a multidoor, you can edit all doors connected")
+    if modem.isOpen(diagPort) == false then
+        modem.open(diagPort)
+    end
+    local _, _, from, port, _, command, msg = event.pull("modem_message")
+    local diagInfo = ser.unserialize(msg)
+    local editTable = {}
+    if diagInfo.type == "single" then
+        editTable[1] = diagInfo
+    else
+        local num = 2
+        if diagInfo.status == "incorrect magreader" then
+            diagInfo.key = "unreal"
+            num = 1
+        else
+            editTable[1] = diagInfo.entireDoor[diagInfo.key]
+        end
+        for key,value in pairs(diagInfo) do
+            if key ~= diagInfo.key then
+                editTable[num] = diagInfo.entireDoor[key]
+                editTable[num].key = key
+            end
+        end
+    end
+    local pig = true
+    local pageChangeAllowed = true
+    term.clear()
+    local editChange = function()
+        setGui(1,"Page" .. pageNum .. "/" .. #editTable)
+        setGui(2,"Use left and right to change doors (if multi door)")
+        setGui(3,"Click the screen to save and submit to door control")
+        setGui(4,"")
+        if diagInfo.type == "single" then
+            setGui(16,"***")
+        else
+            setGui(5,"Door Key: " .. editTable[pageNum].key)
+            if diagInfo.status == "incorrect magreader" then
+                setGui(6,"Notice: magreader swiped isn't linked to any door. If it's supposed to be linked you will have to fix it.")
+            end
+            setGui(7,"")
+            if editTable[pageNum].doorType == 0 or editTable[pageNum].doorType == 3 then
+                setGui(16,"Door Addresss: " .. editTable[pageNum].doorAddress " | Reader Address: " .. editTable[pageNum].reader)
+            else
+                setGui(16,"Reader Address: " .. editTable[pageNum].reader)
+            end
+        end
+        setGui(8,"1. Change Door Name: " .. editTable[pageNum].name)
+        setGui(9,diagInfo.type == "multi" and "2. Change Door type/color/uuid" or "2. Change Door type/color/side")
+        setGui(10,"3. Change toggle and delay")
+        setGui(11,"4. Change force open and bypass lock")
+        setGui(12,"5. Change passes")
+        setGui(13,diagInfo.type == "multi" and "6. Change card reader uuid" or "")
+        setGui(14,"")
+        setGui(15,"Door type: " .. doorTypeTypes[editTable[pageNum].doorType + 1])
+        setGui(17,toggleTypes[editTable[pageNum].toggle] .. " | Delay: " .. editTable[pageNum].delay)
+        setGui(18,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen] .. " | bypass lock: " .. bypassLockTypes[editTable[pageNum].bypassLock])
+        setGui(19,"Amount of passes: " .. #editTable[pageNum].cardRead)
+    end
+    pageChange(1,#editTable,editChange)
+    while pig do
+        lengthNum = diagInfo.type == "single" and 5 or 6
+        local ev, p1, p2, p3 = event.pullMultiple("touch","key_down","numInput")
+        if ev == "touch" then
+            pig = false
+        elseif ev == "key_down" and pageChangeAllowed then
+            local char = keyboard.keys[p3]
+            if char == "left" then
+                pageChange(false,#editTable,passChange)
+                os.sleep(1)
+            elseif char == "right" then
+                pageChange(true,#editTable,passChange)
+                os.sleep(1)
+            end
+        elseif ev == "numInput" then
+            pageChangeAllowed = false
+            if p1 == 1 then
+                
+            elseif p1 == 2 then
+
+            elseif p1 == 3 then
+
+            elseif p1 == 4 then
+
+            elseif p1 == 5 then
+
+            elseif p1 == 6 then
+
+            end
+        end
     end
 end
 
@@ -382,10 +479,13 @@ local nextVar = 0
 print("Which app would you like to run?")
 print("1. Diagnostics")
 print("2. Accelerated door setup")
-lengthNum = 2
+print("3. Door Editing")
+lengthNum = 3
 _, nextVar = event.pull("numInput")
 if nextVar == 1 then
     diagnostics()
 elseif nextVar == 2 then
     accsetup()
+elseif nextVar == 3 then
+    doorediting()
 end

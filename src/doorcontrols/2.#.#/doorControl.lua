@@ -138,7 +138,7 @@ local function convert( chars, dist, inv )
     end
   end
 
-  local function update(_, localAddress, remoteAddress, port, distance, msg, data)
+  local function update(_, localAddress, remoteAddress, port, distance, msg, data) --TODO: Make the door editable with the diagnostic tablet
     if (testR == true) then
       data = crypt(data, extraConfig.cryptKey, true)
       if msg == "forceopen" then
@@ -212,6 +212,23 @@ local function convert( chars, dist, inv )
               thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, settingData[data.key].redSide)
             end
           end
+        end
+      elseif msg == "changeSettings" then
+        data = ser.unserialize(data)
+        settingData = data
+        os.execute("copy doorSettings.txt dsBackup.txt")
+        ttf.save(settingData,"doorSettings.txt")
+        print("New settings received")
+        local fill = {}
+        fill["type"] = extraConfig.type
+        fill["data"] = settingData
+        modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+        local got, _, _, _, _, fill = event.pull(2, "modem_message")
+        if got then
+          varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
+        else
+          print("Failed to receive confirmation from server")
+          os.exit()
         end
       end
     end
