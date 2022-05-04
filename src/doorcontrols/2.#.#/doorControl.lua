@@ -49,10 +49,12 @@ local varSettings = {}
 local settingData = {}
 local extraConfig = {}
 
+local osVersion = false
+
 local function convert( chars, dist, inv )
     return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
   end
-   
+
   local function crypt(str,k,inv)
     local enc= "";
     for i=1,#str do
@@ -79,9 +81,16 @@ local function convert( chars, dist, inv )
           str:gsub(pattern, function(c) fields[#fields+1] = c end)
           return fields
   end
+
+  function colorDo(key,num,delay)
+    component.proxy(key).setLightState(num)
+    os.sleep(delay)
+    component.proxy(key).setLightState(0)
+  end
   
-  function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH)
+  function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH,key)
     if(toggleH == 0) then
+      if osVersion then component.proxy(key).setLightState(3) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).open()
@@ -109,7 +118,9 @@ local function convert( chars, dist, inv )
       else
         os.sleep(1)
       end
+      if osVersion then component.proxy(key).setLightState(0) end
     else
+      if osVersion then thread.create(colorDo,key,3,2) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).toggle()
@@ -257,6 +268,9 @@ ttf.save(extraConfig,"extraConfig.txt")
 if modem.isOpen(modemPort) == false then
   modem.open(modemPort)
 end
+if magReader.swipeIndicator ~= nil then
+  osVersion = true
+end
 
 local checkBool = false
 modem.broadcast(modemPort,"autoInstallerQuery")
@@ -317,6 +331,13 @@ else
   os.exit()
 end
 got = nil
+
+if osVersion then
+  for key,_ in pairs(component.list("os_magreader")) do
+    component.proxy(key).swipeIndicator(false)
+    component.proxy(key).setLightState(0)
+  end
+end
 
 if extraConfig.type == "single" then
   doorType = settingData.doorType
@@ -433,6 +454,15 @@ while true do
       end
       data = ser.serialize(diagData)
       modem.broadcast(diagPort, "diag", data)
+      if osVersion then 
+        component.proxy(address).setLightState(1)
+        os.sleep(0.3)
+        component.proxy(address).setLightState(2)
+        os.sleep(0.3)
+        component.proxy(address).setLightState(3)
+        os.sleep(0.3)
+        component.proxy(address).setLightState(0)
+      end
     else
       if keyed == nil and extraConfig.type == "multi" then
         os.exit()
@@ -453,16 +483,22 @@ while true do
           term.write("Access granted\n")
           computer.beep()
           if extraConfig.type == "single" then
-            openDoor(delay,redColor,true,toggle,doorType,redSide)
+            openDoor(delay,redColor,true,toggle,doorType,redSide,address)
           else
-            thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide)
+            thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide,address)
           end
         elseif data == "false" then
           term.write("Access denied\n")
+          if osVersion then 
+            thread.create(colorDo,address,1,1)
+          end
           computer.beep()
           computer.beep()
         elseif data == "locked" then
           term.write("Doors have been locked\n")
+          if osVersion then 
+            thread.create(colorDo,address,1,2)
+          end
           computer.beep()
           computer.beep()
           computer.beep()
@@ -471,6 +507,9 @@ while true do
         end
       else
         term.write("server timeout\n")
+        if osVersion then 
+          thread.create(colorDo,address,2,1)
+        end
       end
     end
   end
