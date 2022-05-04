@@ -2,7 +2,7 @@
 
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "2.2.1"
+local doorVersion = "2.2.2"
 testR = true
 
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
@@ -149,7 +149,7 @@ local function convert( chars, dist, inv )
     end
   end
 
-  local function update(_, localAddress, remoteAddress, port, distance, msg, data) --TODO: Make the door editable with the diagnostic tablet
+  local function update(_, localAddress, remoteAddress, port, distance, msg, data)
     if (testR == true) then
       data = crypt(data, extraConfig.cryptKey, true)
       if msg == "forceopen" then
@@ -241,6 +241,32 @@ local function convert( chars, dist, inv )
           print("Failed to receive confirmation from server")
           os.exit()
         end
+      elseif msg == "identifyMag" then
+        local lightShow = function(data)
+          if osVersion == true then
+            for i=1,5,1 do
+              for j=1,3,1 do
+                component.proxy(data.reader).setLightState(j)
+                os.sleep(0.3)
+              end
+            end
+          else
+            if data.doorType == 2 then
+              for i=1,5,1 do
+                component.redstone.setBundledOutput(redSide,{ [data.redColor] = 255 })
+                os.sleep(0.5)
+                component.redstone.setBundledOutput(redSide,{ [data.redColor] = 0 })
+                os.sleep(0.5)
+              end
+            else
+              for i=1,10,1 do
+                component.proxy(data.doorAddress).toggle()
+                os.sleep(0.5)
+              end
+            end
+          end
+        end
+        thread.create(lightShow,ser.unserialize(data))
       end
     end
   end

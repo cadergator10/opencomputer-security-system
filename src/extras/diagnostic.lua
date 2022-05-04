@@ -19,10 +19,9 @@ local doorTypeTypes = {"Door Control","Redstone dust","Bundled Cable","Rolldoor"
 local redSideTypes = {"bottom","top","back","front","right","left"}
 local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}
 local forceOpenTypes = {"False","True"}
-local bypassLockTypes = {"False","True"}
 local passTypes = {["string"]="Inputtable String",["-string"]="Hidden String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"2.2.0","2.2.1","2.3.0"}
+local supportedVersions = {"2.2.0","2.2.1","2.2.2"}
 
 local settings
 
@@ -90,7 +89,7 @@ function pageChange(pos,length,call,...)
     call(...)
 end
 
-function doorDiag(isMain,diagInfo2) --TODO: Add all the diagnostic information (toggle, redtype, etc.)
+function doorDiag(isMain,diagInfo2)
     if isMain == false then
         local diagInfo3 = diagInfo["entireDoor"][diagInfo2[pageNum]]
         diagInfo3["type"] = extraConfig.type
@@ -118,6 +117,7 @@ function doorDiag(isMain,diagInfo2) --TODO: Add all the diagnostic information (
                 print("***")
                 print("door name: " .. diagInfo2["name"])
             end
+            print("door pass amount: " .. #diagInfo2.cardRead)
             print("-Component Addresses--")
             if diagInfo2["type"] == "multi" then
                 if diagInfo2["doorType"] == 0 then
@@ -134,6 +134,22 @@ function doorDiag(isMain,diagInfo2) --TODO: Add all the diagnostic information (
                 print("***")
                 print("***")
             end
+            print("----Door Functions----")
+            print("Door Type: " .. doorTypeTypes[diagInfo2.doorType + 1])
+            if diagInfo2.doorType == 2 then
+                print(diagInfo2.type == "single" and "Redstone output side: " .. diagInfo2.redSide or "***")
+                print("Redstone output color: " .. diagInfo2.redColor)
+            elseif diagInfo2.doorType == 1 then
+                print("Redstone output side: " .. diagInfo2.redSide)
+                print("***")
+            else
+                print("***")
+                print("***")
+            end
+            print("Toggleable: " .. toggleTypes[diagInfo2.toggle + 1])
+            print(diagInfo2.toggle == 0 and "Delay: " .. diagInfo2.delay or "***")
+            print("ForceOpen: " .. forceOpenTypes[diagInfo2.forceOpen + 1])
+            print("BypassLock: " .. forceOpenTypes[diagInfo2.bypassLock + 1])
         else
             if diagInfo2["type"] == "multi" then
                 print("number of door entries: " .. diagInfo2["entries"])
@@ -142,7 +158,15 @@ function doorDiag(isMain,diagInfo2) --TODO: Add all the diagnostic information (
             end
             print("***")
             print("***")
+            print("***")
             print("-Component Addresses--")
+            print("***")
+            print("***")
+            print("----Door Functions----")
+            print("***")
+            print("***")
+            print("***")
+            print("***")
             print("***")
             print("***")
         end
@@ -349,7 +373,7 @@ function diagnostics()
     end
 end
 
-function doorediting() --TODO: Make an editing program for the diagnostic tablet
+function doorediting() --TEST: Can this edit the doors?
     term.clear()
     setGui(1,"Scan the door you would like to edit")
     setGui(2,"If the door is a multidoor, you can edit all doors connected")
@@ -358,6 +382,10 @@ function doorediting() --TODO: Make an editing program for the diagnostic tablet
     end
     local _, _, from, port, _, command, msg = event.pull("modem_message")
     local diagInfo = ser.unserialize(msg)
+    if diagInfo.version ~= "2.2.2" then
+        setGui(4,"Door version is not 2.2.2 and above and is unsupported")
+        os.exit()
+    end
     local editTable = {}
     if diagInfo.type == "single" then
         editTable[1] = diagInfo
@@ -407,8 +435,13 @@ function doorediting() --TODO: Make an editing program for the diagnostic tablet
         setGui(14,"")
         setGui(15,"Door type: " .. doorTypeTypes[editTable[pageNum].doorType + 1])
         setGui(17,toggleTypes[editTable[pageNum].toggle] .. " | Delay: " .. editTable[pageNum].delay)
-        setGui(18,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen] .. " | bypass lock: " .. bypassLockTypes[editTable[pageNum].bypassLock])
+        setGui(18,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock])
         setGui(19,"Amount of passes: " .. #editTable[pageNum].cardRead)
+
+        setGui(20,"----------------------")
+        setGui(21,"Press a number to edit those parameters")
+        setGui(22,diagInfo.type == "multi" and "Press enter to identify a linked magreader" or "")
+        setGui(23,"")
     end
     pageChange(1,#editTable,editChange)
     while pig do
@@ -424,24 +457,111 @@ function doorediting() --TODO: Make an editing program for the diagnostic tablet
             elseif char == "right" then
                 pageChange(true,#editTable,passChange)
                 os.sleep(1)
+            elseif char == "enter" then
+                if diagInfo.type == "multi" then
+                    modem.send(from,port,"identifyMag",ser.serialize(editTable[pageNum]))
+                end
             end
         elseif ev == "numInput" then
             pageChangeAllowed = false
+            local text
             if p1 == 1 then
-                
+                setGui(21,"What should the name be set to?")
+                term.setCursor(1,23)
+                text = term.read()
+                editTable[pageNum].name = text:sub(1,-2)
             elseif p1 == 2 then
-
+                setGui(21,diagInfo.type == "multi" and "Door Type? 0= doorcontrol. 2=bundled. 3=rolldoor. NEVER USE 1! NUMBER ONLY" or "Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY")
+                term.setCursor(1,23)
+                text = term.read()
+                editTable[pageNum].doorType = tonumber(text)
+                if editTable[pageNum].doorType == 2 then
+                    setGui(21,"What color. Use the Color API wiki provided on the opencomputers wiki, and enter the NUMBER")
+                    term.setCursor(1,23)
+                    text = term.read()
+                    editTable[pageNum].redColor = tonumber(text)
+                    if diagInfo.type == "multi" then
+                        editTable[pageNum].doorAddress = ""
+                    else
+                        setGui(21,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
+                        term.setCursor(1,23)
+                        text = term.read()
+                        editTable[pageNum].redSide = tonumber(text)
+                    end
+                elseif editTable[pageNum].doorType == 1 then
+                    editTable[pageNum].redColor = 0
+                    setGui(21,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
+                    term.setCursor(1,23)
+                    text = term.read()
+                    editTable[pageNum].redSide = tonumber(text)
+                else
+                    editTable[pageNum].redColor = 0
+                    if diagInfo.type == "single" then editTable[pageNum].redSide = 0 end
+                    if diagInfo.type == "multi" then
+                        setGui(21,"What is the address for the doorcontrol/rolldoor block?")
+                        setGui(22,"Enter uuid as text")
+                        term.setCursor(1,23)
+                        text = term.read()
+                        editTable[pageNum].doorAddress = text:sub(1,-2)
+                    end
+                end
             elseif p1 == 3 then
-
+                setGui(21,"Should the door be toggleable or not? 0 for autoclose and 1 for toggleable")
+                term.setCursor(1,23)
+                text = term.read()
+                editTable[pageNum].toggle = tonumber(text)
+                if editTable[pageNum].toggle == 0 then
+                    setGui(21,"How long should the door stay open?")
+                    term.setCursor(1,23)
+                    text = term.read()
+                    editTable[pageNum].delay = tonumber(text)
+                else
+                    editTable[pageNum].delay = 0
+                end
             elseif p1 == 4 then
-
+                setGui(21,"Is this door opened whenever all doors are asked to open?")
+                setGui(22,"0 if no, 1 if yes. Default is yes")
+                term.setCursor(1,23)
+                text = term.read()
+                editTable[pageNum].forceOpen = tonumber(text)
+                setGui(21,"Is this door immune to lock door?")
+                setGui(22,"0 if no, 1 if yes. Default is no")
+                term.setCursor(1,23)
+                text = term.read()
+                editTable[pageNum].bypassLock = tonumber(text)
             elseif p1 == 5 then
-
+                setGui(21,"At the moment, there is no way to edit passes without")
+                setGui(22,"using the autoinstaller to do so.")
+                setGui(23,"Press enter to continue")
+                term.read()
             elseif p1 == 6 then
-
+                setGui(21,"What is the address for the magreader block?")
+                setGui(22,"Enter uuid as text")
+                term.setCursor(1,23)
+                text = term.read()
+                editTable[pageNum].doorAddress = text:sub(1,-2)
             end
+            pageChange(pageNum,#editTable,editChange)
+            pageChangeAllowed = true
         end
     end
+    local poo = {}
+    if diagInfo.type == "multi" then
+        for i=1,#editTable,1 do
+            poo[editTable[i].key] = editTable[i]
+            poo.key = nil
+        end
+    else
+        poo = editTable[1]
+        poo.status = nil
+        poo.type = nil
+        poo.version = nil
+        poo.num = nil
+    end
+    modem.send(from,modemPort,"changeSettings",ser.serialize(poo))
+    term.clear()
+    print("finished")
+    os.exit()
 end
 
 --------Startup Code

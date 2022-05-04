@@ -148,7 +148,7 @@ local function runInstall()
         text = sendMsg(editorSettings.type == "multi" and "Door Type? 0= doorcontrol. 2=bundled. 3=rolldoor. NEVER USE 1! NUMBER ONLY" or "Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY",1)
         loopArray["doorType"] = tonumber(text)
         if loopArray.doorType == 2 then
-            text = sendMsg("What color. Use the Color API wiki provided in discord, and enter the NUMBER",1)
+            text = sendMsg("What color. Use the Color API wiki on the opencomputers wiki, and enter the NUMBER",1)
             loopArray["redColor"] = tonumber(text)
             if editorSettings.type == "multi" then
                 sendMsg("No need to input anything for door address. The setting doesn't require it :)")

@@ -23,7 +23,7 @@ local aRD = fs.path(system.getCurrentScript())
 local workspace, window, menu
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton
-local addVarButton, delVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton
+local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton
  
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
@@ -388,7 +388,7 @@ function checkTypeCallback()
   elseif selected == 4 then
     extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "groups (comma seperating each group)"))
     extraVar.onInputFinished = function()
-    addVarArray.data = split(extraVar.text,",")
+      addVarArray.data = split(extraVar.text,",")
     end
   else
     
@@ -426,7 +426,6 @@ function addVarYesCall()
   window:remove()
 end
 
---TODO: Add the ability to edit passes
 function addVarCallback()
   addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
@@ -475,6 +474,24 @@ function delVarCallback()
   end
   varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "remove variable from system"))
   varYesButton.onTouch = delVarYesCall
+end
+
+function editVarCallback() --TODO: Add the ability to edit passes
+  addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, 0xEEEEEE, 0x2D2D2D, 0xCCCCCC, 0x888888))
+  for i=1,#userTable.settings.var,1 do
+    typeSelect:addItem(userTable.settings.label[i])
+  end
+  local showThis = function(int)
+    addVarArray.var = userTable.settings.var[int]
+    addVarArray.label = userTable.settings.label[int]
+    addVarArray.calls = userTable.settings.calls[int]
+    addVarArray.type = userTable.settings.type[int]
+    addVarArray.above = userTable.settings.above[int]
+    addVarArray.data = userTable.settings.data[int]
+  end
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "change variable properties"))
 end
  
 ----------GUI SETUP
@@ -602,16 +619,18 @@ listDownButton.onTouch = pageCallback,false
 window:addChild(GUI.panel(64,36,86,1,0x6B6E74))
 userNewButton = window:addChild(GUI.button(4,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "new"))
 userNewButton.onTouch = newUserCallback
-userDeleteButton = window:addChild(GUI.button(18,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "delete")) 
+userDeleteButton = window:addChild(GUI.button(20,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "delete")) 
 userDeleteButton.onTouch = deleteUserCallback
-userChangeUUIDButton = window:addChild(GUI.button(32,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "reset uuid")) 
+userChangeUUIDButton = window:addChild(GUI.button(36,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "reset uuid")) 
 userChangeUUIDButton.onTouch = changeUUID
-createAdminCardButton = window:addChild(GUI.button(46,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "admin card")) 
+createAdminCardButton = window:addChild(GUI.button(52,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "admin card")) 
 createAdminCardButton.onTouch = writeAdminCardCallback
-addVarButton = window:addChild(GUI.button(60,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add var")) 
+addVarButton = window:addChild(GUI.button(68,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add var")) 
 addVarButton.onTouch = addVarCallback
-delVarButton = window:addChild(GUI.button(72,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "delete var")) 
+delVarButton = window:addChild(GUI.button(84,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "delete var")) 
 delVarButton.onTouch = delVarCallback
+--editVarButton = window:addChild(GUI.button(100,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "edit var")) 
+--editVarButton.onTouch = editVarCallback
  
 --CardWriter frame
  
