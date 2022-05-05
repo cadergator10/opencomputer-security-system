@@ -151,8 +151,8 @@ local function convert( chars, dist, inv )
 
   local function update(_, localAddress, remoteAddress, port, distance, msg, data)
     if (testR == true) then
-      data = crypt(data, extraConfig.cryptKey, true)
       if msg == "forceopen" then
+        data = crypt(data, extraConfig.cryptKey, true)
         if extraConfig.type == "single" then
           if(doorType == 0)then
             if data == "open" then

@@ -434,8 +434,8 @@ function doorediting() --TEST: Can this edit the doors?
         setGui(13,diagInfo.type == "multi" and "6. Change card reader uuid" or "")
         setGui(14,"")
         setGui(15,"Door type: " .. doorTypeTypes[editTable[pageNum].doorType + 1])
-        setGui(17,toggleTypes[editTable[pageNum].toggle] .. " | Delay: " .. editTable[pageNum].delay)
-        setGui(18,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock])
+        setGui(17,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
+        setGui(18,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
         setGui(19,"Amount of passes: " .. #editTable[pageNum].cardRead)
 
         setGui(20,"----------------------")
@@ -545,6 +545,7 @@ function doorediting() --TEST: Can this edit the doors?
             pageChangeAllowed = true
         end
     end
+    term.clear()
     local poo = {}
     if diagInfo.type == "multi" then
         for i=1,#editTable,1 do
@@ -559,7 +560,6 @@ function doorediting() --TEST: Can this edit the doors?
         poo.num = nil
     end
     modem.send(from,modemPort,"changeSettings",ser.serialize(poo))
-    term.clear()
     print("finished")
     os.exit()
 end
