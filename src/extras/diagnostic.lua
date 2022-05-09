@@ -468,16 +468,19 @@ function doorediting() --TEST: Can this edit the doors?
             if p1 == 1 then
                 setGui(21,"What should the name be set to?")
                 term.setCursor(1,23)
+                term.clearLine()
                 text = term.read()
                 editTable[pageNum].name = text:sub(1,-2)
             elseif p1 == 2 then
                 setGui(21,diagInfo.type == "multi" and "Door Type? 0= doorcontrol. 2=bundled. 3=rolldoor. NEVER USE 1! NUMBER ONLY" or "Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY")
                 term.setCursor(1,23)
+                term.clearLine()
                 text = term.read()
                 editTable[pageNum].doorType = tonumber(text)
                 if editTable[pageNum].doorType == 2 then
                     setGui(21,"What color. Use the Color API wiki provided on the opencomputers wiki, and enter the NUMBER")
                     term.setCursor(1,23)
+                    term.clearLine()
                     text = term.read()
                     editTable[pageNum].redColor = tonumber(text)
                     if diagInfo.type == "multi" then
@@ -485,6 +488,7 @@ function doorediting() --TEST: Can this edit the doors?
                     else
                         setGui(21,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
                         term.setCursor(1,23)
+                        term.clearLine()
                         text = term.read()
                         editTable[pageNum].redSide = tonumber(text)
                     end
@@ -492,6 +496,7 @@ function doorediting() --TEST: Can this edit the doors?
                     editTable[pageNum].redColor = 0
                     setGui(21,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
                     term.setCursor(1,23)
+                    term.clearLine()
                     text = term.read()
                     editTable[pageNum].redSide = tonumber(text)
                 else
@@ -501,6 +506,7 @@ function doorediting() --TEST: Can this edit the doors?
                         setGui(21,"What is the address for the doorcontrol/rolldoor block?")
                         setGui(22,"Enter uuid as text")
                         term.setCursor(1,23)
+                        term.clearLine()
                         text = term.read()
                         editTable[pageNum].doorAddress = text:sub(1,-2)
                     end
@@ -508,11 +514,13 @@ function doorediting() --TEST: Can this edit the doors?
             elseif p1 == 3 then
                 setGui(21,"Should the door be toggleable or not? 0 for autoclose and 1 for toggleable")
                 term.setCursor(1,23)
+                term.clearLine()
                 text = term.read()
                 editTable[pageNum].toggle = tonumber(text)
                 if editTable[pageNum].toggle == 0 then
                     setGui(21,"How long should the door stay open?")
                     term.setCursor(1,23)
+                    term.clearLine()
                     text = term.read()
                     editTable[pageNum].delay = tonumber(text)
                 else
@@ -522,11 +530,13 @@ function doorediting() --TEST: Can this edit the doors?
                 setGui(21,"Is this door opened whenever all doors are asked to open?")
                 setGui(22,"0 if no, 1 if yes. Default is yes")
                 term.setCursor(1,23)
+                term.clearLine()
                 text = term.read()
                 editTable[pageNum].forceOpen = tonumber(text)
                 setGui(21,"Is this door immune to lock door?")
                 setGui(22,"0 if no, 1 if yes. Default is no")
                 term.setCursor(1,23)
+                term.clearLine()
                 text = term.read()
                 editTable[pageNum].bypassLock = tonumber(text)
             elseif p1 == 5 then
@@ -538,6 +548,7 @@ function doorediting() --TEST: Can this edit the doors?
                 setGui(21,"What is the address for the magreader block?")
                 setGui(22,"Enter uuid as text")
                 term.setCursor(1,23)
+                term.clearLine()
                 text = term.read()
                 editTable[pageNum].doorAddress = text:sub(1,-2)
             end

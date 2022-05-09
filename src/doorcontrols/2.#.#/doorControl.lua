@@ -85,12 +85,12 @@ local function convert( chars, dist, inv )
   function colorDo(key,num,delay)
     component.proxy(key).setLightState(num)
     os.sleep(delay)
-    component.proxy(key).setLightState(0)
+    component.proxy(key).setLightState(1)
   end
   
   function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH,key)
     if(toggleH == 0) then
-      if osVersion then component.proxy(key).setLightState(3) end
+      if osVersion then component.proxy(key).setLightState(4) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).open()
@@ -118,9 +118,9 @@ local function convert( chars, dist, inv )
       else
         os.sleep(1)
       end
-      if osVersion then component.proxy(key).setLightState(0) end
+      if osVersion then component.proxy(key).setLightState(1) end
     else
-      if osVersion then thread.create(colorDo,key,3,2) end
+      if osVersion then thread.create(colorDo,key,4,2) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).toggle()
@@ -237,6 +237,16 @@ local function convert( chars, dist, inv )
         local got, _, _, _, _, fill = event.pull(2, "modem_message")
         if got then
           varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
+          if extraConfig.type == "single" then
+            doorType = settingData.doorType
+            redSide = settingData.redSide
+            redColor = settingData.redColor
+            delay = settingData.delay
+            cardRead = settingData.cardRead
+            toggle = settingData.toggle
+            forceOpen = settingData.forceOpen
+            bypassLock = settingData.bypassLock
+          end
         else
           print("Failed to receive confirmation from server")
           os.exit()
@@ -245,11 +255,12 @@ local function convert( chars, dist, inv )
         local lightShow = function(data)
           if osVersion == true then
             for i=1,5,1 do
-              for j=1,3,1 do
+              for j=2,4,1 do
                 component.proxy(data.reader).setLightState(j)
                 os.sleep(0.3)
               end
             end
+            component.proxy(data.reader).setLightState(1)
           else
             if data.doorType == 2 then
               for i=1,5,1 do
@@ -361,7 +372,7 @@ got = nil
 if osVersion then
   for key,_ in pairs(component.list("os_magreader")) do
     component.proxy(key).swipeIndicator(false)
-    component.proxy(key).setLightState(0)
+    component.proxy(key).setLightState(1)
   end
 end
 
@@ -481,13 +492,13 @@ while true do
       data = ser.serialize(diagData)
       modem.broadcast(diagPort, "diag", data)
       if osVersion then 
-        component.proxy(address).setLightState(1)
-        os.sleep(0.3)
         component.proxy(address).setLightState(2)
         os.sleep(0.3)
         component.proxy(address).setLightState(3)
         os.sleep(0.3)
-        component.proxy(address).setLightState(0)
+        component.proxy(address).setLightState(4)
+        os.sleep(0.3)
+        component.proxy(address).setLightState(1)
       end
     else
       if keyed == nil and extraConfig.type == "multi" then
@@ -516,14 +527,14 @@ while true do
         elseif data == "false" then
           term.write("Access denied\n")
           if osVersion then 
-            thread.create(colorDo,address,1,1)
+            thread.create(colorDo,address,2,1)
           end
           computer.beep()
           computer.beep()
         elseif data == "locked" then
           term.write("Doors have been locked\n")
           if osVersion then 
-            thread.create(colorDo,address,1,2)
+            thread.create(colorDo,address,2,2)
           end
           computer.beep()
           computer.beep()
@@ -534,7 +545,7 @@ while true do
       else
         term.write("server timeout\n")
         if osVersion then 
-          thread.create(colorDo,address,2,1)
+          thread.create(colorDo,address,3,1)
         end
       end
     end
