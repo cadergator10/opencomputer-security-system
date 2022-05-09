@@ -401,6 +401,7 @@ function doorediting() --TEST: Can this edit the doors?
             if key ~= diagInfo.key then
                 editTable[num] = diagInfo.entireDoor[key]
                 editTable[num].key = key
+                num = num + 1
             end
         end
     end
