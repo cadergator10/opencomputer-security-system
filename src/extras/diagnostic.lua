@@ -422,7 +422,7 @@ function doorediting() --TEST: Can this edit the doors?
             end
             setGui(7,"")
             if editTable[pageNum].doorType == 0 or editTable[pageNum].doorType == 3 then
-                setGui(16,"Door Addresss: " .. editTable[pageNum].doorAddress " | Reader Address: " .. editTable[pageNum].reader)
+                setGui(16,"Door Address: " .. editTable[pageNum].doorAddress .. " | Reader Address: " .. editTable[pageNum].reader)
             else
                 setGui(16,"Reader Address: " .. editTable[pageNum].reader)
             end
@@ -438,7 +438,6 @@ function doorediting() --TEST: Can this edit the doors?
         setGui(17,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
         setGui(18,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
         setGui(19,"Amount of passes: " .. #editTable[pageNum].cardRead)
-
         setGui(20,"----------------------")
         setGui(21,"Press a number to edit those parameters")
         setGui(22,diagInfo.type == "multi" and "Press enter to identify a linked magreader" or "")
@@ -453,10 +452,10 @@ function doorediting() --TEST: Can this edit the doors?
         elseif ev == "key_down" and pageChangeAllowed then
             local char = keyboard.keys[p3]
             if char == "left" then
-                pageChange(false,#editTable,passChange)
+                pageChange(false,#editTable,editChange)
                 os.sleep(1)
             elseif char == "right" then
-                pageChange(true,#editTable,passChange)
+                pageChange(true,#editTable,editChange)
                 os.sleep(1)
             elseif char == "enter" then
                 if diagInfo.type == "multi" then
