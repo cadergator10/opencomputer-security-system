@@ -82,6 +82,21 @@ local function convert( chars, dist, inv )
           return fields
   end
 
+  function deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+  end
+
   function colorDo(key,num,delay)
     component.proxy(key).setLightState(num)
     os.sleep(delay)
@@ -472,7 +487,7 @@ while true do
     if (data == adminCard) then
       term.write("Admin card swiped. Sending diagnostics\n")
       modem.open(diagPort)
-      local diagData = extraConfig.type == "multi" and settingData[keyed] or settingData
+      local diagData = extraConfig.type == "multi" and deepcopy(settingData[keyed]) or deepcopy(settingData)
       if diagData == nil then
         diagData = {}
       end
@@ -481,7 +496,7 @@ while true do
       diagData["version"] = doorVersion
       diagData["key"] = extraConfig.type == "multi" and keyed or nil
       diagData["num"] = 2
-      diagData["entireDoor"] = extraConfig.type == "multi" and settingData or nil
+      diagData["entireDoor"] = extraConfig.type == "multi" and deepcopy(settingData) or nil
       local counter = 0
       if extraConfig.type == "multi" then
         for index in pairs(settingData) do

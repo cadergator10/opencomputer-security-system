@@ -47,6 +47,21 @@ local function convert( chars, dist, inv )
       return s
   end
 
+function deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
 function setGui(pos, text)
     term.setCursor(1,pos)
     term.clearLine()
@@ -388,18 +403,18 @@ function doorediting() --TEST: Can this edit the doors?
     end
     local editTable = {}
     if diagInfo.type == "single" then
-        editTable[1] = diagInfo
+        editTable[1] = deepcopy(diagInfo)
     else
         local num = 2
         if diagInfo.status == "incorrect magreader" then
             diagInfo.key = "unreal"
             num = 1
         else
-            editTable[1] = diagInfo.entireDoor[diagInfo.key]
+            editTable[1] = deepcopy(diagInfo.entireDoor[diagInfo.key])
         end
-        for key,value in pairs(diagInfo) do
+        for key,value in pairs(diagInfo.entireDoor) do
             if key ~= diagInfo.key then
-                editTable[num] = diagInfo.entireDoor[key]
+                editTable[num] = deepcopy(diagInfo.entireDoor[key])
                 editTable[num].key = key
                 num = num + 1
             end
