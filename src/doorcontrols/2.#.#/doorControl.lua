@@ -479,8 +479,10 @@ while true do
       isOk = "ok"
     else
       print("MAG READER IS NOT SET UP! PLEASE FIX")
-      os.exit()
-    end
+      if crypt(str, extraConfig.cryptKey, true) ~= adminCard then
+        os.exit()
+      end
+      end
   end
   local data = crypt(str, extraConfig.cryptKey, true)
   if ev then

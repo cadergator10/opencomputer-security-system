@@ -487,9 +487,11 @@ function doorediting() --TEST: Can this edit the doors?
             end
             setGui(7,"")
             if editTable[pageNum].doorType == 0 or editTable[pageNum].doorType == 3 then
-                setGui(16,"Door Address: " .. editTable[pageNum].doorAddress .. " | Reader Address: " .. editTable[pageNum].reader)
+                setGui(16,"Door Address: " .. editTable[pageNum].doorAddress)
+                setGui(17,"Reader Address: " .. editTable[pageNum].reader)
             else
-                setGui(16,"Reader Address: " .. editTable[pageNum].reader)
+                setGui(16,"***")
+                setGui(17,"Reader Address: " .. editTable[pageNum].reader)
             end
         end
         setGui(8,"1. Change Door Name: " .. editTable[pageNum].name)
@@ -500,13 +502,13 @@ function doorediting() --TEST: Can this edit the doors?
         setGui(13,diagInfo.type == "multi" and "6. Change card reader uuid" or "")
         setGui(14,"")
         setGui(15,"Door type: " .. doorTypeTypes[editTable[pageNum].doorType + 1])
-        setGui(17,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
-        setGui(18,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
-        setGui(19,"Amount of passes: " .. #editTable[pageNum].cardRead)
-        setGui(20,"----------------------")
-        setGui(21,"Press a number to edit those parameters")
-        setGui(22,diagInfo.type == "multi" and "Press enter to identify a linked magreader" or "")
-        setGui(23,"")
+        setGui(18,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
+        setGui(19,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
+        setGui(20,"Amount of passes: " .. #editTable[pageNum].cardRead)
+        setGui(21,"----------------------")
+        setGui(22,"Press a number to edit those parameters")
+        setGui(23,diagInfo.type == "multi" and "Press enter to identify a linked magreader" or "")
+        setGui(24,"")
     end
     pageChange(1,#editTable,editChange)
     while pig do
@@ -528,6 +530,7 @@ function doorediting() --TEST: Can this edit the doors?
                 end
             end
         elseif ev == "numInput" then
+            setGui(22,"")
             pageChangeAllowed = false
             local text
             if p1 == 1 then
@@ -615,7 +618,7 @@ function doorediting() --TEST: Can this edit the doors?
                 term.setCursor(1,23)
                 term.clearLine()
                 text = term.read()
-                editTable[pageNum].doorAddress = text:sub(1,-2)
+                editTable[pageNum].reader = text:sub(1,-2)
             end
             pageChange(pageNum,#editTable,editChange)
             pageChangeAllowed = true
