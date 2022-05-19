@@ -3,7 +3,7 @@
 <a href="https://oc.cil.li/topic/994-security-system-for-opensecurity">This was built off of DustPuppy's system here</a>
 
 Version 1.#.# of the security system was originally built for the <a href="https://www.technicpack.net/modpack/site-91.1622979">Site 91</a> modpack official server, but I made it public so others could enjoy it. It is obsolete as well and is discontinued with the diagnostic tablet and future QOL updates.
-Version 2.#.# is an entire remake of the entire system and is mine. It is not for redistribution as your own. It is the fully modular system.
+Version 2.#.# is an entire remake of the entire system and the code is more than just an editing of the original code (I actually rewrote it didn't just copy paste.)
 
 Go to bottom for a changelog, future changes, and some extra information about how to use the system
 
@@ -16,6 +16,7 @@ In total: this is what the second generation new system supports:
   <li>An automatic door setup, with easy setup and updating.</li>
   <li>Easy setting edits: Autoinstaller has functions to let you edit, add, or remove doors as well as wipe all files and update the computer!</li>
   <li>Editable crypt key, so your information being passed isn't easilly read (has a default if you don't want to change it)</li>
+  <li>A diagnostic tablet which can show door settings, help you with door setup with the accelerated door setup, or easilly change door settings with runtime editing.</li>
 </ol>
 
 I will be making a full video tutorial series soon. <a href="https://www.youtube.com/channel/UCC492g_YuYcWKRIeQD3kqdQ">Channel is here</a>
@@ -86,6 +87,7 @@ Future updates:
    <li>Ability to edit variables to an extent, ~~and add breaksafe for editing groups (groups are linked to a certain name instead of index in list.~~ Can't think of a good way other than resetting up the door passes with new groups.</li>
    <li>Remote control program for 2.#.# systems</li>
    <li>Allow user linked programs through linking (a use for the hidden string)</li>
+   <li>Allow user submitted functions or custom programs to be able to be run off of hidden strings (maybe you want the user to be able to open a door 5 times and lower the counter every time it is swiped, etc.) Simplified answer: Custom programs using Security API that utilizes the hidden string<\li>
    <li>Better styling for the MineOS database (make it look gooood)
 </ol>
 
@@ -93,3 +95,4 @@ Important information:
    The first number of a security system update is a full system update, which can possibly break previous systems. The second is a small update that doesn't involve updating every single device. Second number should be able to be mixed and matched (eg a 7.1 device works with a 7.0 server), but the first cannot (8.0 device SHOULD/WILL NOT work with a 7.0 device.)
    1.#.# ARE NEVER COMPATABLE WITH 2.#.# VERSIONS!
    Future quality of life updates are not going to be compatable with 1.#.# if extra work is needed. (if you really want it, you can always add it in yourself and submit a pull request)
+   If you have anything you would like to try adding yourself, feel free to add whatever you want to the code and pull request it into the main branch. I can then check if it's a worthwhile update and merge.
