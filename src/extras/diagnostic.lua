@@ -107,12 +107,12 @@ end
 function doorDiag(isMain,diagInfo2, diagInfo)
     if isMain == false then
         local diagInfo3 = diagInfo["entireDoor"][diagInfo2[pageNum]]
-        diagInfo3["type"] = extraConfig.type
-        diagInfo3["version"] = doorVersion
+        diagInfo3["type"] = diagInfo.type
+        diagInfo3["version"] = diagInfo.version
         diagInfo3["key"] = diagInfo2[pageNum]
         diagInfo3["num"] = 2
         diagInfo2 = diagInfo3
-        print("Page" .. pageNum .. "/" .. diagInfo2["entries"])
+        print("Page" .. pageNum .. "/" .. diagInfo["entries"])
         print("Use left and right to change pages")
         print("Click the screen to go back to menu")
         print("")
@@ -185,6 +185,53 @@ function doorDiag(isMain,diagInfo2, diagInfo)
             print("***")
             print("***")
         end
+    else
+        print("--Main Computer info--")
+        print(isMain == true and "door status = " .. diagInfo2["status"] or "***")
+        print("door type = " .. diagInfo["type"])
+        print("door update version = " .. diagInfo["version"])
+        if diagInfo["type"] == "multi" then
+            print("number of door entries: " .. diagInfo["entries"])
+            print("door's key: " .. diagInfo2["key"])
+            print("door name: " .. diagInfo2["name"])
+        else
+            print("***")
+            print("***")
+            print("door name: " .. diagInfo2["name"])
+        end
+        print("door pass amount: " .. #diagInfo2.cardRead)
+        print("-Component Addresses--")
+        if diagInfo["type"] == "multi" then
+            if diagInfo2["doorType"] == 0 then
+                print("Reader Address: " .. diagInfo2["reader"])
+                print("Doorcontrol Address: " .. diagInfo2["doorAddress"])
+            elseif diagInfo2["doorType"] == 3 then
+                print("Reader Address: " .. diagInfo2["reader"])
+                print("RollDoor Address: " .. diagInfo2["doorAddress"])
+            else
+                print("Reader Address: " .. diagInfo2["reader"])
+                print("***")
+            end
+        else
+            print("***")
+            print("***")
+        end
+        print("----Door Functions----")
+        print("Door Type: " .. doorTypeTypes[diagInfo2.doorType + 1])
+        if diagInfo2.doorType == 2 then
+            print(diagInfo.type == "single" and "Redstone output side: " .. diagInfo2.redSide or "***")
+            print("Redstone output color: " .. diagInfo2.redColor)
+        elseif diagInfo2.doorType == 1 then
+            print("Redstone output side: " .. diagInfo2.redSide)
+            print("***")
+        else
+            print("***")
+            print("***")
+        end
+        print("Toggleable: " .. toggleTypes[diagInfo2.toggle + 1])
+        print(diagInfo2.toggle == 0 and "Delay: " .. diagInfo2.delay or "***")
+        print("ForceOpen: " .. forceOpenTypes[diagInfo2.forceOpen + 1])
+        print("BypassLock: " .. forceOpenTypes[diagInfo2.bypassLock + 1])
     end
 end
 
