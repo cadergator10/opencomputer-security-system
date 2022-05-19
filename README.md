@@ -78,13 +78,15 @@ Beta Changelog:
    <li>2.2.0 Side update 1: Created the securityAPI. Information in wiki 4/11
    <li>2.2.0 Side update 2: Improved diagnostic tablet with a simple user interface; Moved accelerated door setup code to the diagnostic tablet
    <li>2.2.1 Diagnostics update: Accelerated door setup and diagnostics are combined to one tablet with easy to use controls. Works with both 2.2.0 and 2.2.1 and future doors (2.2.1 and up allow you to see every door configuration on multi-doors) 4/30</li>
+   <li>2.2.2 Runtime Editing update: Added the editor to the diagnostic tablet program, so you can now swipe the admin card in the door control and edit all the doors without having to use the autoinstaller! (Does not include pass editing which still requires the autoinstaller atm) Works with 2.2.2 and up Only. Also changed uuid resetting button to show a yes/no page. 5/18</li>
 </ul>
 
 Future updates:
 <ol>
-   <li>Ability to change passes easily on the fly with new diagnostic tablet, so you don't have to reboot the computer AND redo pass editing all over again.</li>
-   <li>Ability to edit variables to an extent, and add breaksafe for editing groups (groups are linked to a certain name instead of index in list.</li>
+   <li>Ability to edit variables to an extent, ~~and add breaksafe for editing groups (groups are linked to a certain name instead of index in list.~~ Can't think of a good way other than resetting up the door passes with new groups.</li>
    <li>Remote control program for 2.#.# systems</li>
+   <li>Allow user linked programs through linking (a use for the hidden string)</li>
+   <li>Better styling for the MineOS database (make it look gooood)
 </ol>
 
 Important information:

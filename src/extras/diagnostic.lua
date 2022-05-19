@@ -19,10 +19,9 @@ local doorTypeTypes = {"Door Control","Redstone dust","Bundled Cable","Rolldoor"
 local redSideTypes = {"bottom","top","back","front","right","left"}
 local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}
 local forceOpenTypes = {"False","True"}
-local bypassLockTypes = {"",""}
 local passTypes = {["string"]="Inputtable String",["-string"]="Hidden String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"2.2.0","2.2.1"}
+local supportedVersions = {"2.2.0","2.2.1","2.2.2"}
 
 local settings
 
@@ -47,6 +46,21 @@ local function convert( chars, dist, inv )
       s = string.gsub( s,string.char(26),"\"..string.char(26)..\"" )
       return s
   end
+
+function deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
 
 function setGui(pos, text)
     term.setCursor(1,pos)
@@ -90,15 +104,15 @@ function pageChange(pos,length,call,...)
     call(...)
 end
 
-function doorDiag(isMain,diagInfo2) --TEST: Test if this functions on main and entire door mode.
+function doorDiag(isMain,diagInfo2, diagInfo)
     if isMain == false then
         local diagInfo3 = diagInfo["entireDoor"][diagInfo2[pageNum]]
-        diagInfo3["type"] = extraConfig.type
-        diagInfo3["version"] = doorVersion
+        diagInfo3["type"] = diagInfo.type
+        diagInfo3["version"] = diagInfo.version
         diagInfo3["key"] = diagInfo2[pageNum]
         diagInfo3["num"] = 2
         diagInfo2 = diagInfo3
-        print("Page" .. pageNum .. "/" .. diagInfo2["entries"])
+        print("Page" .. pageNum .. "/" .. diagInfo["entries"])
         print("Use left and right to change pages")
         print("Click the screen to go back to menu")
         print("")
@@ -118,6 +132,7 @@ function doorDiag(isMain,diagInfo2) --TEST: Test if this functions on main and e
                 print("***")
                 print("door name: " .. diagInfo2["name"])
             end
+            print("door pass amount: " .. #diagInfo2.cardRead)
             print("-Component Addresses--")
             if diagInfo2["type"] == "multi" then
                 if diagInfo2["doorType"] == 0 then
@@ -134,6 +149,22 @@ function doorDiag(isMain,diagInfo2) --TEST: Test if this functions on main and e
                 print("***")
                 print("***")
             end
+            print("----Door Functions----")
+            print("Door Type: " .. doorTypeTypes[diagInfo2.doorType + 1])
+            if diagInfo2.doorType == 2 then
+                print(diagInfo2.type == "single" and "Redstone output side: " .. diagInfo2.redSide or "***")
+                print("Redstone output color: " .. diagInfo2.redColor)
+            elseif diagInfo2.doorType == 1 then
+                print("Redstone output side: " .. diagInfo2.redSide)
+                print("***")
+            else
+                print("***")
+                print("***")
+            end
+            print("Toggleable: " .. toggleTypes[diagInfo2.toggle + 1])
+            print(diagInfo2.toggle == 0 and "Delay: " .. diagInfo2.delay or "***")
+            print("ForceOpen: " .. forceOpenTypes[diagInfo2.forceOpen + 1])
+            print("BypassLock: " .. forceOpenTypes[diagInfo2.bypassLock + 1])
         else
             if diagInfo2["type"] == "multi" then
                 print("number of door entries: " .. diagInfo2["entries"])
@@ -142,10 +173,65 @@ function doorDiag(isMain,diagInfo2) --TEST: Test if this functions on main and e
             end
             print("***")
             print("***")
+            print("***")
             print("-Component Addresses--")
             print("***")
             print("***")
+            print("----Door Functions----")
+            print("***")
+            print("***")
+            print("***")
+            print("***")
+            print("***")
+            print("***")
         end
+    else
+        print("--Main Computer info--")
+        print(isMain == true and "door status = " .. diagInfo2["status"] or "***")
+        print("door type = " .. diagInfo["type"])
+        print("door update version = " .. diagInfo["version"])
+        if diagInfo["type"] == "multi" then
+            print("number of door entries: " .. diagInfo["entries"])
+            print("door's key: " .. diagInfo2["key"])
+            print("door name: " .. diagInfo2["name"])
+        else
+            print("***")
+            print("***")
+            print("door name: " .. diagInfo2["name"])
+        end
+        print("door pass amount: " .. #diagInfo2.cardRead)
+        print("-Component Addresses--")
+        if diagInfo["type"] == "multi" then
+            if diagInfo2["doorType"] == 0 then
+                print("Reader Address: " .. diagInfo2["reader"])
+                print("Doorcontrol Address: " .. diagInfo2["doorAddress"])
+            elseif diagInfo2["doorType"] == 3 then
+                print("Reader Address: " .. diagInfo2["reader"])
+                print("RollDoor Address: " .. diagInfo2["doorAddress"])
+            else
+                print("Reader Address: " .. diagInfo2["reader"])
+                print("***")
+            end
+        else
+            print("***")
+            print("***")
+        end
+        print("----Door Functions----")
+        print("Door Type: " .. doorTypeTypes[diagInfo2.doorType + 1])
+        if diagInfo2.doorType == 2 then
+            print(diagInfo.type == "single" and "Redstone output side: " .. diagInfo2.redSide or "***")
+            print("Redstone output color: " .. diagInfo2.redColor)
+        elseif diagInfo2.doorType == 1 then
+            print("Redstone output side: " .. diagInfo2.redSide)
+            print("***")
+        else
+            print("***")
+            print("***")
+        end
+        print("Toggleable: " .. toggleTypes[diagInfo2.toggle + 1])
+        print(diagInfo2.toggle == 0 and "Delay: " .. diagInfo2.delay or "***")
+        print("ForceOpen: " .. forceOpenTypes[diagInfo2.forceOpen + 1])
+        print("BypassLock: " .. forceOpenTypes[diagInfo2.bypassLock + 1])
     end
 end
 
@@ -215,8 +301,12 @@ function diagThr(num,diagInfo)
     end
     print("1. Main Door Info")
     print("2. Pass Rules")
-    if diagInfo.version == "2.2.1" and diagInfo.type == "multi" then print("3. Entire door Info") end
-    lengthNum = diagInfo.version == "2.2.1" and diagInfo.type == "multi" and 3 or 2
+    local lengthMe = 2
+    if diagInfo.version ~= "2.2.0" and diagInfo.type == "multi" then
+        lengthMe = 3
+        print(lengthMe .. ". Entire door Info") 
+    end
+    lengthNum = lengthMe
     _, nextVar = event.pull("numInput")
     if nextVar == 1 then
         goto mainInfo
@@ -241,7 +331,7 @@ function diagThr(num,diagInfo)
             table.insert(indexed,key)
         end
         term.clear()
-        pageChange(1,#indexed,doorDiag,false,indexed)
+        pageChange(1,#indexed,doorDiag,false,indexed, diagInfo)
         pickle = true
         while pickle do
             local ev, p1, p2, p3 = event.pullMultiple("touch","key_down")
@@ -250,10 +340,12 @@ function diagThr(num,diagInfo)
             else
                 local char = keyboard.keys[p3]
                 if char == "left" then
-                    pageChange(false,#indexed,doorDiag,false,indexed)
+                    term.clear()
+                    pageChange(false,#indexed,doorDiag,false,indexed, diagInfo)
                     os.sleep(1)
                 elseif char == "right" then
-                    pageChange(true,#indexed,doorDiag,false,indexed)
+                    term.clear()
+                    pageChange(true,#indexed,doorDiag,false,indexed, diagInfo)
                     os.sleep(1)
                 end
             end
@@ -293,9 +385,9 @@ function diagThr(num,diagInfo)
                     setGui(8,"")
                     setGui(9,"Requires " .. #diagInfo.cardRead[pageNum].data .. " Add passes")
                     for i=1,#diagInfo.cardRead[pageNum].data,1 do
-                        local q,p = getPassID(diagInfo.cardRead[pageNum].data[i],diagInfo.cardRead)
+                        local q,p,r = getPassID(diagInfo.cardRead[pageNum].data[i],diagInfo.cardRead)
                         if q then
-                            setGui(i + 9,settings.data.label[p] .. " | " .. passTypes[settings.data.type[p]])
+                            setGui(i + 9,settings.data.label[p] .. " | " .. passTypes[settings.data.type[p]] .. " | " .. diagInfo.cardRead[r].param)
                         else
                             setGui(i + 9,"Error (pass might be missing)")
                         end
@@ -336,15 +428,215 @@ function diagnostics()
         end
 
         local _, _, from, port, _, command, msg = event.pull("modem_message")
-        local data = msg
-        local diagInfo = ser.unserialize(data)
-        local temp
+        local diagInfo = ser.unserialize(msg)
         num = num + 1
         if diagt ~= nil then
             diagt:kill()
         end
         diagt = thread.create(diagThr,num,diagInfo)
     end
+end
+
+function doorediting() --TEST: Can this edit the doors?
+    term.clear()
+    setGui(1,"Scan the door you would like to edit")
+    setGui(2,"If the door is a multidoor, you can edit all doors connected")
+    if modem.isOpen(diagPort) == false then
+        modem.open(diagPort)
+    end
+    local _, _, from, port, _, command, msg = event.pull("modem_message")
+    local diagInfo = ser.unserialize(msg)
+    if diagInfo.version ~= "2.2.2" then
+        setGui(4,"Door version is not 2.2.2 and above and is unsupported")
+        os.exit()
+    end
+    local editTable = {}
+    if diagInfo.type == "single" then
+        editTable[1] = deepcopy(diagInfo)
+    else
+        local num = 2
+        if diagInfo.status == "incorrect magreader" then
+            diagInfo.key = "unreal"
+            num = 1
+        else
+            editTable[1] = deepcopy(diagInfo.entireDoor[diagInfo.key])
+        end
+        for key,value in pairs(diagInfo.entireDoor) do
+            if key ~= diagInfo.key then
+                editTable[num] = deepcopy(diagInfo.entireDoor[key])
+                editTable[num].key = key
+                num = num + 1
+            end
+        end
+    end
+    local pig = true
+    local pageChangeAllowed = true
+    term.clear()
+    local editChange = function()
+        setGui(1,"Page" .. pageNum .. "/" .. #editTable)
+        setGui(2,"Use left and right to change doors (if multi door)")
+        setGui(3,"Click the screen to save and submit to door control")
+        setGui(4,"")
+        if diagInfo.type == "single" then
+            setGui(16,"***")
+        else
+            setGui(5,"Door Key: " .. editTable[pageNum].key)
+            if diagInfo.status == "incorrect magreader" then
+                setGui(6,"Notice: magreader swiped isn't linked to any door. If it's supposed to be linked you will have to fix it.")
+            end
+            setGui(7,"")
+            if editTable[pageNum].doorType == 0 or editTable[pageNum].doorType == 3 then
+                setGui(16,"Door Address: " .. editTable[pageNum].doorAddress .. " | Reader Address: " .. editTable[pageNum].reader)
+            else
+                setGui(16,"Reader Address: " .. editTable[pageNum].reader)
+            end
+        end
+        setGui(8,"1. Change Door Name: " .. editTable[pageNum].name)
+        setGui(9,diagInfo.type == "multi" and "2. Change Door type/color/uuid" or "2. Change Door type/color/side")
+        setGui(10,"3. Change toggle and delay")
+        setGui(11,"4. Change force open and bypass lock")
+        setGui(12,"5. Change passes")
+        setGui(13,diagInfo.type == "multi" and "6. Change card reader uuid" or "")
+        setGui(14,"")
+        setGui(15,"Door type: " .. doorTypeTypes[editTable[pageNum].doorType + 1])
+        setGui(17,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
+        setGui(18,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
+        setGui(19,"Amount of passes: " .. #editTable[pageNum].cardRead)
+        setGui(20,"----------------------")
+        setGui(21,"Press a number to edit those parameters")
+        setGui(22,diagInfo.type == "multi" and "Press enter to identify a linked magreader" or "")
+        setGui(23,"")
+    end
+    pageChange(1,#editTable,editChange)
+    while pig do
+        lengthNum = diagInfo.type == "single" and 5 or 6
+        local ev, p1, p2, p3 = event.pullMultiple("touch","key_down","numInput")
+        if ev == "touch" then
+            pig = false
+        elseif ev == "key_down" and pageChangeAllowed then
+            local char = keyboard.keys[p3]
+            if char == "left" then
+                pageChange(false,#editTable,editChange)
+                os.sleep(1)
+            elseif char == "right" then
+                pageChange(true,#editTable,editChange)
+                os.sleep(1)
+            elseif char == "enter" then
+                if diagInfo.type == "multi" then
+                    modem.send(from,port,"identifyMag",ser.serialize(editTable[pageNum]))
+                end
+            end
+        elseif ev == "numInput" then
+            pageChangeAllowed = false
+            local text
+            if p1 == 1 then
+                setGui(21,"What should the name be set to?")
+                term.setCursor(1,23)
+                term.clearLine()
+                text = term.read()
+                editTable[pageNum].name = text:sub(1,-2)
+            elseif p1 == 2 then
+                setGui(21,diagInfo.type == "multi" and "Door Type? 0= doorcontrol. 2=bundled. 3=rolldoor. NEVER USE 1! NUMBER ONLY" or "Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY")
+                term.setCursor(1,23)
+                term.clearLine()
+                text = term.read()
+                editTable[pageNum].doorType = tonumber(text)
+                if editTable[pageNum].doorType == 2 then
+                    setGui(21,"What color. Use the Color API wiki provided on the opencomputers wiki, and enter the NUMBER")
+                    term.setCursor(1,23)
+                    term.clearLine()
+                    text = term.read()
+                    editTable[pageNum].redColor = tonumber(text)
+                    if diagInfo.type == "multi" then
+                        editTable[pageNum].doorAddress = ""
+                    else
+                        setGui(21,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
+                        term.setCursor(1,23)
+                        term.clearLine()
+                        text = term.read()
+                        editTable[pageNum].redSide = tonumber(text)
+                    end
+                elseif editTable[pageNum].doorType == 1 then
+                    editTable[pageNum].redColor = 0
+                    setGui(21,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
+                    term.setCursor(1,23)
+                    term.clearLine()
+                    text = term.read()
+                    editTable[pageNum].redSide = tonumber(text)
+                else
+                    editTable[pageNum].redColor = 0
+                    if diagInfo.type == "single" then editTable[pageNum].redSide = 0 end
+                    if diagInfo.type == "multi" then
+                        setGui(21,"What is the address for the doorcontrol/rolldoor block?")
+                        setGui(22,"Enter uuid as text")
+                        term.setCursor(1,23)
+                        term.clearLine()
+                        text = term.read()
+                        editTable[pageNum].doorAddress = text:sub(1,-2)
+                    end
+                end
+            elseif p1 == 3 then
+                setGui(21,"Should the door be toggleable or not? 0 for autoclose and 1 for toggleable")
+                term.setCursor(1,23)
+                term.clearLine()
+                text = term.read()
+                editTable[pageNum].toggle = tonumber(text)
+                if editTable[pageNum].toggle == 0 then
+                    setGui(21,"How long should the door stay open?")
+                    term.setCursor(1,23)
+                    term.clearLine()
+                    text = term.read()
+                    editTable[pageNum].delay = tonumber(text)
+                else
+                    editTable[pageNum].delay = 0
+                end
+            elseif p1 == 4 then
+                setGui(21,"Is this door opened whenever all doors are asked to open?")
+                setGui(22,"0 if no, 1 if yes. Default is yes")
+                term.setCursor(1,23)
+                term.clearLine()
+                text = term.read()
+                editTable[pageNum].forceOpen = tonumber(text)
+                setGui(21,"Is this door immune to lock door?")
+                setGui(22,"0 if no, 1 if yes. Default is no")
+                term.setCursor(1,23)
+                term.clearLine()
+                text = term.read()
+                editTable[pageNum].bypassLock = tonumber(text)
+            elseif p1 == 5 then
+                setGui(21,"At the moment, there is no way to edit passes without")
+                setGui(22,"using the autoinstaller to do so.")
+                setGui(23,"Press enter to continue")
+                term.read()
+            elseif p1 == 6 then
+                setGui(21,"What is the address for the magreader block?")
+                setGui(22,"Enter uuid as text")
+                term.setCursor(1,23)
+                term.clearLine()
+                text = term.read()
+                editTable[pageNum].doorAddress = text:sub(1,-2)
+            end
+            pageChange(pageNum,#editTable,editChange)
+            pageChangeAllowed = true
+        end
+    end
+    term.clear()
+    local poo = {}
+    if diagInfo.type == "multi" then
+        for i=1,#editTable,1 do
+            poo[editTable[i].key] = editTable[i]
+            poo.key = nil
+        end
+    else
+        poo = editTable[1]
+        poo.status = nil
+        poo.type = nil
+        poo.version = nil
+        poo.num = nil
+    end
+    modem.send(from,modemPort,"changeSettings",ser.serialize(poo))
+    print("finished")
+    os.exit()
 end
 
 --------Startup Code
@@ -382,10 +674,13 @@ local nextVar = 0
 print("Which app would you like to run?")
 print("1. Diagnostics")
 print("2. Accelerated door setup")
-lengthNum = 2
+print("3. Door Editing")
+lengthNum = 3
 _, nextVar = event.pull("numInput")
 if nextVar == 1 then
     diagnostics()
 elseif nextVar == 2 then
     accsetup()
+elseif nextVar == 3 then
+    doorediting()
 end

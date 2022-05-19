@@ -4,9 +4,6 @@ local modemPort = 199
 local dbPort = 144
 
 local adminCard = "admincard"
-
-local showUUIDWarn = true
- 
  
 local component = require("component")
 local gpu = component.gpu
@@ -23,7 +20,7 @@ local aRD = fs.path(system.getCurrentScript())
 local workspace, window, menu
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton
-local addVarButton, delVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton
+local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton
  
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
@@ -37,7 +34,7 @@ If type is -int, [1] = minus button, [2] = plus button, [3] = value label, [4] =
 ----------
  
 local prgName = "Security database"
-local version = "v2.2.0"
+local version = "v2.2.2"
  
 local modem
  
@@ -139,11 +136,11 @@ function updateList()
   userList = window:addChild(GUI.list(4, 4, 58, 34, 3, 0, 0xE1E1E1, 0x4B4B4B, 0xD2D2D2, 0x4B4B4B, 0x3366CC, 0xFFFFFF, false)) 
   local temp = pageMult * listPageNumber
   for i = temp + 1, temp + pageMult, 1 do
-  if (userTable[i] == nil) then
+    if (userTable[i] == nil) then
 
-  else
-    userList:addItem(userTable[i].name).onTouch = userListCallback
-  end
+    else
+      userList:addItem(userTable[i].name).onTouch = userListCallback
+    end
   end
 
   saveTable(userTable, aRD .. "userlist.txt")
@@ -303,15 +300,24 @@ function deleteUserCallback()
 end
 
 function changeUUID()
-    if showUUIDWarn == true then
-        showUUIDWarn = false
-        GUI.alert("This will reset this user's uuid, rendering all cards linked to it useless. Use this if a card gets stolen or in another emergency. Use at own risk.")
-    else
-        local selected = pageMult * listPageNumber + userList.selectedItem
-        userTable[selected].uuid = uuid.next()
-        updateList()
-  		userListCallback()
+    varContainer.addBackgroundContainer(workspace,true,true)
+    varContainer.layout:addChild(GUI.label(1,1,3,3,0x165FF2,"This will reset this user's uuid, rendering all cards linked to it useless."))
+    varContainer.layout:addChild(GUI.label(1,3,3,3,0x165FF2,"Use this if a card gets stolen or in another emergency."))
+    varContainer.layout:addChild(GUI.label(1,5,3,3,0x165FF2,"Are you sure you want to continue?"))
+    local funcyes = function()
+      local selected = pageMult * listPageNumber + userList.selectedItem
+      userTable[selected].uuid = uuid.next()
+      updateList()
+      userListCallback()
+      varContainer:remove()
     end
+    local funcno = function()
+      varContainer:remove()
+    end
+    local button1 = varContainer.layout:addChild(GUI.button(1,9,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "Yes"))
+    local button2 = varContainer.layout:addChild(GUI.button(1,7,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "No"))
+    button1.onTouch = funcyes
+    button2.onTouch = funcno
 end
  
 function writeCardCallback()
@@ -388,7 +394,7 @@ function checkTypeCallback()
   elseif selected == 4 then
     extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "groups (comma seperating each group)"))
     extraVar.onInputFinished = function()
-    addVarArray.data = split(extraVar.text,",")
+      addVarArray.data = split(extraVar.text,",")
     end
   else
     
@@ -426,7 +432,6 @@ function addVarYesCall()
   window:remove()
 end
 
---TODO: Add the ability to edit passes
 function addVarCallback()
   addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
@@ -476,6 +481,24 @@ function delVarCallback()
   varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "remove variable from system"))
   varYesButton.onTouch = delVarYesCall
 end
+
+function editVarCallback() --TODO: Add the ability to edit passes
+  addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, 0xEEEEEE, 0x2D2D2D, 0xCCCCCC, 0x888888))
+  for i=1,#userTable.settings.var,1 do
+    typeSelect:addItem(userTable.settings.label[i])
+  end
+  local showThis = function(int)
+    addVarArray.var = userTable.settings.var[int]
+    addVarArray.label = userTable.settings.label[int]
+    addVarArray.calls = userTable.settings.calls[int]
+    addVarArray.type = userTable.settings.type[int]
+    addVarArray.above = userTable.settings.above[int]
+    addVarArray.data = userTable.settings.data[int]
+  end
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "change variable properties"))
+end
  
 ----------GUI SETUP
 workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,0xE1E1E1))
@@ -504,7 +527,7 @@ if settingTable == nil then
 end
 updateList()
  
---user infos
+--user infos --TODO: Make the page look better, be resizeable, use layouts instead, etc.
 local labelSpot = 12
 window:addChild(GUI.label(64,labelSpot,3,3,0x165FF2,"User name : "))
 userNameText = window:addChild(GUI.input(88,labelSpot,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "input name"))
@@ -602,16 +625,18 @@ listDownButton.onTouch = pageCallback,false
 window:addChild(GUI.panel(64,36,86,1,0x6B6E74))
 userNewButton = window:addChild(GUI.button(4,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "new"))
 userNewButton.onTouch = newUserCallback
-userDeleteButton = window:addChild(GUI.button(18,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "delete")) 
+userDeleteButton = window:addChild(GUI.button(20,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "delete")) 
 userDeleteButton.onTouch = deleteUserCallback
-userChangeUUIDButton = window:addChild(GUI.button(32,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "reset uuid")) 
+userChangeUUIDButton = window:addChild(GUI.button(36,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "reset uuid")) 
 userChangeUUIDButton.onTouch = changeUUID
-createAdminCardButton = window:addChild(GUI.button(46,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "admin card")) 
+createAdminCardButton = window:addChild(GUI.button(52,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "admin card")) 
 createAdminCardButton.onTouch = writeAdminCardCallback
-addVarButton = window:addChild(GUI.button(60,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add var")) 
+addVarButton = window:addChild(GUI.button(68,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "add var")) 
 addVarButton.onTouch = addVarCallback
-delVarButton = window:addChild(GUI.button(72,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "delete var")) 
+delVarButton = window:addChild(GUI.button(84,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "delete var")) 
 delVarButton.onTouch = delVarCallback
+--editVarButton = window:addChild(GUI.button(100,42,16,1,0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "edit var")) 
+--editVarButton.onTouch = editVarCallback
  
 --CardWriter frame
  

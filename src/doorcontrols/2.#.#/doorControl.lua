@@ -2,7 +2,7 @@
 
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "2.2.1"
+local doorVersion = "2.2.2"
 testR = true
 
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
@@ -49,10 +49,12 @@ local varSettings = {}
 local settingData = {}
 local extraConfig = {}
 
+local osVersion = false
+
 local function convert( chars, dist, inv )
     return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
   end
-   
+
   local function crypt(str,k,inv)
     local enc= "";
     for i=1,#str do
@@ -79,9 +81,31 @@ local function convert( chars, dist, inv )
           str:gsub(pattern, function(c) fields[#fields+1] = c end)
           return fields
   end
+
+  function deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+  end
+
+  function colorDo(key,num,delay)
+    component.proxy(key).setLightState(num)
+    os.sleep(delay)
+    component.proxy(key).setLightState(1)
+  end
   
-  function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH)
+  function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH,key)
     if(toggleH == 0) then
+      if osVersion then component.proxy(key).setLightState(4) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).open()
@@ -109,7 +133,9 @@ local function convert( chars, dist, inv )
       else
         os.sleep(1)
       end
+      if osVersion then component.proxy(key).setLightState(1) end
     else
+      if osVersion then thread.create(colorDo,key,4,2) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).toggle()
@@ -140,8 +166,8 @@ local function convert( chars, dist, inv )
 
   local function update(_, localAddress, remoteAddress, port, distance, msg, data)
     if (testR == true) then
-      data = crypt(data, extraConfig.cryptKey, true)
       if msg == "forceopen" then
+        data = crypt(data, extraConfig.cryptKey, true)
         if extraConfig.type == "single" then
           if(doorType == 0)then
             if data == "open" then
@@ -213,6 +239,60 @@ local function convert( chars, dist, inv )
             end
           end
         end
+      elseif msg == "changeSettings" then
+        data = ser.unserialize(data)
+        settingData = data
+        os.execute("copy doorSettings.txt dsBackup.txt")
+        ttf.save(settingData,"doorSettings.txt")
+        print("New settings received")
+        local fill = {}
+        fill["type"] = extraConfig.type
+        fill["data"] = settingData
+        modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+        local got, _, _, _, _, fill = event.pull(2, "modem_message")
+        if got then
+          varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
+          if extraConfig.type == "single" then
+            doorType = settingData.doorType
+            redSide = settingData.redSide
+            redColor = settingData.redColor
+            delay = settingData.delay
+            cardRead = settingData.cardRead
+            toggle = settingData.toggle
+            forceOpen = settingData.forceOpen
+            bypassLock = settingData.bypassLock
+          end
+        else
+          print("Failed to receive confirmation from server")
+          os.exit()
+        end
+      elseif msg == "identifyMag" then
+        local lightShow = function(data)
+          if osVersion == true then
+            for i=1,5,1 do
+              for j=2,4,1 do
+                component.proxy(data.reader).setLightState(j)
+                os.sleep(0.3)
+              end
+            end
+            component.proxy(data.reader).setLightState(1)
+          else
+            if data.doorType == 2 then
+              for i=1,5,1 do
+                component.redstone.setBundledOutput(redSide,{ [data.redColor] = 255 })
+                os.sleep(0.5)
+                component.redstone.setBundledOutput(redSide,{ [data.redColor] = 0 })
+                os.sleep(0.5)
+              end
+            else
+              for i=1,10,1 do
+                component.proxy(data.doorAddress).toggle()
+                os.sleep(0.5)
+              end
+            end
+          end
+        end
+        thread.create(lightShow,ser.unserialize(data))
       end
     end
   end
@@ -239,6 +319,9 @@ ttf.save(extraConfig,"extraConfig.txt")
 
 if modem.isOpen(modemPort) == false then
   modem.open(modemPort)
+end
+if magReader.swipeIndicator ~= nil then
+  osVersion = true
 end
 
 local checkBool = false
@@ -300,6 +383,13 @@ else
   os.exit()
 end
 got = nil
+
+if osVersion then
+  for key,_ in pairs(component.list("os_magreader")) do
+    component.proxy(key).swipeIndicator(false)
+    component.proxy(key).setLightState(1)
+  end
+end
 
 if extraConfig.type == "single" then
   doorType = settingData.doorType
@@ -397,7 +487,7 @@ while true do
     if (data == adminCard) then
       term.write("Admin card swiped. Sending diagnostics\n")
       modem.open(diagPort)
-      local diagData = extraConfig.type == "multi" and settingData[keyed] or settingData
+      local diagData = extraConfig.type == "multi" and deepcopy(settingData[keyed]) or deepcopy(settingData)
       if diagData == nil then
         diagData = {}
       end
@@ -406,7 +496,7 @@ while true do
       diagData["version"] = doorVersion
       diagData["key"] = extraConfig.type == "multi" and keyed or nil
       diagData["num"] = 2
-      diagData["entireDoor"] = extraConfig.type == "multi" and settingData or nil
+      diagData["entireDoor"] = extraConfig.type == "multi" and deepcopy(settingData) or nil
       local counter = 0
       if extraConfig.type == "multi" then
         for index in pairs(settingData) do
@@ -416,6 +506,15 @@ while true do
       end
       data = ser.serialize(diagData)
       modem.broadcast(diagPort, "diag", data)
+      if osVersion then 
+        component.proxy(address).setLightState(2)
+        os.sleep(0.3)
+        component.proxy(address).setLightState(3)
+        os.sleep(0.3)
+        component.proxy(address).setLightState(4)
+        os.sleep(0.3)
+        component.proxy(address).setLightState(1)
+      end
     else
       if keyed == nil and extraConfig.type == "multi" then
         os.exit()
@@ -436,16 +535,22 @@ while true do
           term.write("Access granted\n")
           computer.beep()
           if extraConfig.type == "single" then
-            openDoor(delay,redColor,true,toggle,doorType,redSide)
+            openDoor(delay,redColor,true,toggle,doorType,redSide,address)
           else
-            thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide)
+            thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide,address)
           end
         elseif data == "false" then
           term.write("Access denied\n")
+          if osVersion then 
+            thread.create(colorDo,address,2,1)
+          end
           computer.beep()
           computer.beep()
         elseif data == "locked" then
           term.write("Doors have been locked\n")
+          if osVersion then 
+            thread.create(colorDo,address,2,2)
+          end
           computer.beep()
           computer.beep()
           computer.beep()
@@ -454,6 +559,9 @@ while true do
         end
       else
         term.write("server timeout\n")
+        if osVersion then 
+          thread.create(colorDo,address,3,1)
+        end
       end
     end
   end
