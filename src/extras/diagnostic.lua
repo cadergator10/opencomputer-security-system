@@ -104,7 +104,7 @@ function pageChange(pos,length,call,...)
     call(...)
 end
 
-function doorDiag(isMain,diagInfo2)
+function doorDiag(isMain,diagInfo2, diagInfo)
     if isMain == false then
         local diagInfo3 = diagInfo["entireDoor"][diagInfo2[pageNum]]
         diagInfo3["type"] = extraConfig.type
@@ -256,7 +256,7 @@ function diagThr(num,diagInfo)
     print("2. Pass Rules")
     local lengthMe = 2
     if diagInfo.version ~= "2.2.0" and diagInfo.type == "multi" then
-        lengthMe = 1
+        lengthMe = 3
         print(lengthMe .. ". Entire door Info") 
     end
     lengthNum = lengthMe
@@ -284,7 +284,7 @@ function diagThr(num,diagInfo)
             table.insert(indexed,key)
         end
         term.clear()
-        pageChange(1,#indexed,doorDiag,false,indexed)
+        pageChange(1,#indexed,doorDiag,false,indexed, diagInfo)
         pickle = true
         while pickle do
             local ev, p1, p2, p3 = event.pullMultiple("touch","key_down")
@@ -293,10 +293,12 @@ function diagThr(num,diagInfo)
             else
                 local char = keyboard.keys[p3]
                 if char == "left" then
-                    pageChange(false,#indexed,doorDiag,false,indexed)
+                    term.clear()
+                    pageChange(false,#indexed,doorDiag,false,indexed, diagInfo)
                     os.sleep(1)
                 elseif char == "right" then
-                    pageChange(true,#indexed,doorDiag,false,indexed)
+                    term.clear()
+                    pageChange(true,#indexed,doorDiag,false,indexed, diagInfo)
                     os.sleep(1)
                 end
             end
