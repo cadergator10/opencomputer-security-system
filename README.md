@@ -87,6 +87,7 @@ Future updates:
    <li>Ability to edit variables to an extent, ~~and add breaksafe for editing groups (groups are linked to a certain name instead of index in list.~~ Can't think of a good way other than resetting up the door passes with new groups.</li>
    <li>Remote control program for 2.#.# systems</li>
    <li>Allow user linked programs through linking (a use for the hidden string)</li>
+   <li>Allow user submitted functions or custom programs to be able to be run off of hidden strings (maybe you want the user to be able to open a door 5 times and lower the counter every time it is swiped, etc.) Simplified answer: Custom programs using Security API that utilizes the hidden string<\li>
    <li>Better styling for the MineOS database (make it look gooood)
 </ol>
 
