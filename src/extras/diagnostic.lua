@@ -460,6 +460,7 @@ function doorediting() --TEST: Can this edit the doors?
             num = 1
         else
             editTable[1] = deepcopy(diagInfo.entireDoor[diagInfo.key])
+            editTable[1].key = diagInfo.key
         end
         for key,value in pairs(diagInfo.entireDoor) do
             if key ~= diagInfo.key then
