@@ -460,6 +460,7 @@ function doorediting() --TEST: Can this edit the doors?
             num = 1
         else
             editTable[1] = deepcopy(diagInfo.entireDoor[diagInfo.key])
+            editTable[1].key = diagInfo.key
         end
         for key,value in pairs(diagInfo.entireDoor) do
             if key ~= diagInfo.key then
@@ -486,9 +487,11 @@ function doorediting() --TEST: Can this edit the doors?
             end
             setGui(7,"")
             if editTable[pageNum].doorType == 0 or editTable[pageNum].doorType == 3 then
-                setGui(16,"Door Address: " .. editTable[pageNum].doorAddress .. " | Reader Address: " .. editTable[pageNum].reader)
+                setGui(16,"Door Address: " .. editTable[pageNum].doorAddress)
+                setGui(17,"Reader Address: " .. editTable[pageNum].reader)
             else
-                setGui(16,"Reader Address: " .. editTable[pageNum].reader)
+                setGui(16,"***")
+                setGui(17,"Reader Address: " .. editTable[pageNum].reader)
             end
         end
         setGui(8,"1. Change Door Name: " .. editTable[pageNum].name)
@@ -499,13 +502,13 @@ function doorediting() --TEST: Can this edit the doors?
         setGui(13,diagInfo.type == "multi" and "6. Change card reader uuid" or "")
         setGui(14,"")
         setGui(15,"Door type: " .. doorTypeTypes[editTable[pageNum].doorType + 1])
-        setGui(17,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
-        setGui(18,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
-        setGui(19,"Amount of passes: " .. #editTable[pageNum].cardRead)
-        setGui(20,"----------------------")
-        setGui(21,"Press a number to edit those parameters")
-        setGui(22,diagInfo.type == "multi" and "Press enter to identify a linked magreader" or "")
-        setGui(23,"")
+        setGui(18,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
+        setGui(19,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
+        setGui(20,"Amount of passes: " .. #editTable[pageNum].cardRead)
+        setGui(21,"----------------------")
+        setGui(22,"Press a number to edit those parameters")
+        setGui(23,diagInfo.type == "multi" and "Press enter to identify a linked magreader" or "")
+        setGui(24,"")
     end
     pageChange(1,#editTable,editChange)
     while pig do
@@ -527,39 +530,40 @@ function doorediting() --TEST: Can this edit the doors?
                 end
             end
         elseif ev == "numInput" then
+            setGui(23,"")
             pageChangeAllowed = false
             local text
             if p1 == 1 then
-                setGui(21,"What should the name be set to?")
-                term.setCursor(1,23)
+                setGui(22,"What should the name be set to?")
+                term.setCursor(1,24)
                 term.clearLine()
                 text = term.read()
                 editTable[pageNum].name = text:sub(1,-2)
             elseif p1 == 2 then
-                setGui(21,diagInfo.type == "multi" and "Door Type? 0= doorcontrol. 2=bundled. 3=rolldoor. NEVER USE 1! NUMBER ONLY" or "Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY")
-                term.setCursor(1,23)
+                setGui(22,diagInfo.type == "multi" and "Door Type? 0= doorcontrol. 2=bundled. 3=rolldoor. NEVER USE 1! NUMBER ONLY" or "Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY")
+                term.setCursor(1,24)
                 term.clearLine()
                 text = term.read()
                 editTable[pageNum].doorType = tonumber(text)
                 if editTable[pageNum].doorType == 2 then
-                    setGui(21,"What color. Use the Color API wiki provided on the opencomputers wiki, and enter the NUMBER")
-                    term.setCursor(1,23)
+                    setGui(22,"What color. Use the Color API wiki provided on the opencomputers wiki, and enter the NUMBER")
+                    term.setCursor(1,24)
                     term.clearLine()
                     text = term.read()
                     editTable[pageNum].redColor = tonumber(text)
                     if diagInfo.type == "multi" then
                         editTable[pageNum].doorAddress = ""
                     else
-                        setGui(21,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
-                        term.setCursor(1,23)
+                        setGui(22,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
+                        term.setCursor(1,24)
                         term.clearLine()
                         text = term.read()
                         editTable[pageNum].redSide = tonumber(text)
                     end
                 elseif editTable[pageNum].doorType == 1 then
                     editTable[pageNum].redColor = 0
-                    setGui(21,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
-                    term.setCursor(1,23)
+                    setGui(22,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
+                    term.setCursor(1,24)
                     term.clearLine()
                     text = term.read()
                     editTable[pageNum].redSide = tonumber(text)
@@ -567,23 +571,23 @@ function doorediting() --TEST: Can this edit the doors?
                     editTable[pageNum].redColor = 0
                     if diagInfo.type == "single" then editTable[pageNum].redSide = 0 end
                     if diagInfo.type == "multi" then
-                        setGui(21,"What is the address for the doorcontrol/rolldoor block?")
-                        setGui(22,"Enter uuid as text")
-                        term.setCursor(1,23)
+                        setGui(22,"What is the address for the doorcontrol/rolldoor block?")
+                        setGui(23,"Enter uuid as text")
+                        term.setCursor(1,24)
                         term.clearLine()
                         text = term.read()
                         editTable[pageNum].doorAddress = text:sub(1,-2)
                     end
                 end
             elseif p1 == 3 then
-                setGui(21,"Should the door be toggleable or not? 0 for autoclose and 1 for toggleable")
-                term.setCursor(1,23)
+                setGui(22,"Should the door be toggleable or not? 0 for autoclose and 1 for toggleable")
+                term.setCursor(1,24)
                 term.clearLine()
                 text = term.read()
                 editTable[pageNum].toggle = tonumber(text)
                 if editTable[pageNum].toggle == 0 then
-                    setGui(21,"How long should the door stay open?")
-                    term.setCursor(1,23)
+                    setGui(22,"How long should the door stay open?")
+                    term.setCursor(1,24)
                     term.clearLine()
                     text = term.read()
                     editTable[pageNum].delay = tonumber(text)
@@ -591,30 +595,30 @@ function doorediting() --TEST: Can this edit the doors?
                     editTable[pageNum].delay = 0
                 end
             elseif p1 == 4 then
-                setGui(21,"Is this door opened whenever all doors are asked to open?")
-                setGui(22,"0 if no, 1 if yes. Default is yes")
-                term.setCursor(1,23)
+                setGui(22,"Is this door opened whenever all doors are asked to open?")
+                setGui(23,"0 if no, 1 if yes. Default is yes")
+                term.setCursor(1,24)
                 term.clearLine()
                 text = term.read()
                 editTable[pageNum].forceOpen = tonumber(text)
-                setGui(21,"Is this door immune to lock door?")
-                setGui(22,"0 if no, 1 if yes. Default is no")
-                term.setCursor(1,23)
+                setGui(22,"Is this door immune to lock door?")
+                setGui(23,"0 if no, 1 if yes. Default is no")
+                term.setCursor(1,24)
                 term.clearLine()
                 text = term.read()
                 editTable[pageNum].bypassLock = tonumber(text)
             elseif p1 == 5 then
-                setGui(21,"At the moment, there is no way to edit passes without")
-                setGui(22,"using the autoinstaller to do so.")
-                setGui(23,"Press enter to continue")
+                setGui(22,"At the moment, there is no way to edit passes without")
+                setGui(23,"using the autoinstaller to do so.")
+                setGui(24,"Press enter to continue")
                 term.read()
             elseif p1 == 6 then
-                setGui(21,"What is the address for the magreader block?")
-                setGui(22,"Enter uuid as text")
-                term.setCursor(1,23)
+                setGui(22,"What is the address for the magreader block?")
+                setGui(23,"Enter uuid as text")
+                term.setCursor(1,24)
                 term.clearLine()
                 text = term.read()
-                editTable[pageNum].doorAddress = text:sub(1,-2)
+                editTable[pageNum].reader = text:sub(1,-2)
             end
             pageChange(pageNum,#editTable,editChange)
             pageChangeAllowed = true
