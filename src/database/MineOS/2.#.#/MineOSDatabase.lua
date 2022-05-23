@@ -119,6 +119,19 @@ function loadTable( sfile )
         return nil
     end
 end
+
+function callModem(callPort,...) --Does it work?
+  modem.broadcast(modemPort,...)
+  local e, _, from, port, _, msg
+  repeat
+      e, ... = event.pull(1)
+  until(e == "modem_message" or e == nil)
+  if e == "modem_message" then
+      return true,...
+  else
+      return false
+  end
+end
  
 ----------Callbacks
 function updateServer()
@@ -501,6 +514,13 @@ function editVarCallback() --TODO: Add the ability to edit passes
 end
  
 ----------GUI SETUP
+local check, work = callModem(modemPort,"getuserlist") --TODO: Finish modem call for getuserlist including server
+if check then
+  work = ser.unserialize(crypt(work,cryptKey,true))
+else
+  GUI.alert("Failed to get userlist. Is server online?")
+end
+
 workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,0xE1E1E1))
  
 local layout = window:addChild(GUI.layout(1, 1, window.width, window.height, 1, 1))

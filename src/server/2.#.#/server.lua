@@ -69,6 +69,21 @@ function loadTable( sfile )
     end
 end
 
+function deepcopy(orig)
+  local orig_type = type(orig)
+  local copy
+  if orig_type == 'table' then
+      copy = {}
+      for orig_key, orig_value in next, orig, nil do
+          copy[deepcopy(orig_key)] = deepcopy(orig_value)
+      end
+      setmetatable(copy, deepcopy(getmetatable(orig)))
+  else -- number, string, boolean, etc
+      copy = orig
+  end
+  return copy
+end
+
 function advWrite(text,color,wrap)
   gpu.setForeground(color or gpu.getForeground())
   term.write(text,wrap or true)
@@ -264,7 +279,10 @@ while true do
     thisUserName = getVar("name",data.uuid)
   end
   if command == "updateuserlist" then
+    local peek = ser.unserialize(data)
+    local paak = deepcopy(userTable.settings)
     userTable = ser.unserialize(data)
+    userTable.settings = nil
     advWrite("Updated userlist received\n",0x0000C0)
     saveTable(userTable, "userlist.txt")
   elseif command == "autoInstallerQuery" then
