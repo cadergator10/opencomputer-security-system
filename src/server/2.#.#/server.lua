@@ -359,6 +359,9 @@ while true do
         modem.send(from, port, data)
       end--IMPORTANT: Hello
     end
+  elseif command == "getuserlist" then
+    data = crypt(ser.serialize(userTable),settingTable.cryptKey)
+    modem.send(from, port, data)
   elseif command == "checkRules" then
     if lockDoors == true and bypassLock ~= 1 then
       advWrite("Doors have been locked. Unable to open door\n",0xFF0000)

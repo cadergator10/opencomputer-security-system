@@ -512,13 +512,21 @@ function editVarCallback() --TODO: Add the ability to edit passes
   end
   varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, 0xFFFFFF, 0x555555, 0x880000, 0xFFFFFF, "change variable properties"))
 end
- 
+
 ----------GUI SETUP
+settingTable = loadTable(aRD .. "dbsettings.txt")
+if settingTable == nil then
+  GUI.alert("It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.")
+  settingTable = {["cryptKey"]={1,2,3,4,5}}
+  saveTable(settingTable,aRD .. "dbsettings.txt")
+end
 local check, work = callModem(modemPort,"getuserlist") --TODO: Finish modem call for getuserlist including server
 if check then
-  work = ser.unserialize(crypt(work,cryptKey,true))
+  work = ser.unserialize(crypt(work,settingTable.cryptKey,true))
+  saveTable(work,aRD .. "userlist.txt")
 else
   GUI.alert("Failed to get userlist. Is server online?")
+  os.exit()
 end
 
 workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,0xE1E1E1))
