@@ -303,5 +303,50 @@ local function convert( chars, dist, inv )
     end
   end
 
+  function security.getVar(str,var,loc) --TODO: Convert modifications to uuid as well.
+    local data = crypt(str,extraConfig.cryptKey,true)
+    data = ser.unserialize(data)
+    local pik = false
+    if type(var) == "boolean" and var == true then
+      var = settingData.cardRead[1].call
+      pik = true
+    end
+    data.var = var
+    data.pik = pik
+    data = crypt(ser.serialize(data),extraConfig.cryptKey)  
+    if loc ~= nil then
+      modem.send(loc,modemPort,"getvar",data)
+    else
+      modem.broadcast(modemPort,"getvar",var)
+    end
+    modem.open(modemPort)
+    local e, _, from, port, _, msg = event.pull(1, "modem_message")
+    if e then
+      data = crypt(msg, extraConfig.cryptKey, true)
+      return true, data
+    else
+      return false, "timed out or user not found"
+    end
+  end
+  function security.setVar(str,var,it,loc)
+    local data = crypt(str,extraConfig.cryptKey,true)
+    data = ser.unserialize(data)
+    data.var = var
+    data.data = it
+    data = crypt(ser.serialize(data),extraConfig.cryptKey)
+    if loc ~= nil then
+      modem.send(loc,modemPort,"getvar",data)
+    else
+      modem.broadcast(modemPort,"getvar",var)
+    end
+    modem.open(modemPort)
+    local e, _, from, port, _, msg = event.pull(1, "modem_message")
+    if e then
+      return true, "no error"
+    else
+      return false, "timed out"
+    end
+  end
+
 return security
 

@@ -274,7 +274,7 @@ while true do
   local data = msg
   if command ~= "autoInstallerQuery" and command ~= "remotecontrol" then data = crypt(msg, settingTable.cryptKey, true) end
   local thisUserName = false
-  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "remotecontrol" then
+  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "remotecontrol" and command ~= "getuserlist" then
     data = ser.unserialize(data)
     thisUserName = getVar("name",data.uuid)
   end
@@ -362,6 +362,26 @@ while true do
   elseif command == "getuserlist" then
     data = crypt(ser.serialize(userTable),settingTable.cryptKey)
     modem.send(from, port, data)
+  elseif command == "getvar" then --TEST: Test modifications of variables
+    local worked = false
+    for key, value in pairs(userTable) do
+      if value.uuid = data.uuid then
+        worked = true
+        modem.send(from,port, crypt(value[data.var],settingTable.cryptKey))
+      end
+    end
+  elseif command == "setvar" then
+    local worked = false
+    local counter = 1
+    for key, value in pairs(userTable) do
+      if value.uuid = data.uuid then
+        worked = true
+        userTable[counter][data.var] = data.data
+        modem.send(from,port, crypt("true",settingTable.cryptKey))
+      else
+        counter = counter + 1
+      end
+    end
   elseif command == "checkRules" then
     if lockDoors == true and bypassLock ~= 1 then
       advWrite("Doors have been locked. Unable to open door\n",0xFF0000)

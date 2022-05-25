@@ -446,7 +446,7 @@ function addVarYesCall()
 end
 
 function addVarCallback()
-  addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
+  addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false} --TODO: Add a "default value" for string values.
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
   varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "variable key"))
   varInput.onInputFinished = function()
