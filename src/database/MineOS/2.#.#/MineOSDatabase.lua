@@ -193,7 +193,7 @@ function userListCallback()
       if userTable.settings.type[i] == "-int" then
         guiCalls[i][3].text = tostring(guiCalls[i][4][userTable[selectedId][userTable.settings.var[i]]] or "none")
       else
-        guiCalls[i][3].text = tostring(userTable[selectedId][userTable.settings.var[i]])
+        guiCalls[i][3].text = tostring(userTable[selectedId][userTable.settings.var[i]]) --FIXME: Erroring here after deleting user
       end
       guiCalls[i][1].disabled = false
       guiCalls[i][2].disabled = false
@@ -276,7 +276,7 @@ end
  
 function deleteUserCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
-  userTable[selected] = nil
+  table.remove(userTable,selected)
   updateList()
   userNameText.text = ""
   userNameText.disabled = true
@@ -288,14 +288,15 @@ function deleteUserCallback()
       if tmp ~= "-string" then guiCalls[i][1].disabled = true end
     elseif tmp == "int" or tmp == "-int" then
       if tmp == "-int" then
-        guiCalls[i][3] = "NAN"
+        guiCalls[i][3].text = "NAN"
       else
-        guiCalls[i][3] = "#"
+        guiCalls[i][3].text = "#"
       end
       guiCalls[i][1].disabled = true
       guiCalls[i][2].disabled = true
     end
   end
+  cardBlockedYesButton.disabled = true
   if enableLinking == true then linkUserButton.disabled = true end
 end
 
