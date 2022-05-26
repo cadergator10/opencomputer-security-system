@@ -286,10 +286,10 @@ function newUserCallback()
   table.insert(userTable, tmpTable)
   updateList()
 end
- 
+
 function deleteUserCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
-  userTable[selected] = nil
+  table.remove(userTable,selected)
   updateList()
   userNameText.text = ""
   userNameText.disabled = true
@@ -301,14 +301,15 @@ function deleteUserCallback()
       if tmp ~= "-string" then guiCalls[i][1].disabled = true end
     elseif tmp == "int" or tmp == "-int" then
       if tmp == "-int" then
-        guiCalls[i][3] = "NAN"
+        guiCalls[i][3].text = "NAN"
       else
-        guiCalls[i][3] = "#"
+        guiCalls[i][3].text = "#"
       end
       guiCalls[i][1].disabled = true
       guiCalls[i][2].disabled = true
     end
   end
+  cardBlockedYesButton.disabled = true
   if enableLinking == true then linkUserButton.disabled = true end
 end
 
@@ -446,7 +447,7 @@ function addVarYesCall()
 end
 
 function addVarCallback()
-  addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false} --TODO: Add a "default value" for string values.
+  addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
   varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "variable key"))
   varInput.onInputFinished = function()

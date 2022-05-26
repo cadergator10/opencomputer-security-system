@@ -365,7 +365,7 @@ while true do
   elseif command == "getvar" then --TEST: Test modifications of variables
     local worked = false
     for key, value in pairs(userTable) do
-      if value.uuid = data.uuid then
+      if value.uuid == data.uuid then
         worked = true
         modem.send(from,port, crypt(value[data.var],settingTable.cryptKey))
       end
@@ -374,7 +374,7 @@ while true do
     local worked = false
     local counter = 1
     for key, value in pairs(userTable) do
-      if value.uuid = data.uuid then
+      if value.uuid == data.uuid then
         worked = true
         userTable[counter][data.var] = data.data
         modem.send(from,port, crypt("true",settingTable.cryptKey))
