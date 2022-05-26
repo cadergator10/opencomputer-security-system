@@ -21,7 +21,7 @@ local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","
 local forceOpenTypes = {"False","True"}
 local passTypes = {["string"]="Inputtable String",["-string"]="Hidden String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"2.2.0","2.2.1","2.2.2"}
+local supportedVersions = {"2.2.0","2.2.1","2.2.2","2.3.0"}
 
 local settings
 
@@ -446,7 +446,7 @@ function doorediting() --TEST: Can this edit the doors?
     end
     local _, _, from, port, _, command, msg = event.pull("modem_message")
     local diagInfo = ser.unserialize(msg)
-    if diagInfo.version ~= "2.2.2" then
+    if diagInfo.version ~= "2.2.2" and diagInfo.version ~= "2.3.0" then
         setGui(4,"Door version is not 2.2.2 and above and is unsupported")
         os.exit()
     end
