@@ -521,7 +521,7 @@ if settingTable == nil then
   settingTable = {["cryptKey"]={1,2,3,4,5}}
   saveTable(settingTable,aRD .. "dbsettings.txt")
 end
-local check, work = callModem(modemPort,"getuserlist") --TODO: Finish modem call for getuserlist including server
+local check,_,_,_,_,work = callModem(modemPort,"getuserlist") --TEST: Does this get the userlist correctly?
 if check then
   work = ser.unserialize(crypt(work,settingTable.cryptKey,true))
   saveTable(work,aRD .. "userlist.txt")

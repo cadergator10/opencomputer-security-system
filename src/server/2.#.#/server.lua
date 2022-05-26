@@ -362,7 +362,7 @@ while true do
   elseif command == "getuserlist" then
     data = crypt(ser.serialize(userTable),settingTable.cryptKey)
     modem.send(from, port, data)
-  elseif command == "getvar" then --TEST: Test modifications of variables
+  elseif command == "getvar" then
     local worked = false
     for key, value in pairs(userTable) do
       if value.uuid == data.uuid then
