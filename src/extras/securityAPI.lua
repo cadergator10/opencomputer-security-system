@@ -1,4 +1,4 @@
-local version = "2.2.0"
+local version = "2.3.0"
 --testR = true
 
 local security = {}
@@ -25,6 +25,8 @@ local modem = component.modem
 
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 local varSettings = {}
+
+local query
  
 local settingData = {}
 local extraConfig = {}
@@ -82,6 +84,19 @@ local function convert( chars, dist, inv )
   --------Called Functions
 
   function security.setup()
+    modem.open(modemPort)
+    modem.broadcast(modemPort,"autoInstallerQuery")
+    local e
+    e,_,_,_,_,query = event.pull(3,"modem_message")
+    if e == nil then
+      print("Failed query. Is the server on?")
+      os.exit()
+    end
+    query = ser.unserialize(query)
+    if query.num == 1 then
+      print("Server is a 1.#.# version, which isn't supported!")
+      os.exit()
+    end
     local fill = io.open("extraConfig.txt", "r")
     if fill ~= nil then
       io.close(fill)
@@ -115,18 +130,6 @@ local function convert( chars, dist, inv )
       print("First time pass setup")
       print("Would you like to use the simple pass setup or new advanced one? 1 for simple, 2 for advanced")
       local text = term.read()
-      modem.open(modemPort)
-      modem.broadcast(modemPort,"autoInstallerQuery")
-      local e,_,_,_,_,query = event.pull(3,"modem_message")
-      if e == nil then
-        print("Failed query. Is the server on?")
-        os.exit()
-      end
-      query = ser.unserialize(query)
-      if query.num == 1 then
-        print("Server is a 1.#.# version, which isn't supported!")
-        os.exit()
-      end
       settingData.name = "Test Security API"
       if tonumber(text) == 1 then
         local nextmsg = "What should be read? 0 = staff,"
@@ -298,6 +301,63 @@ local function convert( chars, dist, inv )
         else
             return true, false
         end
+    else
+      return false, "timed out"
+    end
+  end
+
+  function security.getVar(str,var,loc)
+    local data = crypt(str,extraConfig.cryptKey,true)
+    data = ser.unserialize(data)
+    if type(var) == "boolean" then
+      var = settingData.cardRead[1].call
+      for i=1,#query.data.calls, 1 do
+        if var == query.data.calls[i] then
+          var = query.data.var[i]
+          break
+        end
+      end
+    end
+    data.var = var
+    data = crypt(ser.serialize(data),extraConfig.cryptKey)  
+    if loc ~= nil then
+      modem.send(loc,modemPort,"getvar",data)
+    else
+      modem.broadcast(modemPort,"getvar",data)
+    end
+    modem.open(modemPort)
+    local e, _, from, port, _, msg = event.pull(1, "modem_message")
+    if e then
+      data = crypt(msg, extraConfig.cryptKey, true)
+      return true, data
+    else
+      return false, "timed out or user not found"
+    end
+  end
+  function security.setVar(str,var,it,loc)
+    local data = crypt(str,extraConfig.cryptKey,true)
+    data = ser.unserialize(data)
+    if type(var) == "boolean" then
+      var = settingData.cardRead[1].call
+      for i=1,#query.data.calls, 1 do
+        if var == query.data.calls[i] then
+          var = query.data.var[i]
+          break
+        end
+      end
+    end
+    data.var = var
+    data.data = it
+    data = crypt(ser.serialize(data),extraConfig.cryptKey)
+    if loc ~= nil then
+      modem.send(loc,modemPort,"setvar",data)
+    else
+      modem.broadcast(modemPort,"setvar",data)
+    end
+    modem.open(modemPort)
+    local e, _, from, port, _, msg = event.pull(1, "modem_message")
+    if e then
+      return true, "no error"
     else
       return false, "timed out"
     end

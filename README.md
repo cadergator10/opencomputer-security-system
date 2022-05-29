@@ -80,14 +80,18 @@ Beta Changelog:
    <li>2.2.0 Side update 2: Improved diagnostic tablet with a simple user interface; Moved accelerated door setup code to the diagnostic tablet
    <li>2.2.1 Diagnostics update: Accelerated door setup and diagnostics are combined to one tablet with easy to use controls. Works with both 2.2.0 and 2.2.1 and future doors (2.2.1 and up allow you to see every door configuration on multi-doors) 4/30</li>
    <li>2.2.2 Runtime Editing update: Added the editor to the diagnostic tablet program, so you can now swipe the admin card in the door control and edit all the doors without having to use the autoinstaller! (Does not include pass editing which still requires the autoinstaller atm) Works with 2.2.2 and up Only. Also changed uuid resetting button to show a yes/no page. 5/18</li>
+   <li>2.3.0 Functional string update: String and HiddenStrings can now be grabbed and set via the securityAPI. This allows you to make custom programs using it (such as a door you can only use 3 times, etc.) This gives a use for the hidden string, as it is now a string value unable to be edited in the database. Get and set with securityapi only works with strings, not int, group, or bool. Check SecurityAPI wiki page for more info. MineOS database now downloads userTable from server on reboot instead of using the one already saved on the database in order to avoid resetting string values set on the server. mineos also has option to turn on and off autoupdate (in dbsettings.txt in app folder) 5/#</li>
 </ul>
+
+Queued updates:
+<ol>
+   <li>2.3.1: Remote control program for 2.#.# systems</li>
+   <li>2.4.0: Security sectors for managing doors (locking certain doors from a seperate pc) </li>
+</ol>
 
 Future updates:
 <ol>
    <li>Ability to edit variables to an extent, ~~and add breaksafe for editing groups (groups are linked to a certain name instead of index in list.~~ Can't think of a good way other than resetting up the door passes with new groups.</li>
-   <li>Remote control program for 2.#.# systems</li>
-   <li>Allow user linked programs through linking (a use for the hidden string)</li>
-   <li>Allow user submitted functions or custom programs to be able to be run off of hidden strings (maybe you want the user to be able to open a door 5 times and lower the counter every time it is swiped, etc.) Simplified answer: Custom programs using Security API that utilizes the hidden string<\li>
    <li>Better styling for the MineOS database (make it look gooood)
 </ol>
 

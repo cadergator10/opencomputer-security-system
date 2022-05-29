@@ -11,7 +11,7 @@ local term = require("term")
 local ios = require("io")
 local gpu = component.gpu
 
-local version = "2.2.0"
+local version = "2.3.0"
 
 local redstone = {}
 
@@ -69,6 +69,21 @@ function loadTable( sfile )
     end
 end
 
+function deepcopy(orig)
+  local orig_type = type(orig)
+  local copy
+  if orig_type == 'table' then
+      copy = {}
+      for orig_key, orig_value in next, orig, nil do
+          copy[deepcopy(orig_key)] = deepcopy(orig_value)
+      end
+      setmetatable(copy, deepcopy(getmetatable(orig)))
+  else -- number, string, boolean, etc
+      copy = orig
+  end
+  return copy
+end
+
 function advWrite(text,color,wrap)
   gpu.setForeground(color or gpu.getForeground())
   term.write(text,wrap or true)
@@ -93,6 +108,7 @@ local doorTable = loadTable("doorlist.txt")
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 if userTable == nil then
   userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}} --sets up setting var with one setting to start with.
+  saveTable(userTable,"userlist.txt")
 end
 if doorTable == nil then
   doorTable = {}
@@ -257,9 +273,9 @@ while true do
 
   local _, _, from, port, _, command, msg, bypassLock = event.pull("modem_message")
   local data = msg
-  if command ~= "autoInstallerQuery" and command ~= "remotecontrol" then data = crypt(msg, settingTable.cryptKey, true) end
+  if command ~= "autoInstallerQuery" and command ~= "remotecontrol" and command ~= "getuserlist" then data = crypt(msg, settingTable.cryptKey, true) end
   local thisUserName = false
-  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "remotecontrol" then
+  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "remotecontrol" and command ~= "getuserlist" then
     data = ser.unserialize(data)
     thisUserName = getVar("name",data.uuid)
   end
@@ -340,6 +356,30 @@ while true do
         advWrite(" tablet not linked\n",0x990000)
         modem.send(from, port, data)
       end--IMPORTANT: Hello
+    end
+  elseif command == "getuserlist" then
+    data = ser.serialize(userTable)
+    data = crypt(data,settingTable.cryptKey)
+    modem.send(from, port, data)
+  elseif command == "getvar" then
+    local worked = false
+    for key, value in pairs(userTable) do
+      if value.uuid == data.uuid then
+        worked = true
+        modem.send(from,port, crypt(value[data.var],settingTable.cryptKey))
+      end
+    end
+  elseif command == "setvar" then
+    local worked = false
+    local counter = 1
+    for key, value in pairs(userTable) do
+      if value.uuid == data.uuid then
+        worked = true
+        userTable[counter][data.var] = data.data
+        modem.send(from,port, crypt("true",settingTable.cryptKey))
+      else
+        counter = counter + 1
+      end
     end
   elseif command == "checkRules" then
     if lockDoors == true and bypassLock ~= 1 then
