@@ -108,6 +108,7 @@ local doorTable = loadTable("doorlist.txt")
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 if userTable == nil then
   userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}} --sets up setting var with one setting to start with.
+  saveTable(userTable,"userlist.txt")
 end
 if doorTable == nil then
   doorTable = {}
@@ -272,17 +273,14 @@ while true do
 
   local _, _, from, port, _, command, msg, bypassLock = event.pull("modem_message")
   local data = msg
-  if command ~= "autoInstallerQuery" and command ~= "remotecontrol" then data = crypt(msg, settingTable.cryptKey, true) end
+  if command ~= "autoInstallerQuery" and command ~= "remotecontrol" and command ~= "getuserlist" then data = crypt(msg, settingTable.cryptKey, true) end
   local thisUserName = false
   if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "remotecontrol" and command ~= "getuserlist" then
     data = ser.unserialize(data)
     thisUserName = getVar("name",data.uuid)
   end
   if command == "updateuserlist" then
-    local peek = ser.unserialize(data)
-    local paak = deepcopy(userTable.settings)
     userTable = ser.unserialize(data)
-    userTable.settings = nil
     advWrite("Updated userlist received\n",0x0000C0)
     saveTable(userTable, "userlist.txt")
   elseif command == "autoInstallerQuery" then
@@ -360,7 +358,8 @@ while true do
       end--IMPORTANT: Hello
     end
   elseif command == "getuserlist" then
-    data = crypt(ser.serialize(userTable),settingTable.cryptKey)
+    data = ser.serialize(userTable)
+    data = crypt(data,settingTable.cryptKey)
     modem.send(from, port, data)
   elseif command == "getvar" then
     local worked = false

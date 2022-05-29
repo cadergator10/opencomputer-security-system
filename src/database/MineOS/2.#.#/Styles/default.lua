@@ -18,7 +18,7 @@
     passNameLabel = 0x165FF2,
     passIntLabel = 0x165FF2,
     passButton = 0xFFFFFF,
-    passText = 0xFFFFFF,
+    passText = 0x555555,
     passSelectButton = 0x880000,
     passSelectText = 0xFFFFFF,
     passInputBack = 0xEEEEEE,
@@ -29,7 +29,7 @@
 
     bottomDivider = 0x6B6E74,
     bottomButton = 0xFFFFFF,
-    bottomText = 0xFFFFFF,
+    bottomText = 0x555555,
     bottomSelectButton = 0x880000,
     bottomSelectText = 0xFFFFFF,
 
@@ -38,7 +38,7 @@
 
     containerLabel = 0x165FF2,
     containerButton = 0xFFFFFF,
-    containerText = 0xFFFFFF,
+    containerText = 0x555555,
     containerSelectButton = 0x880000,
     containerSelectText = 0xFFFFFF,
     containerInputBack = 0xEEEEEE,

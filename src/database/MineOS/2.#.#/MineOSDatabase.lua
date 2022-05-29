@@ -21,7 +21,7 @@ local style = "default.lua"
  
 local workspace, window, menu
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel
-local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton
+local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
 local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton
  
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
@@ -124,12 +124,12 @@ end
 
 function callModem(callPort,...) --Does it work?
   modem.broadcast(modemPort,...)
-  local e, _, from, port, _, msg
+  local e, _, from, port, _, msg,a,b,c,d,f,g,h
   repeat
-      e, ... = event.pull(1)
+      e, a,b,c,d,f,g,h = event.pull(1)
   until(e == "modem_message" or e == nil)
   if e == "modem_message" then
-      return true,...
+      return true,a,b,c,d,f,g,h
   else
       return false
   end
@@ -164,7 +164,9 @@ function updateList()
   else
   previousPage = listPageNumber
   end
-  updateServer()
+  if settingTable.autoupdate then
+    updateServer()
+  end
 end
  
 function eventCallback(ev, id)
@@ -445,6 +447,7 @@ function addVarYesCall()
   varContainer = nil
   saveTable(userTable,aRD .. "userlist.txt")
   GUI.alert("New variable added. App will be auto closed and changes will be applied on next start.")
+  updateServer()
   window:remove()
 end
 
@@ -485,6 +488,7 @@ function delVarYesCall()
   varContainer = nil
   saveTable(userTable,aRD .. "userlist.txt")
   GUI.alert("Variable removed. App will be auto closed and changes will be applied on next start.")
+  updateServer()
   window:remove()
 end
 
@@ -520,11 +524,15 @@ end
 settingTable = loadTable(aRD .. "dbsettings.txt")
 if settingTable == nil then
   GUI.alert("It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.")
-  settingTable = {["cryptKey"]={1,2,3,4,5},["style"]="default.lua"}
+  settingTable = {["cryptKey"]={1,2,3,4,5},["style"]="default.lua",["autoupdate"]=false}
   saveTable(settingTable,aRD .. "dbsettings.txt")
 end
 if settingTable.style == nil then
   settingTable.style = "default.lua"
+  saveTable(settingTable,aRD .. "dbsettings.txt")
+end
+if settingTable.autoupdate == nil then
+  settingTable.autoupdate = false
   saveTable(settingTable,aRD .. "dbsettings.txt")
 end
 style = fs.readTable(stylePath .. settingTable.style)
@@ -532,9 +540,13 @@ local check,_,_,_,_,work = callModem(modemPort,"getuserlist") --TEST: Does this 
 if check then
   work = ser.unserialize(crypt(work,settingTable.cryptKey,true))
   saveTable(work,aRD .. "userlist.txt")
+  userTable = work
 else
-  GUI.alert("Failed to get userlist. Is server online?")
-  os.exit()
+  GUI.alert("Failed to get userlist. Is server online? rollback to saved userlist")
+  userTable = loadTable(aRD .. "userlist.txt")
+  if userTable == nil then
+    userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
+  end
 end
 
 workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,style.windowFill))
@@ -551,10 +563,6 @@ window:addChild(GUI.panel(3,3,60,36,style.listPanel))
 userList = window:addChild(GUI.list(4, 4, 58, 34, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
 userList:addItem("HELLO")
 listPageNumber = 0
-userTable = loadTable(aRD .. "userlist.txt")
-if userTable == nil then
-  userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
-end
 settingTable = loadTable(aRD .. "dbsettings.txt")
 if settingTable == nil then
   GUI.alert("It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.")
@@ -657,7 +665,8 @@ listDownButton = window:addChild(GUI.button(12,38,3,1, style.listPageButton, sty
 listDownButton.onTouch = pageCallback,false
  
 --Line and user buttons
- 
+
+window:addChild(GUI.panel(64,10,86,1,style.bottomDivider))
 window:addChild(GUI.panel(64,36,86,1,style.bottomDivider))
 userNewButton = window:addChild(GUI.button(4,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "new"))
 userNewButton.onTouch = newUserCallback
@@ -673,16 +682,22 @@ delVarButton = window:addChild(GUI.button(84,42,16,1,style.bottomButton, style.b
 delVarButton.onTouch = delVarCallback
 --editVarButton = window:addChild(GUI.button(100,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "edit var")) 
 --editVarButton.onTouch = editVarCallback
- 
---CardWriter frame
- 
-window:addChild(GUI.panel(114, 2, 38, 6, style.cardStatusPanel))
+
+--Database name and stuff and CardWriter
+window:addChild(GUI.panel(64,2,88,6,style.cardStatusPanel))
+window:addChild(GUI.label(66,4,3,3,style.cardStatusLabel,prgName .. " | " .. version))
 cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,"     No card   "))
  
 --write card button
 cardWriteButton = window:addChild(GUI.button(128,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "write")) 
-cardWriteButton.onTouch = writeCardCallback 
- 
+cardWriteButton.onTouch = writeCardCallback
+
+--Server Update button (only if setting is set to false)
+if settingTable.autoupdate then
+  updateButton = window:addChild(GUI.button(128,38,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "update server"))
+  updateButton.onTouch = updateServer()
+end
+
 event.addHandler(eventCallback)
  
 workspace:draw()
