@@ -521,6 +521,9 @@ function editVarCallback() --TODO: Add the ability to edit passes
 end
 
 ----------GUI SETUP
+if modem.isOpen(modemPort) == false then
+    modem.open(modemPort)
+ end
 settingTable = loadTable(aRD .. "dbsettings.txt")
 if settingTable == nil then
   GUI.alert("It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.")
