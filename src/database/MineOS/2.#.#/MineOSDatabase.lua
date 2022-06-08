@@ -696,7 +696,7 @@ cardWriteButton = window:addChild(GUI.button(128,42,16,1,style.bottomButton, sty
 cardWriteButton.onTouch = writeCardCallback
 
 --Server Update button (only if setting is set to false)
-if settingTable.autoupdate then
+if settingTable.autoupdate == false then
   updateButton = window:addChild(GUI.button(128,38,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "update server"))
   updateButton.onTouch = updateServer()
 end
