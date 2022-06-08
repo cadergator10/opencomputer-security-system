@@ -628,7 +628,7 @@ for i=1,#userTable.settings.var,1 do
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type[i] == "-int" then
-    guiCalls[i][3] = window:addChild(GUI.label(96,labelSpot,3,3,passIntLabel,"NAN"))
+    guiCalls[i][3] = window:addChild(GUI.label(96,labelSpot,3,3,style.passIntLabel,"NAN"))
     guiCalls[i][1] = window:addChild(GUI.button(88,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
     guiCalls[i][1].buttonInt = i
     guiCalls[i][1].callbackInt = i + #baseVariables
