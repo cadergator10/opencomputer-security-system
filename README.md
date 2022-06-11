@@ -85,14 +85,14 @@ Beta Changelog:
 
 Queued updates:
 <ol>
-   <li>2.3.1: Remote control program for 2.#.# systems</li>
+   <li>2.3.1: MineOS database design improvements & Lang file support.</li>
+   <li>2.3.2: Remote control program for 2.#.# systems</li>
    <li>2.4.0: Security sectors for managing doors (locking certain doors from a seperate pc) </li>
 </ol>
 
 Future updates:
 <ol>
    <li>Ability to edit variables to an extent, ~~and add breaksafe for editing groups (groups are linked to a certain name instead of index in list.~~ Can't think of a good way other than resetting up the door passes with new groups.</li>
-   <li>Better styling for the MineOS database (make it look gooood)
 </ol>
 
 Important information:
