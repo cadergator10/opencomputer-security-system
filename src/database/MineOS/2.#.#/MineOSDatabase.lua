@@ -210,7 +210,7 @@ function userListCallback()
       if userTable.settings.type[i] == "-int" then
         guiCalls[i][3].text = tostring(guiCalls[i][4][userTable[selectedId][userTable.settings.var[i]]] or "none")
       else
-        guiCalls[i][3].text = tostring(userTable[selectedId][userTable.settings.var[i]])
+        guiCalls[i][3].text = tostring(userTable[selectedId][userTable.settings.var[i]]) --FIXME: Erroring here after deleting user
       end
       guiCalls[i][1].disabled = false
       guiCalls[i][2].disabled = false
@@ -521,6 +521,9 @@ function editVarCallback() --TODO: Add the ability to edit passes
 end
 
 ----------GUI SETUP
+if modem.isOpen(modemPort) == false then
+    modem.open(modemPort)
+ end
 settingTable = loadTable(aRD .. "dbsettings.txt")
 if settingTable == nil then
   GUI.alert("It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.")
@@ -625,7 +628,7 @@ for i=1,#userTable.settings.var,1 do
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type[i] == "-int" then
-    guiCalls[i][3] = window:addChild(GUI.label(96,labelSpot,3,3,passIntLabel,"NAN"))
+    guiCalls[i][3] = window:addChild(GUI.label(96,labelSpot,3,3,style.passIntLabel,"NAN"))
     guiCalls[i][1] = window:addChild(GUI.button(88,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
     guiCalls[i][1].buttonInt = i
     guiCalls[i][1].callbackInt = i + #baseVariables
@@ -693,9 +696,9 @@ cardWriteButton = window:addChild(GUI.button(128,42,16,1,style.bottomButton, sty
 cardWriteButton.onTouch = writeCardCallback
 
 --Server Update button (only if setting is set to false)
-if settingTable.autoupdate then
+if settingTable.autoupdate == false then
   updateButton = window:addChild(GUI.button(128,38,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "update server"))
-  updateButton.onTouch = updateServer()
+  updateButton.onTouch = updateServer
 end
 
 event.addHandler(eventCallback)
