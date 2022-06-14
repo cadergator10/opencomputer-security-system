@@ -319,7 +319,7 @@ function deleteUserCallback()
 end
 
 function changeUUID()
-    varContainer.addBackgroundContainer(workspace,true,true)
+    varContainer = GUI.addBackgroundContainer(workspace,true,true)
     varContainer.layout:addChild(GUI.label(1,1,3,3,style.containerLabel,loc.changeuuidline1))
     varContainer.layout:addChild(GUI.label(1,3,3,3,style.containerLabel,loc.changeuuidline2))
     varContainer.layout:addChild(GUI.label(1,5,3,3,style.containerLabel,loc.changeuuidline3))
@@ -520,7 +520,7 @@ function editVarCallback() --TODO: Add the ability to edit passes
   end
   varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.changevarpropbutton))
 end
-
+--TODO: Move stuff from singleplayer server to this
 ----------GUI SETUP
 if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
