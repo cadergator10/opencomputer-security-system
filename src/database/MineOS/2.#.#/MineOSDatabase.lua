@@ -21,7 +21,7 @@ local loc = system.getLocalization(aRD .. "Localizations/")
 ----------
  
 local workspace, window, menu
-local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel
+local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
 local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton
  
@@ -394,19 +394,24 @@ function linkUserCallback()
     userListCallback()
 end
 
-function checkTypeCallback()
-  addVarArray.above = false
-  addVarArray.data = false
+function checkTypeCallback(workspace, button) --TODO: finish the checks for this
   local typeArray = {"string","-string","int","-int","bool"}
-  local selected = typeSelect.selectedItem
-  addVarArray.type = typeArray[selected]
+  local selected
+  if button.izit == "add" then
+    addVarArray.above = false
+    addVarArray.data = false
+    selected = typeSelect.selectedItem
+    addVarArray.type = typeArray[selected]
+  else
+    selected = addVarArray[typeSelect.selectedItem]
+  end
   if extraVar ~= nil then
     extraVar:remove()
     extraVar = nil
   end
   if selected == 3 then
     extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
-      extraVar.onTouch = function()
+    extraVar.onTouch = function()
       addVarArray.above = extraVar.pressed
     end
     extraVar.switchMode = true
@@ -416,7 +421,7 @@ function checkTypeCallback()
       addVarArray.data = split(extraVar.text,",")
     end
   else
-    
+
   end
 end
 
@@ -464,6 +469,7 @@ function addVarCallback()
     addVarArray.label = labelInput.text
   end
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,11,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+  typeSelect.izit = "add"
   typeSelect:addItem("String").onTouch = checkTypeCallback
   typeSelect:addItem("Hidden String").onTouch = checkTypeCallback
   typeSelect:addItem("Level (Int)").onTouch = checkTypeCallback
@@ -503,12 +509,21 @@ function delVarCallback()
   varYesButton.onTouch = delVarYesCall
 end
 
+function editVarYesCall()
+
+end
+
 function editVarCallback() --TODO: Add the ability to edit passes
-  addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
+  addVarArray = {}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  varContainer.layout:addChild(GUI.label(1,1,3,3,"You can only edit level and group passes"))
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+  typeSelect.izit = "edit"
   for i=1,#userTable.settings.var,1 do
-    typeSelect:addItem(userTable.settings.label[i])
+    if userTable.settings.type[i] == "-int" or userTable.settings.type[i] == "int" then
+      typeSelect:addItem(userTable.settings.label[i]).onTouch = checkTypeCallback
+      table.insert(addVarArray,i)
+    end
   end
   local showThis = function(int)
     addVarArray.var = userTable.settings.var[int]
@@ -519,8 +534,11 @@ function editVarCallback() --TODO: Add the ability to edit passes
     addVarArray.data = userTable.settings.data[int]
   end
   varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.changevarpropbutton))
+  varYesButton.onTouch = editVarYesCall
+
+  checkTypeCallback(nil,{["izit"]="edit"})
 end
---TODO: Move stuff from singleplayer server to this
+
 ----------GUI SETUP
 if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
@@ -670,22 +688,23 @@ listDownButton.onTouch = pageCallback,false
  
 --Line and user buttons
 
+window:addChild(GUI.panel(115,11,1,26,style.bottomDivider))
 window:addChild(GUI.panel(64,10,86,1,style.bottomDivider))
 window:addChild(GUI.panel(64,36,86,1,style.bottomDivider))
-userNewButton = window:addChild(GUI.button(4,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new))
+userNewButton = window:addChild(GUI.button(4,40,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new))
 userNewButton.onTouch = newUserCallback
-userDeleteButton = window:addChild(GUI.button(20,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delete))
+userDeleteButton = window:addChild(GUI.button(4,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delete))
 userDeleteButton.onTouch = deleteUserCallback
-userChangeUUIDButton = window:addChild(GUI.button(36,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.resetuuid))
+userChangeUUIDButton = window:addChild(GUI.button(4,44,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.resetuuid))
 userChangeUUIDButton.onTouch = changeUUID
-createAdminCardButton = window:addChild(GUI.button(52,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.admincardbutton))
+createAdminCardButton = window:addChild(GUI.button(128,43,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.admincardbutton))
 createAdminCardButton.onTouch = writeAdminCardCallback
-addVarButton = window:addChild(GUI.button(68,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.addvar))
+addVarButton = window:addChild(GUI.button(22,40,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.addvar))
 addVarButton.onTouch = addVarCallback
-delVarButton = window:addChild(GUI.button(84,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delvar))
+delVarButton = window:addChild(GUI.button(22,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delvar))
 delVarButton.onTouch = delVarCallback
---editVarButton = window:addChild(GUI.button(100,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.editvar))
---editVarButton.onTouch = editVarCallback
+editVarButton = window:addChild(GUI.button(22,44,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.editvar))
+editVarButton.onTouch = editVarCallback
 
 --Database name and stuff and CardWriter
 window:addChild(GUI.panel(64,2,88,6,style.cardStatusPanel))
@@ -693,12 +712,12 @@ window:addChild(GUI.label(66,4,3,3,style.cardStatusLabel,prgName .. " | " .. ver
 cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,loc.cardabsent))
  
 --write card button
-cardWriteButton = window:addChild(GUI.button(128,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.write))
+cardWriteButton = window:addChild(GUI.button(128,41,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.write))
 cardWriteButton.onTouch = writeCardCallback
 
 --Server Update button (only if setting is set to false)
 if settingTable.autoupdate == false then
-  updateButton = window:addChild(GUI.button(128,38,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.updateserver))
+  updateButton = window:addChild(GUI.button(128,8,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.updateserver))
   updateButton.onTouch = updateServer
 end
 
