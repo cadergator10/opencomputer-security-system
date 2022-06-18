@@ -23,7 +23,7 @@ local loc = system.getLocalization(aRD .. "Localizations/")
 local workspace, window, menu
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
-local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton
+local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2
  
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
@@ -409,19 +409,43 @@ function checkTypeCallback(workspace, button) --TODO: finish the checks for this
     extraVar:remove()
     extraVar = nil
   end
-  if selected == 3 then
-    extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
-    extraVar.onTouch = function()
-      addVarArray.above = extraVar.pressed
-    end
-    extraVar.switchMode = true
-  elseif selected == 4 then
-    extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
-    extraVar.onInputFinished = function()
-      addVarArray.data = split(extraVar.text,",")
-    end
-  else
+  if button.izit == "add" then
+    if selected == 3 then
+      extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
+      extraVar.onTouch = function()
+        addVarArray.above = extraVar.pressed
+      end
+      extraVar.switchMode = true
+    elseif selected == 4 then
+      extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
+      extraVar.onInputFinished = function()
+        addVarArray.data = split(extraVar.text,",")
+      end
+    else
 
+    end
+    if userTable.settings.type[selected] == "int" then
+      extraVar = varContainer.layout:addChild(GUI.button(1,11,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
+      extraVar.switchMode = true
+      extraVar.pressed = userTable.settings.above[selected]
+      extraVar.onTouch = function()
+        extraVar2 = extraVar.pressed
+      end
+      extraVar2 = userTable.settings.above[selected]
+    elseif userTable.settings.type[selected] == "-int" then
+      extraVar = varContainer.layout:addChild(GUI.input(1,11,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
+      local isme = userTable.settings.data[selected][1]
+      for i=2,i<userTable.settings.data[selected],1 do
+        isme = isme .. "," .. userTable.settings.data[selected][i]
+      end
+      extraVar.text = isme
+      extraVar2 = split(extraVar.text,",")
+      extraVar.onInputFinished = function()
+        extraVar2 = split(extraVar.text,",")
+      end
+    else
+
+    end
   end
 end
 
@@ -510,14 +534,28 @@ function delVarCallback()
 end
 
 function editVarYesCall()
+  local selected = addVarArray[typeSelect.selectedItem]
+  if userTable.settings.type[selected] == "int" then
+    userTable.settings.above[selected] = extraVar2
+  elseif userTable.settings.type[selected] == "-int" then
+    userTable.settings.data[selected] = extraVar2
+  else
 
+  end
+  varContainer:removeChildren()
+  varContainer:remove()
+  varContainer = nil
+  saveTable(userTable,aRD .. "userlist.txt")
+  GUI.alert(loc.delvarcompleted)
+  updateServer()
+  window:remove()
 end
 
 function editVarCallback() --TODO: Add the ability to edit passes
   addVarArray = {}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
   varContainer.layout:addChild(GUI.label(1,1,3,3,"You can only edit level and group passes"))
-  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,6,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
   typeSelect.izit = "edit"
   for i=1,#userTable.settings.var,1 do
     if userTable.settings.type[i] == "-int" or userTable.settings.type[i] == "int" then
