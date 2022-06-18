@@ -37,8 +37,8 @@
     usernotselected = "Пользователь не выбран",
     toggle = "Переключить",
     inputname = "Ввод имени",
-    inputtext = "Ввод текста"
-    linkdevice = "Связанное устройство"
+    inputtext = "Ввод текста",
+    linkdevice = "Связанное устройство",
     new = "Новый",
     delete = "Удалить",
     resetuuid = "Сбросить uuid",

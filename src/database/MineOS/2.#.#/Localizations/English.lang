@@ -37,8 +37,8 @@
     usernotselected = "user not selected",
     toggle = "toggle",
     inputname = "input name",
-    inputtext = "input text"
-    linkdevice = "link device"
+    inputtext = "input text",
+    linkdevice = "link device",
     new = "new",
     delete = "delete",
     resetuuid = "reset uuid",
