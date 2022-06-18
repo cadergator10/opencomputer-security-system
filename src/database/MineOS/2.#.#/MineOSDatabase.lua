@@ -397,7 +397,7 @@ end
 function checkTypeCallback(workspace, button) --TODO: finish the checks for this
   local typeArray = {"string","-string","int","-int","bool"}
   local selected
-  if button.izit == "add" then
+  if typeSelect.izit == "add" then
     addVarArray.above = false
     addVarArray.data = false
     selected = typeSelect.selectedItem
@@ -409,7 +409,7 @@ function checkTypeCallback(workspace, button) --TODO: finish the checks for this
     extraVar:remove()
     extraVar = nil
   end
-  if button.izit == "add" then
+  if typeSelect.izit == "add" then
     if selected == 3 then
       extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
       extraVar.onTouch = function()
@@ -494,11 +494,16 @@ function addVarCallback()
   end
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,11,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
   typeSelect.izit = "add"
-  typeSelect:addItem("String").onTouch = checkTypeCallback
-  typeSelect:addItem("Hidden String").onTouch = checkTypeCallback
-  typeSelect:addItem("Level (Int)").onTouch = checkTypeCallback
-  typeSelect:addItem("Group").onTouch = checkTypeCallback
-  typeSelect:addItem("Pass (true/false)").onTouch = checkTypeCallback
+  local lik = typeSelect:addItem("String")
+  lik.onTouch = checkTypeCallback
+  lik = typeSelect:addItem("Hidden String")
+  lik.onTouch = checkTypeCallback
+  lik = typeSelect:addItem("Level (Int)")
+  lik.onTouch = checkTypeCallback
+  lik = typeSelect:addItem("Group")
+  lik.onTouch = checkTypeCallback
+  lik = typeSelect:addItem("Pass (true/false)")
+  lik.onTouch = checkTypeCallback
   varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvaraddbutton))
   varYesButton.onTouch = addVarYesCall
 end
