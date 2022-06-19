@@ -394,7 +394,7 @@ function linkUserCallback()
     userListCallback()
 end
 
-function checkTypeCallback(workspace, button) --TODO: finish the checks for this
+function checkTypeCallback() --TODO: finish the checks for this
   local typeArray = {"string","-string","int","-int","bool"}
   local selected
   if typeSelect.izit == "add" then
@@ -424,6 +424,7 @@ function checkTypeCallback(workspace, button) --TODO: finish the checks for this
     else
 
     end
+  else
     if userTable.settings.type[selected] == "int" then
       extraVar = varContainer.layout:addChild(GUI.button(1,11,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
       extraVar.switchMode = true
@@ -435,7 +436,7 @@ function checkTypeCallback(workspace, button) --TODO: finish the checks for this
     elseif userTable.settings.type[selected] == "-int" then
       extraVar = varContainer.layout:addChild(GUI.input(1,11,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
       local isme = userTable.settings.data[selected][1]
-      for i=2,i<userTable.settings.data[selected],1 do
+      for i=2,#userTable.settings.data[selected],1 do
         isme = isme .. "," .. userTable.settings.data[selected][i]
       end
       extraVar.text = isme
@@ -551,7 +552,7 @@ function editVarYesCall()
   varContainer:remove()
   varContainer = nil
   saveTable(userTable,aRD .. "userlist.txt")
-  GUI.alert(loc.delvarcompleted)
+  GUI.alert(loc.editvarcompleted)
   updateServer()
   window:remove()
 end
@@ -559,7 +560,7 @@ end
 function editVarCallback() --TODO: Add the ability to edit passes
   addVarArray = {}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
-  varContainer.layout:addChild(GUI.label(1,1,3,3,"You can only edit level and group passes"))
+  varContainer.layout:addChild(GUI.label(1,1,3,3,style.containerLabel, "You can only edit level and group passes"))
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,6,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
   typeSelect.izit = "edit"
   for i=1,#userTable.settings.var,1 do
@@ -750,12 +751,12 @@ editVarButton = window:addChild(GUI.button(22,44,16,1,style.bottomButton, style.
 editVarButton.onTouch = editVarCallback
 
 --Database name and stuff and CardWriter
-window:addChild(GUI.panel(64,2,88,6,style.cardStatusPanel))
+window:addChild(GUI.panel(64,2,88,5,style.cardStatusPanel))
 window:addChild(GUI.label(66,4,3,3,style.cardStatusLabel,prgName .. " | " .. version))
 cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,loc.cardabsent))
  
 --write card button
-cardWriteButton = window:addChild(GUI.button(128,41,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.write))
+cardWriteButton = window:addChild(GUI.button(128,41,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.writebutton))
 cardWriteButton.onTouch = writeCardCallback
 
 --Server Update button (only if setting is set to false)

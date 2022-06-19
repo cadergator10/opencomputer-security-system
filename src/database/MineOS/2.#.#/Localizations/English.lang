@@ -33,6 +33,7 @@
     delvarcompleted = "Variable removed. App will be auto closed and changes will be applied on next start.",
     delvarcompletedbutton = "remove variable from system",
     changevarpropbutton = "change variable properties",
+    changevarcompleted = "Variable changed. If you removed groups from a group variable, you might have to edit doors back to their original grouping.",
 
     usernotselected = "user not selected",
     toggle = "toggle",
