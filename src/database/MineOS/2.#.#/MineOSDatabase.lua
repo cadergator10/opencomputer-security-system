@@ -552,7 +552,7 @@ function editVarYesCall()
   varContainer:remove()
   varContainer = nil
   saveTable(userTable,aRD .. "userlist.txt")
-  GUI.alert(loc.editvarcompleted)
+  GUI.alert(loc.changevarcompleted)
   updateServer()
   window:remove()
 end
