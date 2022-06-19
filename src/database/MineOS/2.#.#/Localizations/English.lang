@@ -30,7 +30,7 @@
     newvarkey = "variable key",
     newvarlabel = "variable label",
     newvaraddbutton = "add variable to system",
-    delvarcompleted = Variable removed. App will be auto closed and changes will be applied on next start.",
+    delvarcompleted = "Variable removed. App will be auto closed and changes will be applied on next start.",
     delvarcompletedbutton = "remove variable from system",
     changevarpropbutton = "change variable properties",
 
