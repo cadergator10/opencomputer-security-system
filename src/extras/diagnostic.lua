@@ -270,9 +270,12 @@ function accsetup()
                 term.clear()
             elseif msg == "terminate" then
                 stayIn = false
+                os.beep()
+                os.beep()
             elseif msg == "analyzer" then
                 print("Scan the device with your tablet")
                 _, text = event.pull("tablet_use")
+                os.beep()
                 modem.send(from,port,text.analyzed[1].address)
             end
         end
@@ -665,13 +668,13 @@ function doorediting() --TEST: Can this edit the doors?
                         readLoad.add = tonumber(readCursor())
                         setGui(22,"How many base passes do you want to add?")
                         setGui(23,"")
-                        readLoad.base = tonumber(readCursor()
+                        readLoad.base = tonumber(readCursor())
                         setGui(22,"How many reject passes do you want to add?")
                         setGui(23,"These don't affect supreme passes")
-                        readLoad.reject = tonumber(readCursor()
+                        readLoad.reject = tonumber(readCursor())
                         setGui(22,"How many supreme passes do you want to add?")
                         setGui(23,"")
-                        readLoad.supreme = tonumber(readCursor()
+                        readLoad.supreme = tonumber(readCursor())
                         local nextmsg = {}
                         nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
                         for i=1,#settings.var,1 do

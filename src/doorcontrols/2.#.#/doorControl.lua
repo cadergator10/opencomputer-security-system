@@ -97,15 +97,22 @@ local function convert( chars, dist, inv )
     return copy
   end
 
-  function colorDo(key,num,delay)
-    component.proxy(key).setLightState(num)
-    os.sleep(delay)
-    component.proxy(key).setLightState(1)
+  function colorLink(key, var) --{["color"]=0,["delay"]=1} or just a number
+    if type(var) == "table" then
+      thread.create(function(args)
+        for i=1,#args,1 do
+          component.proxy(key).setLightState(args[i].color)
+          os.sleep(args[i].delay)
+        end
+      end, var)
+    else
+      component.proxy(key).setLightState(var)
+    end
   end
   
   function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH,key)
     if(toggleH == 0) then
-      if osVersion then component.proxy(key).setLightState(4) end
+      if osVersion then colorLink(key,4) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).open()
@@ -133,9 +140,9 @@ local function convert( chars, dist, inv )
       else
         os.sleep(1)
       end
-      if osVersion then component.proxy(key).setLightState(1) end
+      if osVersion then colorLink(key,1) end
     else
-      if osVersion then thread.create(colorDo,key,4,2) end
+      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=1,["delay"]=0}}) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).toggle()
@@ -271,11 +278,11 @@ local function convert( chars, dist, inv )
           if osVersion == true then
             for i=1,5,1 do
               for j=2,4,1 do
-                component.proxy(data.reader).setLightState(j)
+                colorLink(data.reader,j)
                 os.sleep(0.3)
               end
             end
-            component.proxy(data.reader).setLightState(1)
+            colorLink(data.reader,1)
           else
             if data.doorType == 2 then
               for i=1,5,1 do
@@ -387,7 +394,13 @@ got = nil
 if osVersion then
   for key,_ in pairs(component.list("os_magreader")) do
     component.proxy(key).swipeIndicator(false)
-    component.proxy(key).setLightState(1)
+    colorLink(key,1)
+  end
+  for key,_ in pairs(component.list("os_doorcontrol")) do
+    component.proxy(key).close()
+  end
+  for key,_ in pairs(component.list("os_rolldoorcontrol")) do
+    component.proxy(key).close()
   end
 end
 
@@ -508,20 +521,18 @@ while true do
       end
       data = ser.serialize(diagData)
       modem.broadcast(diagPort, "diag", data)
-      if osVersion then 
-        component.proxy(address).setLightState(2)
-        os.sleep(0.3)
-        component.proxy(address).setLightState(3)
-        os.sleep(0.3)
-        component.proxy(address).setLightState(4)
-        os.sleep(0.3)
-        component.proxy(address).setLightState(1)
+      if osVersion then
+        colorLink(address,{{["color"]=2,["delay"]=0.3},{["color"]=3,["delay"]=0.3},{["color"]=4,["delay"]=0.3},{["color"]=1,["delay"]=0}})
       end
     else
       if keyed == nil and extraConfig.type == "multi" then
         os.exit()
       end
       local tmpTable = ser.unserialize(data)
+      if tmpTable == nil then
+        term.write("Card failed to read. it may not have been written to right or cryptkey may be incorrect.")
+        os.exit()
+      end
       term.write(tmpTable["name"] .. ":")
       if modem.isOpen(modemPort) == false then
         modem.open(modemPort)
@@ -543,15 +554,15 @@ while true do
           end
         elseif data == "false" then
           term.write("Access denied\n")
-          if osVersion then 
-            thread.create(colorDo,address,2,1)
+          if osVersion then
+            colorLink(address,{{["color"]=2,["delay"]=1},{["color"]=1,["delay"]=0}})
           end
           computer.beep()
           computer.beep()
         elseif data == "locked" then
           term.write("Doors have been locked\n")
-          if osVersion then 
-            thread.create(colorDo,address,2,2)
+          if osVersion then
+            colorLink(address,{{["color"]=2,["delay"]=2},{["color"]=1,["delay"]=0}})
           end
           computer.beep()
           computer.beep()
@@ -561,8 +572,8 @@ while true do
         end
       else
         term.write("server timeout\n")
-        if osVersion then 
-          thread.create(colorDo,address,3,1)
+        if osVersion then
+          colorLink(address,{{["color"]=3,["delay"]=1},{["color"]=1,["delay"]=0}})
         end
       end
     end
