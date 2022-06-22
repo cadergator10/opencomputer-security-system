@@ -20,6 +20,7 @@
 
     yes = "Yes",
     no = "No",
+    submit = "Submit",
 
     cardlabel = "'s security pass",
     diagcardlabel = "ADMIN DIAGNOSTIC CARD",
@@ -35,6 +36,10 @@
     changevarpropbutton = "change variable properties",
     changevarcompleted = "Variable changed. If you removed groups from a group variable, you might have to edit doors back to their original grouping.",
 
+    autoupdate = "auto update",
+    style = "Style",
+    settingchangecompleted = "Settings saved. Changes will be applied on next startup",
+
     usernotselected = "user not selected",
     toggle = "toggle",
     inputname = "input name",
@@ -47,6 +52,7 @@
     addvar = "add var",
     delvar = "delete var",
     editvar = "edit var",
+    settingsvar = "settings",
     writebutton = "write",
     updateserver = "update server"
 }

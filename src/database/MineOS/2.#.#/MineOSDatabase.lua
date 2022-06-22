@@ -23,7 +23,7 @@ local loc = system.getLocalization(aRD .. "Localizations/")
 local workspace, window, menu
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
-local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2
+local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, settingsButton
  
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
@@ -583,6 +583,30 @@ function editVarCallback() --TODO: Add the ability to edit passes
   checkTypeCallback(nil,{["izit"]="edit"})
 end
 
+function changeSettings()
+  addVarArray = {["cryptKey"]=settingTable.cryptKey,["style"]=settingTable.style,["autoupdate"]=settingTable.autoupdate}
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  local styleEdit = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.style))
+  styleEdit.text = settingTable.style
+  styleEdit.onInputFinished = function()
+    addVarArray.style = styleEdit.text
+  end
+  local autoupdatebutton = varContainer.layout:addChild(GUI.button(1,6,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.autoupdate))
+  autoupdatebutton.switchMode = true
+  autoupdatebutton.pressed = settingTable.autoupdate
+  autoupdatebutton.onTouch = function()
+    addVarArray.autoupdate = autoupdatebutton.pressed
+  end
+  local acceptButton = varContainer.layout:addChild(GUI.button(1,11,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.submit))
+  acceptButton.onTouch = function()
+    settingTable = addVarArray
+    saveTable(settingTable,aRD .. "dbsettings.txt")
+    GUI.alert(loc.settingchangecompleted)
+    updateServer()
+    window:remove()
+  end
+end
+
 ----------GUI SETUP
 if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
@@ -749,6 +773,10 @@ delVarButton = window:addChild(GUI.button(22,42,16,1,style.bottomButton, style.b
 delVarButton.onTouch = delVarCallback
 editVarButton = window:addChild(GUI.button(22,44,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.editvar))
 editVarButton.onTouch = editVarCallback
+
+--Settings button
+settingsButton = window:addChild(GUI.button(40,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.settingsvar))
+settingsButton.onTouch = changeSettings
 
 --Database name and stuff and CardWriter
 window:addChild(GUI.panel(64,2,88,5,style.cardStatusPanel))

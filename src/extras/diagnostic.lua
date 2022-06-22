@@ -555,7 +555,7 @@ function doorediting() --TEST: Can this edit the doors?
                         end
                     end
                 end
-                table.insert(editTable,{["key"]=j,["doorType"]=0,["redColor"]=0,["redSide"]=0,["reader"]="NAN",["doorAddress"]="NAN",["delay"]=5,["cardRead"]="checkstaff",["toggle"]=0,["forceOpen"]=1,["bypassLock"]=0})
+                table.insert(editTable,{["key"]=j,["doorType"]=0,["redColor"]=0,["redSide"]=0,["reader"]="NAN",["doorAddress"]="NAN",["delay"]=5,["cardRead"]={["uuid"]=uuid.next(),["call"]="checkstaff",["param"]=0,["request"]="supreme",["data"]=false},["toggle"]=0,["forceOpen"]=1,["bypassLock"]=0})
                 pageChange(pageNum,#editTable,editChange)
             elseif char == "r" then
                 pageChangeAllowed = false
