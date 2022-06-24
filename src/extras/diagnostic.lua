@@ -490,7 +490,7 @@ function doorediting() --TEST: Can this edit the doors?
     term.clear()
     local editChange = function()
         setGui(1,"Page" .. pageNum .. "/" .. #editTable)
-        setGui(2,"Use left and right to change doors, n to add a door, and d to delete a door (if multi door)")
+        setGui(2,"Use left and right to change doors, n to add a door, and r to delete a door (if multi door)")
         setGui(3,"Click the screen to save and submit to door control")
         setGui(4,"")
         if diagInfo.type == "single" then
@@ -555,7 +555,7 @@ function doorediting() --TEST: Can this edit the doors?
                         end
                     end
                 end
-                table.insert(editTable,{["key"]=j,["doorType"]=0,["redColor"]=0,["redSide"]=0,["reader"]="NAN",["doorAddress"]="NAN",["delay"]=5,["cardRead"]={["uuid"]=uuid.next(),["call"]="checkstaff",["param"]=0,["request"]="supreme",["data"]=false},["toggle"]=0,["forceOpen"]=1,["bypassLock"]=0})
+                table.insert(editTable,{["key"]=j,["doorType"]=0,["redColor"]=0,["redSide"]=0,["reader"]="NAN",["doorAddress"]="NAN",["delay"]=5,["cardRead"]={{["uuid"]=uuid.next(),["call"]="checkstaff",["param"]=0,["request"]="supreme",["data"]=false}},["toggle"]=0,["forceOpen"]=1,["bypassLock"]=0,["name"]="new door"})
                 pageChange(pageNum,#editTable,editChange)
             elseif char == "r" then
                 pageChangeAllowed = false

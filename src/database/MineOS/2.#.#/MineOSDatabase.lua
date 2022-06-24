@@ -601,6 +601,9 @@ function changeSettings()
   acceptButton.onTouch = function()
     settingTable = addVarArray
     saveTable(settingTable,aRD .. "dbsettings.txt")
+    varContainer:removeChildren()
+    varContainer:remove()
+    varContainer = nil
     GUI.alert(loc.settingchangecompleted)
     updateServer()
     window:remove()
