@@ -4,6 +4,7 @@
 local ttf=require("tableToFile")
 local doorVersion = "2.3.0"
 testR = true
+local saveRefresh = true
 
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
 local doorType = 2
@@ -247,31 +248,38 @@ local function convert( chars, dist, inv )
           end
         end
       elseif msg == "changeSettings" then
-        data = ser.unserialize(data)
-        settingData = data
-        os.execute("copy -f doorSettings.txt dsBackup.txt")
-        ttf.save(settingData,"doorSettings.txt")
-        print("New settings received")
-        local fill = {}
-        fill["type"] = extraConfig.type
-        fill["data"] = settingData
-        modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
-        local got, _, _, _, _, fill = event.pull(2, "modem_message")
-        if got then
-          varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
-          if extraConfig.type == "single" then
-            doorType = settingData.doorType
-            redSide = settingData.redSide
-            redColor = settingData.redColor
-            delay = settingData.delay
-            cardRead = settingData.cardRead
-            toggle = settingData.toggle
-            forceOpen = settingData.forceOpen
-            bypassLock = settingData.bypassLock
+        if saveRefresh then
+          saveRefresh = false
+          thread.create(function()
+            os.sleep(5)
+            saveRefresh = true
+          end)
+          data = ser.unserialize(data)
+          settingData = data
+          os.execute("copy -f doorSettings.txt dsBackup.txt")
+          ttf.save(settingData,"doorSettings.txt")
+          print("New settings received")
+          local fill = {}
+          fill["type"] = extraConfig.type
+          fill["data"] = settingData
+          modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+          local got, _, _, _, _, fill = event.pull(2, "modem_message")
+          if got then
+            varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
+            if extraConfig.type == "single" then
+              doorType = settingData.doorType
+              redSide = settingData.redSide
+              redColor = settingData.redColor
+              delay = settingData.delay
+              cardRead = settingData.cardRead
+              toggle = settingData.toggle
+              forceOpen = settingData.forceOpen
+              bypassLock = settingData.bypassLock
+            end
+          else
+            print("Failed to receive confirmation from server")
+            os.exit()
           end
-        else
-          print("Failed to receive confirmation from server")
-          os.exit()
         end
       elseif msg == "identifyMag" then
         local lightShow = function(data)
