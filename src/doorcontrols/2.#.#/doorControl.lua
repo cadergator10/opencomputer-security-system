@@ -249,7 +249,7 @@ local function convert( chars, dist, inv )
       elseif msg == "changeSettings" then
         data = ser.unserialize(data)
         settingData = data
-        os.execute("copy doorSettings.txt dsBackup.txt")
+        os.execute("copy -f doorSettings.txt dsBackup.txt")
         ttf.save(settingData,"doorSettings.txt")
         print("New settings received")
         local fill = {}
