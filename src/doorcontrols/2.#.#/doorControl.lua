@@ -141,9 +141,9 @@ local function convert( chars, dist, inv )
       else
         os.sleep(1)
       end
-      if osVersion then colorLink(key,1) end
+      if osVersion then colorLink(key,0) end
     else
-      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=1,["delay"]=0}}) end
+      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}}) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).toggle()
@@ -285,12 +285,12 @@ local function convert( chars, dist, inv )
         local lightShow = function(data)
           if osVersion == true then
             for i=1,5,1 do
-              for j=2,4,1 do
-                colorLink(data.reader,j)
+              for j=1,3,1 do
+                colorLink(data.reader,j~=3 and j or 4)
                 os.sleep(0.3)
               end
             end
-            colorLink(data.reader,1)
+            colorLink(data.reader,0)
           else
             if data.doorType == 2 then
               for i=1,5,1 do
@@ -402,7 +402,7 @@ got = nil
 if osVersion then
   for key,_ in pairs(component.list("os_magreader")) do
     component.proxy(key).swipeIndicator(false)
-    colorLink(key,1)
+    colorLink(key,0)
   end
   for key,_ in pairs(component.list("os_doorcontrol")) do
     component.proxy(key).close()
@@ -478,6 +478,7 @@ while true do
     modem.open(modemPort)
   end
   ev, address, user, str, uuid, data = event.pull("magData")
+  if osVersion then colorLink(address,2) end
   local isOk = "ok"
   local keyed = nil
   if extraConfig.type == "multi" then
@@ -501,6 +502,7 @@ while true do
     else
       print("MAG READER IS NOT SET UP! PLEASE FIX")
       if crypt(str, extraConfig.cryptKey, true) ~= adminCard then
+        if osVersion then colorLink(address,{{["color"]=3,["delay"]=3},{["color"]=0,["delay"]=1}}) end
         os.exit()
       end
       end
@@ -530,7 +532,7 @@ while true do
       data = ser.serialize(diagData)
       modem.broadcast(diagPort, "diag", data)
       if osVersion then
-        colorLink(address,{{["color"]=2,["delay"]=0.3},{["color"]=3,["delay"]=0.3},{["color"]=4,["delay"]=0.3},{["color"]=1,["delay"]=0}})
+        colorLink(address,{{["color"]=1,["delay"]=0.3},{["color"]=2,["delay"]=0.3},{["color"]=4,["delay"]=0.3},{["color"]=0,["delay"]=0}})
       end
     else
       if keyed == nil and extraConfig.type == "multi" then
@@ -539,6 +541,7 @@ while true do
       local tmpTable = ser.unserialize(data)
       if tmpTable == nil then
         term.write("Card failed to read. it may not have been written to right or cryptkey may be incorrect.")
+        if osVersion then colorLink(address,{{["color"]=3,["delay"]=3},{["color"]=0,["delay"]=1}}) end
         os.exit()
       end
       term.write(tmpTable["name"] .. ":")
@@ -563,14 +566,14 @@ while true do
         elseif data == "false" then
           term.write("Access denied\n")
           if osVersion then
-            colorLink(address,{{["color"]=2,["delay"]=1},{["color"]=1,["delay"]=0}})
+            colorLink(address,{{["color"]=1,["delay"]=1},{["color"]=0,["delay"]=0}})
           end
           computer.beep()
           computer.beep()
         elseif data == "locked" then
           term.write("Doors have been locked\n")
           if osVersion then
-            colorLink(address,{{["color"]=2,["delay"]=2},{["color"]=1,["delay"]=0}})
+            colorLink(address,{{["color"]=1,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=1,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
           end
           computer.beep()
           computer.beep()
@@ -581,7 +584,7 @@ while true do
       else
         term.write("server timeout\n")
         if osVersion then
-          colorLink(address,{{["color"]=3,["delay"]=1},{["color"]=1,["delay"]=0}})
+          colorLink(address,{{["color"]=5,["delay"]=1},{["color"]=0,["delay"]=0}})
         end
       end
     end
