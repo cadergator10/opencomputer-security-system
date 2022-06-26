@@ -211,7 +211,7 @@ function userListCallback()
       if userTable.settings.type[i] == "-int" then
         guiCalls[i][3].text = tostring(guiCalls[i][4][userTable[selectedId][userTable.settings.var[i]]] or "none")
       else
-        guiCalls[i][3].text = tostring(userTable[selectedId][userTable.settings.var[i]])
+        guiCalls[i][3].text = tostring(userTable[selectedId][userTable.settings.var[i]]) --FIXME: Erroring here after deleting user
       end
       guiCalls[i][1].disabled = false
       guiCalls[i][2].disabled = false
