@@ -16,13 +16,14 @@ local writer
 local aRD = fs.path(system.getCurrentScript())
 local stylePath = aRD.."Styles/"
 local style = "default.lua"
- 
+local loc = system.getLocalization(aRD .. "Localizations/")
+
 ----------
  
 local workspace, window, menu
-local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel
+local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
-local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton
+local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, settingsButton
  
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
@@ -35,8 +36,8 @@ If type is -int, [1] = minus button, [2] = plus button, [3] = value label, [4] =
 ]]
 ----------
  
-local prgName = "Security database"
-local version = "v2.3.0"
+local prgName = loc.name
+local version = "v2.3.1"
  
 local modem
  
@@ -51,13 +52,13 @@ local enableLinking = false
 if component.isAvailable("os_cardwriter") then
     writer = component.os_cardwriter
 else
-    GUI.alert("This requires an Open Security card writer to run")
+    GUI.alert(loc.cardwriteralert)
     return
 end
 if component.isAvailable("modem") then
     modem = component.modem
 else
-    GUI.alert("This requires a modem to run")
+    GUI.alert(loc.modemalert)
     return
 end
 
@@ -171,9 +172,9 @@ end
  
 function eventCallback(ev, id)
   if ev == "cardInsert" then
-    cardStatusLabel.text = "   Card present"
+    cardStatusLabel.text = loc.cardpresent
   elseif ev == "cardRemove" then
-    cardStatusLabel.text = "     No card   "
+    cardStatusLabel.text = loc.cardabsent
   end
 end
  
@@ -252,7 +253,7 @@ function buttonCallback(workspace, button)
         end
       end
     else
-      GUI.alert("error in button callback with button id: " .. buttonInt)
+      GUI.alert(loc.buttoncallbackalert .. buttonInt)
       return
     end
   else
@@ -318,10 +319,10 @@ function deleteUserCallback()
 end
 
 function changeUUID()
-    varContainer.addBackgroundContainer(workspace,true,true)
-    varContainer.layout:addChild(GUI.label(1,1,3,3,style.containerLabel,"This will reset this user's uuid, rendering all cards linked to it useless."))
-    varContainer.layout:addChild(GUI.label(1,3,3,3,style.containerLabel,"Use this if a card gets stolen or in another emergency."))
-    varContainer.layout:addChild(GUI.label(1,5,3,3,style.containerLabel,"Are you sure you want to continue?"))
+    varContainer = GUI.addBackgroundContainer(workspace,true,true)
+    varContainer.layout:addChild(GUI.label(1,1,3,3,style.containerLabel,loc.changeuuidline1))
+    varContainer.layout:addChild(GUI.label(1,3,3,3,style.containerLabel,loc.changeuuidline2))
+    varContainer.layout:addChild(GUI.label(1,5,3,3,style.containerLabel,loc.changeuuidline3))
     local funcyes = function()
       local selected = pageMult * listPageNumber + userList.selectedItem
       userTable[selected].uuid = uuid.next()
@@ -332,8 +333,8 @@ function changeUUID()
     local funcno = function()
       varContainer:remove()
     end
-    local button1 = varContainer.layout:addChild(GUI.button(1,9,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, "Yes"))
-    local button2 = varContainer.layout:addChild(GUI.button(1,7,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, "No"))
+    local button1 = varContainer.layout:addChild(GUI.button(1,9,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.yes))
+    local button2 = varContainer.layout:addChild(GUI.button(1,7,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.no))
     button1.onTouch = funcyes
     button2.onTouch = funcno
 end
@@ -343,13 +344,13 @@ function writeCardCallback()
   local data = {["date"]=userTable[selected].date,["name"]=userTable[selected].name,["uuid"]=userTable[selected].uuid}
   data = ser.serialize(data)
   local crypted = crypt(data, settingTable.cryptKey)
-  writer.write(crypted, userTable[selected].name .. "'s security pass", false, 0)
+  writer.write(crypted, userTable[selected].name .. loc.cardlabel, false, 0)
 end
 
 function writeAdminCardCallback()
   local data =  adminCard
   local crypted = crypt(data, settingTable.cryptKey)
-  writer.write(crypted, "ADMIN DIAGNOSTIC CARD", false, 14)
+  writer.write(crypted, loc.diagcardlabel, false, 14)
 end
 
 function pageCallback(isPos)
@@ -374,7 +375,7 @@ function inputCallback()
 end
 
 function linkUserCallback()
-    local container = GUI.addBackgroundContainer(workspace, false, true, "You have 20 seconds to link your device now. do not click anything")
+    local container = GUI.addBackgroundContainer(workspace, false, true, loc.linkinstruction)
     local selected = pageMult * listPageNumber + userList.selectedItem
     modem.open(dbPort)
     local e, _, from, port, _, msg = event.pull(20)
@@ -383,39 +384,69 @@ function linkUserCallback()
         local data = crypt(msg,settingTable.cryptKey,true)
         userTable[selected].link = data
         modem.send(from,port,crypt(userTable[selected].name,settingTable.cryptKey))
-        GUI.alert("Link successful")
+        GUI.alert(loc.linksuccess)
     else
         userTable[selected].link = "nil"
-        GUI.alert("failed link")
+        GUI.alert(loc.linkfail)
     end
     modem.close(dbPort)
     updateList()
     userListCallback()
 end
 
-function checkTypeCallback()
-  addVarArray.above = false
-  addVarArray.data = false
+function checkTypeCallback() --TODO: finish the checks for this
   local typeArray = {"string","-string","int","-int","bool"}
-  local selected = typeSelect.selectedItem
-  addVarArray.type = typeArray[selected]
+  local selected
+  if typeSelect.izit == "add" then
+    addVarArray.above = false
+    addVarArray.data = false
+    selected = typeSelect.selectedItem
+    addVarArray.type = typeArray[selected]
+  else
+    selected = addVarArray[typeSelect.selectedItem]
+  end
   if extraVar ~= nil then
     extraVar:remove()
     extraVar = nil
   end
-  if selected == 3 then
-    extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, "check above value"))
+  if typeSelect.izit == "add" then
+    if selected == 3 then
+      extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
       extraVar.onTouch = function()
-      addVarArray.above = extraVar.pressed
-    end
-    extraVar.switchMode = true
-  elseif selected == 4 then
-    extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", "groups (comma seperating each group)"))
-    extraVar.onInputFinished = function()
-      addVarArray.data = split(extraVar.text,",")
+        addVarArray.above = extraVar.pressed
+      end
+      extraVar.switchMode = true
+    elseif selected == 4 then
+      extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
+      extraVar.onInputFinished = function()
+        addVarArray.data = split(extraVar.text,",")
+      end
+    else
+
     end
   else
-    
+    if userTable.settings.type[selected] == "int" then
+      extraVar = varContainer.layout:addChild(GUI.button(1,11,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
+      extraVar.switchMode = true
+      extraVar.pressed = userTable.settings.above[selected]
+      extraVar.onTouch = function()
+        extraVar2 = extraVar.pressed
+      end
+      extraVar2 = userTable.settings.above[selected]
+    elseif userTable.settings.type[selected] == "-int" then
+      extraVar = varContainer.layout:addChild(GUI.input(1,11,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
+      local isme = userTable.settings.data[selected][1]
+      for i=2,#userTable.settings.data[selected],1 do
+        isme = isme .. "," .. userTable.settings.data[selected][i]
+      end
+      extraVar.text = isme
+      extraVar2 = split(extraVar.text,",")
+      extraVar.onInputFinished = function()
+        extraVar2 = split(extraVar.text,",")
+      end
+    else
+
+    end
   end
 end
 
@@ -428,7 +459,7 @@ function addVarYesCall()
     elseif addVarArray.type == "bool" then
       userTable[i][addVarArray.var] = false
     else
-      GUI.alert("Error occured in addVarYesCall function. Please report this to author.")
+      GUI.alert(loc.addvaralert)
         varContainer:removeChildren()
         varContainer:remove()
         varContainer = nil
@@ -446,7 +477,7 @@ function addVarYesCall()
   varContainer:remove()
   varContainer = nil
   saveTable(userTable,aRD .. "userlist.txt")
-  GUI.alert("New variable added. App will be auto closed and changes will be applied on next start.")
+  GUI.alert(loc.newvaradded)
   updateServer()
   window:remove()
 end
@@ -454,21 +485,27 @@ end
 function addVarCallback()
   addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
-  varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", "variable key"))
+  varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarkey))
   varInput.onInputFinished = function()
     addVarArray.var = varInput.text
   end
-  labelInput = varContainer.layout:addChild(GUI.input(1,6,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", "variable label"))
+  labelInput = varContainer.layout:addChild(GUI.input(1,6,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarlabel))
   labelInput.onInputFinished = function()
     addVarArray.label = labelInput.text
   end
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,11,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
-  typeSelect:addItem("String").onTouch = checkTypeCallback
-  typeSelect:addItem("Hidden String").onTouch = checkTypeCallback
-  typeSelect:addItem("Level (Int)").onTouch = checkTypeCallback
-  typeSelect:addItem("Group").onTouch = checkTypeCallback
-  typeSelect:addItem("Pass (true/false)").onTouch = checkTypeCallback
-  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, "add variable to system"))
+  typeSelect.izit = "add"
+  local lik = typeSelect:addItem("String")
+  lik.onTouch = checkTypeCallback
+  lik = typeSelect:addItem("Hidden String")
+  lik.onTouch = checkTypeCallback
+  lik = typeSelect:addItem("Level (Int)")
+  lik.onTouch = checkTypeCallback
+  lik = typeSelect:addItem("Group")
+  lik.onTouch = checkTypeCallback
+  lik = typeSelect:addItem("Pass (true/false)")
+  lik.onTouch = checkTypeCallback
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvaraddbutton))
   varYesButton.onTouch = addVarYesCall
 end
 
@@ -487,7 +524,7 @@ function delVarYesCall()
   varContainer:remove()
   varContainer = nil
   saveTable(userTable,aRD .. "userlist.txt")
-  GUI.alert("Variable removed. App will be auto closed and changes will be applied on next start.")
+  GUI.alert(loc.delvarcompleted)
   updateServer()
   window:remove()
 end
@@ -498,16 +535,39 @@ function delVarCallback()
   for i=1,#userTable.settings.var,1 do
     typeSelect:addItem(userTable.settings.label[i])
   end
-  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, "remove variable from system"))
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.delvarcompletedbutton))
   varYesButton.onTouch = delVarYesCall
 end
 
+function editVarYesCall()
+  local selected = addVarArray[typeSelect.selectedItem]
+  if userTable.settings.type[selected] == "int" then
+    userTable.settings.above[selected] = extraVar2
+  elseif userTable.settings.type[selected] == "-int" then
+    userTable.settings.data[selected] = extraVar2
+  else
+
+  end
+  varContainer:removeChildren()
+  varContainer:remove()
+  varContainer = nil
+  saveTable(userTable,aRD .. "userlist.txt")
+  GUI.alert(loc.changevarcompleted)
+  updateServer()
+  window:remove()
+end
+
 function editVarCallback() --TODO: Add the ability to edit passes
-  addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
+  addVarArray = {}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
-  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+  varContainer.layout:addChild(GUI.label(1,1,3,3,style.containerLabel, "You can only edit level and group passes"))
+  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,6,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+  typeSelect.izit = "edit"
   for i=1,#userTable.settings.var,1 do
-    typeSelect:addItem(userTable.settings.label[i])
+    if userTable.settings.type[i] == "-int" or userTable.settings.type[i] == "int" then
+      typeSelect:addItem(userTable.settings.label[i]).onTouch = checkTypeCallback
+      table.insert(addVarArray,i)
+    end
   end
   local showThis = function(int)
     addVarArray.var = userTable.settings.var[int]
@@ -517,7 +577,37 @@ function editVarCallback() --TODO: Add the ability to edit passes
     addVarArray.above = userTable.settings.above[int]
     addVarArray.data = userTable.settings.data[int]
   end
-  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, "change variable properties"))
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.changevarpropbutton))
+  varYesButton.onTouch = editVarYesCall
+
+  checkTypeCallback(nil,{["izit"]="edit"})
+end
+
+function changeSettings()
+  addVarArray = {["cryptKey"]=settingTable.cryptKey,["style"]=settingTable.style,["autoupdate"]=settingTable.autoupdate}
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  local styleEdit = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.style))
+  styleEdit.text = settingTable.style
+  styleEdit.onInputFinished = function()
+    addVarArray.style = styleEdit.text
+  end
+  local autoupdatebutton = varContainer.layout:addChild(GUI.button(1,6,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.autoupdate))
+  autoupdatebutton.switchMode = true
+  autoupdatebutton.pressed = settingTable.autoupdate
+  autoupdatebutton.onTouch = function()
+    addVarArray.autoupdate = autoupdatebutton.pressed
+  end
+  local acceptButton = varContainer.layout:addChild(GUI.button(1,11,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.submit))
+  acceptButton.onTouch = function()
+    settingTable = addVarArray
+    saveTable(settingTable,aRD .. "dbsettings.txt")
+    varContainer:removeChildren()
+    varContainer:remove()
+    varContainer = nil
+    GUI.alert(loc.settingchangecompleted)
+    updateServer()
+    window:remove()
+  end
 end
 
 ----------GUI SETUP
@@ -526,7 +616,7 @@ if modem.isOpen(modemPort) == false then
  end
 settingTable = loadTable(aRD .. "dbsettings.txt")
 if settingTable == nil then
-  GUI.alert("It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.")
+  GUI.alert(loc.cryptalert)
   settingTable = {["cryptKey"]={1,2,3,4,5},["style"]="default.lua",["autoupdate"]=false}
   saveTable(settingTable,aRD .. "dbsettings.txt")
 end
@@ -539,13 +629,13 @@ if settingTable.autoupdate == nil then
   saveTable(settingTable,aRD .. "dbsettings.txt")
 end
 style = fs.readTable(stylePath .. settingTable.style)
-local check,_,_,_,_,work = callModem(modemPort,"getuserlist") --TEST: Does this get the userlist correctly?
+local check,_,_,_,_,work = callModem(modemPort,"getuserlist")
 if check then
   work = ser.unserialize(crypt(work,settingTable.cryptKey,true))
   saveTable(work,aRD .. "userlist.txt")
   userTable = work
 else
-  GUI.alert("Failed to get userlist. Is server online? rollback to saved userlist")
+  GUI.alert(loc.userlistfailgrab)
   userTable = loadTable(aRD .. "userlist.txt")
   if userTable == nil then
     userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
@@ -568,29 +658,29 @@ userList:addItem("HELLO")
 listPageNumber = 0
 settingTable = loadTable(aRD .. "dbsettings.txt")
 if settingTable == nil then
-  GUI.alert("It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.")
+  GUI.alert(loc.cryptalert)
   settingTable = {["cryptKey"]={1,2,3,4,5}}
   saveTable(settingTable,aRD .. "dbsettings.txt")
 end
 updateList()
  
---user infos --TODO: Make the page look better, be resizeable, use layouts instead, etc.
+--user infos TODO: Make the page look better, be resizeable, use layouts instead, etc.
 local labelSpot = 12
 window:addChild(GUI.label(64,labelSpot,3,3,style.passNameLabel,"User name : "))
-userNameText = window:addChild(GUI.input(88,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "input name"))
+userNameText = window:addChild(GUI.input(88,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
 userNameText.onInputFinished = inputCallback
 userNameText.disabled = true
 labelSpot = labelSpot + 2
-userUUIDLabel = window:addChild(GUI.label(64,labelSpot,3,3,style.passNameLabel,"UUID      : user not selected"))
+userUUIDLabel = window:addChild(GUI.label(64,labelSpot,3,3,style.passNameLabel,"UUID      : " .. loc.usernotselected))
 labelSpot = labelSpot + 2
 window:addChild(GUI.label(64,labelSpot,3,3,style.passNameLabel,"STAFF     : "))
-StaffYesButton = window:addChild(GUI.button(88,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "toggle"))
+StaffYesButton = window:addChild(GUI.button(88,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
 StaffYesButton.switchMode = true
 StaffYesButton.onTouch = staffUserCallback
 StaffYesButton.disabled = true
 labelSpot = labelSpot + 2
 window:addChild(GUI.label(64,labelSpot,3,3,style.passNameLabel,"Blocked   : "))
-cardBlockedYesButton = window:addChild(GUI.button(88,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "toggle"))
+cardBlockedYesButton = window:addChild(GUI.button(88,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
 cardBlockedYesButton.switchMode = true
 cardBlockedYesButton.onTouch = blockUserCallback
 cardBlockedYesButton.disabled = true
@@ -606,7 +696,7 @@ for i=1,#userTable.settings.var,1 do
   window:addChild(GUI.label(64,labelSpot,3,3,style.passNameLabel,labelText))
   guiCalls[i] = {}
   if userTable.settings.type[i] == "string" then
-    guiCalls[i][1] = window:addChild(GUI.input(88,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "input text"))
+    guiCalls[i][1] = window:addChild(GUI.input(88,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
     guiCalls[i][1].buttonInt = i
     guiCalls[i][1].callbackInt = i + #baseVariables
     guiCalls[i][1].onInputFinished = buttonCallback
@@ -643,7 +733,7 @@ for i=1,#userTable.settings.var,1 do
     guiCalls[i][1].disabled = true
     guiCalls[i][2].disabled = true
   elseif userTable.settings.type[i] == "bool" then
-    guiCalls[i][1] = window:addChild(GUI.button(88,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "toggle"))
+    guiCalls[i][1] = window:addChild(GUI.button(88,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
     guiCalls[i][1].buttonInt = i
     guiCalls[i][1].callbackInt = i + #baseVariables
     guiCalls[i][1].switchMode = true
@@ -653,10 +743,10 @@ for i=1,#userTable.settings.var,1 do
   labelSpot = labelSpot + 2
 end
 
-if enableLinking == true then linkUserLabel = window:addChild(GUI.label(64,labelSpot,3,3,style.passNameLabel,"LINK      : user not selected")) end
+if enableLinking == true then linkUserLabel = window:addChild(GUI.label(64,labelSpot,3,3,style.passNameLabel,"LINK      : " .. loc.usernotselected)) end
 labelSpot = labelSpot + 2
 if enableLinking == true then
-  linkUserButton = window:addChild(GUI.button(96,labelSpot,16,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "link device"))
+  linkUserButton = window:addChild(GUI.button(96,labelSpot,16,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.linkdevice))
 linkUserButton.onTouch = linkUserCallback
 end
 if enableLinking == true then linkUserButton.disabled = true end
@@ -669,35 +759,40 @@ listDownButton.onTouch = pageCallback,false
  
 --Line and user buttons
 
+window:addChild(GUI.panel(115,11,1,26,style.bottomDivider))
 window:addChild(GUI.panel(64,10,86,1,style.bottomDivider))
 window:addChild(GUI.panel(64,36,86,1,style.bottomDivider))
-userNewButton = window:addChild(GUI.button(4,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "new"))
+userNewButton = window:addChild(GUI.button(4,40,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new))
 userNewButton.onTouch = newUserCallback
-userDeleteButton = window:addChild(GUI.button(20,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "delete")) 
+userDeleteButton = window:addChild(GUI.button(4,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delete))
 userDeleteButton.onTouch = deleteUserCallback
-userChangeUUIDButton = window:addChild(GUI.button(36,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "reset uuid")) 
+userChangeUUIDButton = window:addChild(GUI.button(4,44,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.resetuuid))
 userChangeUUIDButton.onTouch = changeUUID
-createAdminCardButton = window:addChild(GUI.button(52,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "admin card")) 
+createAdminCardButton = window:addChild(GUI.button(128,43,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.admincardbutton))
 createAdminCardButton.onTouch = writeAdminCardCallback
-addVarButton = window:addChild(GUI.button(68,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "add var")) 
+addVarButton = window:addChild(GUI.button(22,40,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.addvar))
 addVarButton.onTouch = addVarCallback
-delVarButton = window:addChild(GUI.button(84,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "delete var")) 
+delVarButton = window:addChild(GUI.button(22,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delvar))
 delVarButton.onTouch = delVarCallback
---editVarButton = window:addChild(GUI.button(100,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "edit var")) 
---editVarButton.onTouch = editVarCallback
+editVarButton = window:addChild(GUI.button(22,44,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.editvar))
+editVarButton.onTouch = editVarCallback
+
+--Settings button
+settingsButton = window:addChild(GUI.button(40,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.settingsvar))
+settingsButton.onTouch = changeSettings
 
 --Database name and stuff and CardWriter
-window:addChild(GUI.panel(64,2,88,6,style.cardStatusPanel))
+window:addChild(GUI.panel(64,2,88,5,style.cardStatusPanel))
 window:addChild(GUI.label(66,4,3,3,style.cardStatusLabel,prgName .. " | " .. version))
-cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,"     No card   "))
+cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,loc.cardabsent))
  
 --write card button
-cardWriteButton = window:addChild(GUI.button(128,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "write")) 
+cardWriteButton = window:addChild(GUI.button(128,41,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.writebutton))
 cardWriteButton.onTouch = writeCardCallback
 
 --Server Update button (only if setting is set to false)
 if settingTable.autoupdate == false then
-  updateButton = window:addChild(GUI.button(128,38,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "update server"))
+  updateButton = window:addChild(GUI.button(128,8,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.updateserver))
   updateButton.onTouch = updateServer
 end
 

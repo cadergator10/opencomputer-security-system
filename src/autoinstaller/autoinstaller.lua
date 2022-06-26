@@ -245,7 +245,7 @@ local function runInstall()
                     table.insert(loopArray.cardRead,rule)
                 end
                 local addNum = #loopArray.cardRead
-                for i=1,readLoad.base,1 do --Show all add passes :(
+                for i=1,readLoad.base,1 do
                     local rule = passFunc("base",i)
                     text = tonumber(sendMsg("How many add passes do you want to link?",1))
                     if text ~= 0 then
