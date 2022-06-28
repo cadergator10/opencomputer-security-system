@@ -529,7 +529,7 @@ function doorediting() --TEST: Can this edit the doors?
     pageChange(1,#editTable,editChange)
     while pig do
         local flush = function()
-            for i=22,i<=25,1 do
+            for i=22,25,1 do
                 setGui(i,"")
             end
         end
