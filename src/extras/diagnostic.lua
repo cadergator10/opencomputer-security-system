@@ -12,6 +12,7 @@ local keyboard = require("keyboard")
 local thread = require("thread")
 local process = require("process")
 local uuid = require("uuid")
+local computer = require("computer")
 
 --------Extra Arrays
 
@@ -270,12 +271,12 @@ function accsetup()
                 term.clear()
             elseif msg == "terminate" then
                 stayIn = false
-                os.beep()
-                os.beep()
+                computer.beep()
+                computer.beep()
             elseif msg == "analyzer" then
                 print("Scan the device with your tablet")
                 _, text = event.pull("tablet_use")
-                os.beep()
+                computer.beep()
                 modem.send(from,port,text.analyzed[1].address)
             end
         end
@@ -853,7 +854,7 @@ function doorediting() --TEST: Can this edit the doors?
     end
     modem.send(from,modemPort,"changeSettings",ser.serialize(poo))
     print("finished")
-    os.exit()
+    .exit()
 end
 
 --------Startup Code
