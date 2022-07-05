@@ -12,6 +12,7 @@ local keyboard = require("keyboard")
 local thread = require("thread")
 local process = require("process")
 local uuid = require("uuid")
+local computer = require("computer")
 
 --------Extra Arrays
 
@@ -270,12 +271,12 @@ function accsetup()
                 term.clear()
             elseif msg == "terminate" then
                 stayIn = false
-                os.beep()
-                os.beep()
+                computer.beep()
+                computer.beep()
             elseif msg == "analyzer" then
                 print("Scan the device with your tablet")
                 _, text = event.pull("tablet_use")
-                os.beep()
+                computer.beep()
                 modem.send(from,port,text.analyzed[1].address)
             end
         end
@@ -667,137 +668,56 @@ function doorediting() --TEST: Can this edit the doors?
                 text = term.read()
                 editTable[pageNum].bypassLock = tonumber(text)
             elseif p1 == 5 then --TODO: Finish and test
-                if experimental then
-                    local readCursor = function()
-                        term.setCursor(1,25)
-                        term.clearLine()
-                        return term.read()
-                    end
+                local readCursor = function()
+                    term.setCursor(1,25)
+                    term.clearLine()
+                    return term.read()
+                end
+                flush()
+                setGui(22,"Would you like to use the simple pass setup or new advanced one? 1 for simple, 2 for advanced", true)
+                text = readCursor()
+                local savedRead = {}
+                if tonumber(text) == 2 then
+                    local readLoad = {}
                     flush()
-                    setGui(22,"Would you like to use the simple pass setup or new advanced one? 1 for simple, 2 for advanced", true)
-                    text = readCursor()
-                    local savedRead = {}
-                    if tonumber(text) == 2 then
-                        local readLoad = {}
+                    setGui(22,"How many add passes do you want to add?")
+                    setGui(23,"remember multiple base passes can use the same add pass")
+                    readLoad.add = tonumber(readCursor())
+                    flush()
+                    setGui(22,"How many base passes do you want to add?")
+                    setGui(23,"")
+                    readLoad.base = tonumber(readCursor())
+                    flush()
+                    setGui(22,"How many reject passes do you want to add?")
+                    setGui(23,"These don't affect supreme passes")
+                    readLoad.reject = tonumber(readCursor())
+                    flush()
+                    setGui(22,"How many supreme passes do you want to add?")
+                    setGui(23,"")
+                    readLoad.supreme = tonumber(readCursor())
+                    local nextmsg = {}
+                    nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
+                    for i=1,#settings.data.var,1 do
+                        nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. settings.data.label[i]
+                    end
+                    local passFunc = function(type,num)
+                        local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
                         flush()
-                        setGui(22,"How many add passes do you want to add?")
-                        setGui(23,"remember multiple base passes can use the same add pass")
-                        readLoad.add = tonumber(readCursor())
-                        flush()
-                        setGui(22,"How many base passes do you want to add?")
-                        setGui(23,"")
-                        readLoad.base = tonumber(readCursor())
-                        flush()
-                        setGui(22,"How many reject passes do you want to add?")
-                        setGui(23,"These don't affect supreme passes")
-                        readLoad.reject = tonumber(readCursor())
-                        flush()
-                        setGui(22,"How many supreme passes do you want to add?")
-                        setGui(23,"")
-                        readLoad.supreme = tonumber(readCursor())
-                        local nextmsg = {}
-                        nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
-                        for i=1,#settings.data.var,1 do
-                            nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. settings.data.label[i]
-                        end
-                        local passFunc = function(type,num)
-                            local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
-                            flush()
-                            setGui(22,nextmsg.beg..type..nextmsg.mid..num..nextmsg.back, true)
-                            local text = readCursor()
-                            if tonumber(text) == 0 then
-                                newRules.call = "checkstaff"
-                                newRules.param = 0
-                            else
-                                newRules["tempint"] = tonumber(text)
-                                newRules["call"] = settings.data.calls[tonumber(text)]
-                                if settings.data.type[tonumber(text)] == "string" or settings.data.type == "-string" then
-                                    flush()
-                                    setGui(22,"What is the string you would like to read? Enter text.")
-                                    text = readCursor()
-                                    newRules["param"] = text
-                                elseif settings.data.type[tonumber(text)] == "bool" then
-                                    newRules["param"] = 0
-                                elseif settings.data.type[tonumber(text)] == "int" then
-                                    flush()
-                                    if settings.data.above[tonumber(text)] == true then
-                                        setGui(22,"What level and above should be required?")
-                                    else
-                                        setGui(22,"what level exactly should be required?")
-                                    end
-                                    text = readCursor()
-                                    newRules["param"] = tonumber(text)
-                                elseif settings.data.type[tonumber(text)] == "-int" then
-                                    local nextmsg = "What group are you wanting to set?"
-                                    for i=1,#settings.data.data[tonumber(text)],1 do
-                                        nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.data[tonumber(text)][i]
-                                    end
-                                    flush()
-                                    setGui(22,nextmsg)
-                                    text = readCursor()
-                                    newRules["param"] = tonumber(text)
-                                else
-                                    flush()
-                                    setGui(22,"error in cardRead area for num 2")
-                                    readCursor()
-                                    newRules["param"] = 0
-                                end
-                            end
-                            return newRules
-                        end
-                        for i=1,readLoad.add,1 do
-                            local rule = passFunc("add",i)
-                            table.insert(savedRead,rule)
-                        end
-                        local addNum = #savedRead
-                        for i=1,readLoad.base,1 do
-                            local rule = passFunc("base",i)
-                            flush()
-                            setGui(22,"How many add passes do you want to link?")
-                            text = tonumber(readCursor())
-                            if text ~= 0 then
-                                local nextAdd = "Which pass do you want to add? "
-                                for j=1,addNum,1 do
-                                    nextAdd = nextAdd .. ", " .. j .. " = " .. settings.data.label[savedRead[j].tempint]
-                                end
-                                for j=1,text,1 do
-                                    flush()
-                                    setGui(22,nextAdd)
-                                    text = tonumber(readCursor())
-                                    table.insert(rule.data,savedRead[text].uuid)
-                                end
-                            end
-                            table.insert(savedRead,rule)
-                        end
-                        for i=1,readLoad.reject,1 do
-                            local rule = passFunc("reject",i)
-                            table.insert(savedRead,rule)
-                        end
-                        for i=1,readLoad.supreme,1 do
-                            local rule = passFunc("supreme",i)
-                            table.insert(savedRead,rule)
-                        end
-                    else
-                        local nextmsg = "What should be read? 0 = staff"
-                        for i=1,#settings.data.var,1 do
-                            nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.label[i]
-                        end
-                        flush()
-                        setGui(22,nextmsg, true)
-                        text = readCursor()
-                        savedRead = {{["uuid"]=uuid.next(),["call"]="",["param"]=0,["request"]="supreme",["data"]=false}}
+                        setGui(22,nextmsg.beg..type..nextmsg.mid..num..nextmsg.back, true)
+                        local text = readCursor()
                         if tonumber(text) == 0 then
-                            savedRead[1].call = "checkstaff"
-                            savedRead[1].param = 0
+                            newRules.call = "checkstaff"
+                            newRules.param = 0
                         else
-                            savedRead[1].call = settings.data.calls[tonumber(text)]
-                            if settings.data.type[tonumber(text)] == "string" or settings.data.type[tonumber(text)] == "-string" then
+                            newRules["tempint"] = tonumber(text)
+                            newRules["call"] = settings.data.calls[tonumber(text)]
+                            if settings.data.type[tonumber(text)] == "string" or settings.data.type == "-string" then
                                 flush()
                                 setGui(22,"What is the string you would like to read? Enter text.")
                                 text = readCursor()
-                                savedRead[1].param = text:sub(1,-2)
+                                newRules["param"] = text
                             elseif settings.data.type[tonumber(text)] == "bool" then
-                                savedRead[1].param = 0
+                                newRules["param"] = 0
                             elseif settings.data.type[tonumber(text)] == "int" then
                                 flush()
                                 if settings.data.above[tonumber(text)] == true then
@@ -806,7 +726,7 @@ function doorediting() --TEST: Can this edit the doors?
                                     setGui(22,"what level exactly should be required?")
                                 end
                                 text = readCursor()
-                                savedRead[1].param = tonumber(text)
+                                newRules["param"] = tonumber(text)
                             elseif settings.data.type[tonumber(text)] == "-int" then
                                 local nextmsg = "What group are you wanting to set?"
                                 for i=1,#settings.data.data[tonumber(text)],1 do
@@ -815,23 +735,96 @@ function doorediting() --TEST: Can this edit the doors?
                                 flush()
                                 setGui(22,nextmsg)
                                 text = readCursor()
-                                savedRead[1].param = tonumber(text)
+                                newRules["param"] = tonumber(text)
                             else
                                 flush()
                                 setGui(22,"error in cardRead area for num 2")
                                 readCursor()
-                                savedRead[1].param = 0
+                                newRules["param"] = 0
                             end
                         end
+                        return newRules
                     end
-                    editTable[pageNum].cardRead = savedRead
+                    for i=1,readLoad.add,1 do
+                        local rule = passFunc("add",i)
+                        table.insert(savedRead,rule)
+                    end
+                    local addNum = #savedRead
+                    for i=1,readLoad.base,1 do
+                        local rule = passFunc("base",i)
+                        flush()
+                        setGui(22,"How many add passes do you want to link?")
+                        text = tonumber(readCursor())
+                        if text ~= 0 then
+                            local nextAdd = "Which pass do you want to add? "
+                            for j=1,addNum,1 do
+                                nextAdd = nextAdd .. ", " .. j .. " = " .. settings.data.label[savedRead[j].tempint]
+                            end
+                            for j=1,text,1 do
+                                flush()
+                                setGui(22,nextAdd)
+                                text = tonumber(readCursor())
+                                table.insert(rule.data,savedRead[text].uuid)
+                            end
+                        end
+                        table.insert(savedRead,rule)
+                    end
+                    for i=1,readLoad.reject,1 do
+                        local rule = passFunc("reject",i)
+                        table.insert(savedRead,rule)
+                    end
+                    for i=1,readLoad.supreme,1 do
+                        local rule = passFunc("supreme",i)
+                        table.insert(savedRead,rule)
+                    end
                 else
+                    local nextmsg = "What should be read? 0 = staff"
+                    for i=1,#settings.data.var,1 do
+                        nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.label[i]
+                    end
                     flush()
-                    setGui(22,"At the moment, there is no way to edit passes without")
-                    setGui(23,"using the autoinstaller to do so.")
-                    setGui(24,"Press enter to continue")
-                    term.read()
+                    setGui(22,nextmsg, true)
+                    text = readCursor()
+                    savedRead = {{["uuid"]=uuid.next(),["call"]="",["param"]=0,["request"]="supreme",["data"]=false}}
+                    if tonumber(text) == 0 then
+                        savedRead[1].call = "checkstaff"
+                        savedRead[1].param = 0
+                    else
+                        savedRead[1].call = settings.data.calls[tonumber(text)]
+                        if settings.data.type[tonumber(text)] == "string" or settings.data.type[tonumber(text)] == "-string" then
+                            flush()
+                            setGui(22,"What is the string you would like to read? Enter text.")
+                            text = readCursor()
+                            savedRead[1].param = text:sub(1,-2)
+                        elseif settings.data.type[tonumber(text)] == "bool" then
+                            savedRead[1].param = 0
+                        elseif settings.data.type[tonumber(text)] == "int" then
+                            flush()
+                            if settings.data.above[tonumber(text)] == true then
+                                setGui(22,"What level and above should be required?")
+                            else
+                                setGui(22,"what level exactly should be required?")
+                            end
+                            text = readCursor()
+                            savedRead[1].param = tonumber(text)
+                        elseif settings.data.type[tonumber(text)] == "-int" then
+                            local nextmsg = "What group are you wanting to set?"
+                            for i=1,#settings.data.data[tonumber(text)],1 do
+                                nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.data[tonumber(text)][i]
+                            end
+                            flush()
+                            setGui(22,nextmsg)
+                            text = readCursor()
+                            savedRead[1].param = tonumber(text)
+                        else
+                            flush()
+                            setGui(22,"error in cardRead area for num 2")
+                            readCursor()
+                            savedRead[1].param = 0
+                        end
+                    end
                 end
+                editTable[pageNum].cardRead = savedRead
             elseif p1 == 6 then
                 flush()
                 setGui(22,"What is the address for the magreader block?")
@@ -861,7 +854,7 @@ function doorediting() --TEST: Can this edit the doors?
     end
     modem.send(from,modemPort,"changeSettings",ser.serialize(poo))
     print("finished")
-    os.exit()
+    .exit()
 end
 
 --------Startup Code
