@@ -29,7 +29,7 @@ local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", 
 
 local settings
 
-lengthNum = 0
+local lengthNum = 0
 
 local pageNum = 1
 
@@ -53,7 +53,7 @@ local function convert( chars, dist, inv )
       return s
   end
 
-function deepcopy(orig)
+local function deepcopy(orig)
     local orig_type = type(orig)
     local copy
     if orig_type == 'table' then
@@ -68,13 +68,13 @@ function deepcopy(orig)
     return copy
 end
 
-function setGui(pos, text, wrap)
+local function setGui(pos, text, wrap)
     term.setCursor(1,pos)
     term.clearLine()
     if wrap then print(text) else term.write(text) end
 end
 
-function getPassID(command,rules)
+local function getPassID(command,rules)
     local bill
     if rules ~= nil then
       for i=1,#rules,1 do
@@ -93,7 +93,7 @@ function getPassID(command,rules)
     return command == "checkstaff" and true or false, command == "checkstaff" and 0 or false
   end
 
-function pageChange(pos,length,call,...)
+local function pageChange(pos,length,call,...)
     if type(pos) == "boolean" then
         if pos then
             if pageNum < length then
@@ -110,7 +110,7 @@ function pageChange(pos,length,call,...)
     call(...)
 end
 
-function doorDiag(isMain,diagInfo2, diagInfo)
+local function doorDiag(isMain,diagInfo2, diagInfo)
     if isMain == false then
         local diagInfo3 = diagInfo["entireDoor"][diagInfo2[pageNum]]
         diagInfo3["type"] = diagInfo.type
@@ -243,7 +243,7 @@ end
 
   --------Program Function
 
-function accsetup()
+local function accsetup()
     term.clear()
     print("Enter 4 digit code")
     local text = term.read()
@@ -289,7 +289,7 @@ function accsetup()
     os.exit()
 end
 
-function diagThr(num,diagInfo)
+local function diagThr(num,diagInfo)
     local nextVar = 0
     local pickle = true
     ::Beg::
@@ -427,7 +427,7 @@ function diagThr(num,diagInfo)
     end
 end
 
-function diagnostics()
+local function diagnostics()
     term.clear()
     local num = 0
     diagt = thread.create(diagThr,num)
@@ -446,7 +446,7 @@ function diagnostics()
     end
 end
 
-function doorediting() --TEST: Can this edit the doors?
+local function doorediting() --TEST: Can this edit the doors?
     term.clear()
     setGui(1,"Scan the door you would like to edit")
     setGui(2,"If the door is a multidoor, you can edit all doors connected")

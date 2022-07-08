@@ -53,14 +53,14 @@ local function exportstring( s )
 	return s
 end
 --// The Save Function
-function saveTable(  tbl,filename )
+local function saveTable(  tbl,filename )
 	local tableFile = assert(io.open(filename, "w"))
   tableFile:write(ser.serialize(tbl))
   tableFile:close()
 end
  
 --// The Load Function
-function loadTable( sfile )
+local function loadTable( sfile )
 	local tableFile = io.open(sfile)
     if tableFile ~= nil then
   		return ser.unserialize(tableFile:read("*all"))
@@ -69,7 +69,7 @@ function loadTable( sfile )
     end
 end
 
-function deepcopy(orig)
+local function deepcopy(orig)
   local orig_type = type(orig)
   local copy
   if orig_type == 'table' then
@@ -84,7 +84,7 @@ function deepcopy(orig)
   return copy
 end
 
-function advWrite(text,color,wrap)
+local function advWrite(text,color,wrap)
   gpu.setForeground(color or gpu.getForeground())
   term.write(text,wrap or true)
 end
@@ -116,7 +116,7 @@ end
 
 --------account functions
 
-function getPassID(command,rules)
+local function getPassID(command,rules)
   local bill
   if rules ~= nil then
     for i=1,#rules,1 do
@@ -135,7 +135,7 @@ function getPassID(command,rules)
   return command == "checkstaff" and true or false, command == "checkstaff" and 0 or false
 end
 
-function getVar(var,user)
+local function getVar(var,user)
    for key, value in pairs(userTable) do
     if value.uuid == user then
       return value[var]
@@ -144,7 +144,7 @@ function getVar(var,user)
    return "Nil "..var
 end
 
-function checkVar(rule,user,index)
+local function checkVar(rule,user,index)
   if index ~= 0 then
     if userTable.settings.type[index] == "string" or userTable.settings.type[index] == "-string" then
       return user[userTable.settings.var[index]] == rule.param
@@ -163,7 +163,7 @@ function checkVar(rule,user,index)
   return false
 end
 --return true, not value.blocked, value[var], value.staff
-function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
+local function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
   local label,color = "will be set",0x000000
   local foundOne = false
   for key, value in pairs(userTable) do
@@ -235,7 +235,7 @@ function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2
   return false
 end
 
-function getDoorInfo(type,id,key)
+local function getDoorInfo(type,id,key)
   if type == "multi" then
     for i=1,#doorTable,1 do --doorTable[i] = {type="single or multi",id="computer's modem uuid",data={door's setting table}}
       if doorTable[i].id == id then
@@ -254,7 +254,7 @@ function getDoorInfo(type,id,key)
   return nil
 end
 
-function checkLink(user)
+local function checkLink(user)
   for key, value in pairs(userTable) do
     if value.link == user then
       return true, not value.blocked, value.name

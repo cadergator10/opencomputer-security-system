@@ -3,7 +3,7 @@
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
 local doorVersion = "2.3.0"
-testR = true
+local testR = true
 local saveRefresh = true
 
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
@@ -75,15 +75,8 @@ local function convert( chars, dist, inv )
     end
     return enc;
   end
-  
-  function splitString(str, sep)
-          local sep, fields = sep or ":", {}
-          local pattern = string.format("([^%s]+)", sep)
-          str:gsub(pattern, function(c) fields[#fields+1] = c end)
-          return fields
-  end
 
-  function deepcopy(orig)
+  local function deepcopy(orig)
     local orig_type = type(orig)
     local copy
     if orig_type == 'table' then
@@ -98,7 +91,7 @@ local function convert( chars, dist, inv )
     return copy
   end
 
-  function colorLink(key, var) --{["color"]=0,["delay"]=1} or just a number
+  local function colorLink(key, var) --{["color"]=0,["delay"]=1} or just a number
     if type(var) == "table" then
       thread.create(function(args)
         for i=1,#args,1 do
@@ -111,7 +104,7 @@ local function convert( chars, dist, inv )
     end
   end
   
-  function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH,key)
+  local function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH,key)
     if(toggleH == 0) then
       if osVersion then colorLink(key,4) end
       if(doorTypeH == 0 or doorTypeH == 3)then
@@ -477,7 +470,7 @@ while true do
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end
-  ev, address, user, str, uuid, data = event.pull("magData")
+  local ev, address, user, str, uuid, data = event.pull("magData")
   if osVersion then colorLink(address,2) end
   local isOk = "ok"
   local keyed = nil

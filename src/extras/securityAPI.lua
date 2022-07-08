@@ -33,13 +33,13 @@ local extraConfig = {}
 
 --------TableToFile
 
-function saveTable(  tbl,filename )
+local function saveTable(  tbl,filename )
 	local tableFile = assert(io.open(filename, "w"))
   tableFile:write(ser.serialize(tbl))
   tableFile:close()
 end
  
-function loadTable( sfile )
+local function loadTable( sfile )
 	local tableFile = io.open(sfile)
     if tableFile ~= nil then
   		return ser.unserialize(tableFile:read("*all"))
@@ -74,7 +74,7 @@ local function convert( chars, dist, inv )
     return enc;
   end
   
-  function splitString(str, sep)
+  local function splitString(str, sep)
           local sep, fields = sep or ":", {}
           local pattern = string.format("([^%s]+)", sep)
           str:gsub(pattern, function(c) fields[#fields+1] = c end)

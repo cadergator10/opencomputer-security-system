@@ -20,7 +20,7 @@ local loc = system.getLocalization(aRD .. "Localizations/")
 
 ----------
  
-local workspace, window, menu
+local workspace, window, menu, userTable, settingTable
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
 local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, settingsButton
@@ -69,7 +69,7 @@ local function convert( chars, dist, inv )
 end
  
 local function split(s, delimiter)
-  result = {};
+  local result = {};
   for match in (s..delimiter):gmatch("(.-)"..delimiter) do
       table.insert(result, match);
   end
@@ -107,14 +107,14 @@ local function exportstring( s )
     return s
 end
 --// The Save Function
-function saveTable(  tbl,filename )
+local function saveTable(  tbl,filename )
     local tableFile = fs.open(filename, "w")
   	tableFile:write(ser.serialize(tbl))
   	tableFile:close()
 end
 
 --// The Load Function
-function loadTable( sfile )
+local function loadTable( sfile )
     local tableFile = fs.open(sfile, "r")
     if tableFile ~= nil then
   		return ser.unserialize(tableFile:readAll())
@@ -123,7 +123,7 @@ function loadTable( sfile )
     end
 end
 
-function callModem(callPort,...) --Does it work?
+local function callModem(callPort,...) --Does it work?
   modem.broadcast(modemPort,...)
   local e, _, from, port, _, msg,a,b,c,d,f,g,h
   repeat
@@ -137,7 +137,7 @@ function callModem(callPort,...) --Does it work?
 end
  
 ----------Callbacks
-function updateServer()
+local function updateServer()
   local data = ser.serialize(userTable)
   local crypted = crypt(data, settingTable.cryptKey)
   if modem.isOpen(modemPort) == false then
@@ -145,46 +145,14 @@ function updateServer()
   end
   modem.broadcast(modemPort, "updateuserlist", crypted)
 end
- 
-function updateList()
-  selectedId = userList.selectedItem
-  userList:remove()
-  userList = window:addChild(GUI.list(4, 4, 58, 34, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false)) 
-  local temp = pageMult * listPageNumber
-  for i = temp + 1, temp + pageMult, 1 do
-    if (userTable[i] == nil) then
 
-    else
-      userList:addItem(userTable[i].name).onTouch = userListCallback
-    end
-  end
-
-  saveTable(userTable, aRD .. "userlist.txt")
-  if (previousPage == listPageNumber) then
-  userList.selectedItem = selectedId
-  else
-  previousPage = listPageNumber
-  end
-  if settingTable.autoupdate then
-    updateServer()
-  end
-end
- 
-function eventCallback(ev, id)
-  if ev == "cardInsert" then
-    cardStatusLabel.text = loc.cardpresent
-  elseif ev == "cardRemove" then
-    cardStatusLabel.text = loc.cardabsent
-  end
-end
- 
-function userListCallback()
-  selectedId = pageMult * listPageNumber + userList.selectedItem
+local function userListCallback()
+  local selectedId = pageMult * listPageNumber + userList.selectedItem
   userNameText.text = userTable[selectedId].name
   userUUIDLabel.text = "UUID      : " .. userTable[selectedId].uuid
-  if enableLinking == true then 
-        linkUserLabel.text = "LINK      : " .. userTable[selectedId].link
-        linkUserButton.disabled = false
+  if enableLinking == true then
+    linkUserLabel.text = "LINK      : " .. userTable[selectedId].link
+    linkUserButton.disabled = false
   end
   if userTable[selectedId].blocked == true then
     cardBlockedYesButton.pressed = true
@@ -221,7 +189,39 @@ function userListCallback()
   end
 end
  
-function buttonCallback(workspace, button)
+local function updateList()
+  local selectedId = userList.selectedItem
+  userList:remove()
+  userList = window:addChild(GUI.list(4, 4, 58, 34, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false)) 
+  local temp = pageMult * listPageNumber
+  for i = temp + 1, temp + pageMult, 1 do
+    if (userTable[i] == nil) then
+
+    else
+      userList:addItem(userTable[i].name).onTouch = userListCallback
+    end
+  end
+
+  saveTable(userTable, aRD .. "userlist.txt")
+  if (previousPage == listPageNumber) then
+  userList.selectedItem = selectedId
+  else
+  previousPage = listPageNumber
+  end
+  if settingTable.autoupdate then
+    updateServer()
+  end
+end
+ 
+local function eventCallback(ev, id)
+  if ev == "cardInsert" then
+    cardStatusLabel.text = loc.cardpresent
+  elseif ev == "cardRemove" then
+    cardStatusLabel.text = loc.cardabsent
+  end
+end
+ 
+local function buttonCallback(workspace, button)
   local buttonInt = button.buttonInt
   local callbackInt = button.callbackInt
   local isPos = button.isPos
@@ -263,21 +263,21 @@ function buttonCallback(workspace, button)
   userListCallback()
 end
 
-function staffUserCallback()
+local function staffUserCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
   userTable[selected].staff = StaffYesButton.pressed
   updateList()
   userListCallback()
 end
  
-function blockUserCallback()
+local function blockUserCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
   userTable[selected].blocked = cardBlockedYesButton.pressed
   updateList()
   userListCallback()
 end
  
-function newUserCallback()
+local function newUserCallback()
   local tmpTable = {["name"] = "new", ["blocked"] = false, ["date"] = os.date(), ["staff"] = false, ["uuid"] = uuid.next(), ["link"] = "nil"}
   for i=1,#userTable.settings.var,1 do
     if userTable.settings.type[i] == "string" or userTable.settings.type[i] == "-string" then
@@ -292,7 +292,7 @@ function newUserCallback()
   updateList()
 end
 
-function deleteUserCallback()
+local function deleteUserCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
   table.remove(userTable,selected)
   updateList()
@@ -318,7 +318,7 @@ function deleteUserCallback()
   if enableLinking == true then linkUserButton.disabled = true end
 end
 
-function changeUUID()
+local function changeUUID()
     varContainer = GUI.addBackgroundContainer(workspace,true,true)
     varContainer.layout:addChild(GUI.label(1,1,3,3,style.containerLabel,loc.changeuuidline1))
     varContainer.layout:addChild(GUI.label(1,3,3,3,style.containerLabel,loc.changeuuidline2))
@@ -339,7 +339,7 @@ function changeUUID()
     button2.onTouch = funcno
 end
  
-function writeCardCallback()
+local function writeCardCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
   local data = {["date"]=userTable[selected].date,["name"]=userTable[selected].name,["uuid"]=userTable[selected].uuid}
   data = ser.serialize(data)
@@ -347,13 +347,13 @@ function writeCardCallback()
   writer.write(crypted, userTable[selected].name .. loc.cardlabel, false, 0)
 end
 
-function writeAdminCardCallback()
+local function writeAdminCardCallback()
   local data =  adminCard
   local crypted = crypt(data, settingTable.cryptKey)
   writer.write(crypted, loc.diagcardlabel, false, 14)
 end
 
-function pageCallback(isPos)
+local function pageCallback(isPos)
   if isPos then
     if listPageNumber < #userTable/pageMult - 1 then
       listPageNumber = listPageNumber + 1
@@ -367,14 +367,14 @@ function pageCallback(isPos)
   userListCallback()
 end
  
-function inputCallback()
+local function inputCallback()
   local selected = pageMult * listPageNumber + userList.selectedItem
   userTable[selected].name = userNameText.text
   updateList()
   userListCallback()
 end
 
-function linkUserCallback()
+local function linkUserCallback()
     local container = GUI.addBackgroundContainer(workspace, false, true, loc.linkinstruction)
     local selected = pageMult * listPageNumber + userList.selectedItem
     modem.open(dbPort)
@@ -394,7 +394,7 @@ function linkUserCallback()
     userListCallback()
 end
 
-function checkTypeCallback() --TODO: finish the checks for this
+local function checkTypeCallback() --TODO: finish the checks for this
   local typeArray = {"string","-string","int","-int","bool"}
   local selected
   if typeSelect.izit == "add" then
@@ -450,7 +450,7 @@ function checkTypeCallback() --TODO: finish the checks for this
   end
 end
 
-function addVarYesCall()
+local function addVarYesCall()
   for i=1,#userTable,1 do
     if addVarArray.type == "string" or addVarArray.type == "-string" then
       userTable[i][addVarArray.var] = "none"
@@ -482,7 +482,7 @@ function addVarYesCall()
   window:remove()
 end
 
-function addVarCallback()
+local function addVarCallback()
   addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=false}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
   varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarkey))
@@ -509,7 +509,7 @@ function addVarCallback()
   varYesButton.onTouch = addVarYesCall
 end
 
-function delVarYesCall()
+local function delVarYesCall()
   local selected = typeSelect.selectedItem
   table.remove(userTable.settings.data,selected)
   table.remove(userTable.settings.label,selected)
@@ -529,7 +529,7 @@ function delVarYesCall()
   window:remove()
 end
 
-function delVarCallback()
+local function delVarCallback()
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
   for i=1,#userTable.settings.var,1 do
@@ -539,7 +539,7 @@ function delVarCallback()
   varYesButton.onTouch = delVarYesCall
 end
 
-function editVarYesCall()
+local function editVarYesCall()
   local selected = addVarArray[typeSelect.selectedItem]
   if userTable.settings.type[selected] == "int" then
     userTable.settings.above[selected] = extraVar2
@@ -557,7 +557,7 @@ function editVarYesCall()
   window:remove()
 end
 
-function editVarCallback() --TODO: Add the ability to edit passes
+local function editVarCallback() --TODO: Add the ability to edit passes
   addVarArray = {}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
   varContainer.layout:addChild(GUI.label(1,1,3,3,style.containerLabel, "You can only edit level and group passes"))
@@ -583,7 +583,7 @@ function editVarCallback() --TODO: Add the ability to edit passes
   checkTypeCallback(nil,{["izit"]="edit"})
 end
 
-function changeSettings()
+local function changeSettings()
   addVarArray = {["cryptKey"]=settingTable.cryptKey,["style"]=settingTable.style,["autoupdate"]=settingTable.autoupdate}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
   local styleEdit = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.style))
