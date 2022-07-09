@@ -304,7 +304,7 @@ while true do
     if isInAlready == false then table.insert(doorTable,tmpTable) end
     saveTable(doorTable, "doorlist.txt")
     modem.send(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
-  elseif command == "remotecontrol" then
+  elseif command == "rcdoors" then
     advWrite("Coming soon?\n",0xFF0000) --IDEA: allow remote control pc sometime in future
     --data = ser.unserialize(data) --{["call"]="the call as what to do",["par1"]=stored params,["par2"]=stored params 2,continued}
     --if data.call == "openDoor" --Don't know if going to do all control on server or if it's going to send door info to the device. I'm going to send door info.
@@ -317,7 +317,7 @@ while true do
       lockDoors = newRed["lock"]
     end
     if newRed["forceopen"] ~= redstone["forceopen"] then
-      forceopen = newRed["forceopen"]
+      local forceopen = newRed["forceopen"]
       if forceopen == true then
         data = crypt("open",settingTable.cryptKey)
         modem.broadcast(199,"forceopen",data)

@@ -857,6 +857,10 @@ local function doorediting() --TEST: Can this edit the doors?
     .exit()
 end
 
+local function remotecontrol()
+
+end
+
 --------Startup Code
 
 term.clear()
@@ -893,7 +897,8 @@ print("Which app would you like to run?")
 print("1. Diagnostics")
 print("2. Accelerated door setup")
 print("3. Door Editing")
-lengthNum = 3
+print("4. Remote Control")
+lengthNum = 4
 _, nextVar = event.pull("numInput")
 if nextVar == 1 then
     diagnostics()
@@ -901,4 +906,6 @@ elseif nextVar == 2 then
     accsetup()
 elseif nextVar == 3 then
     doorediting()
+elseif nextVar == 4 then
+    remotecontrol()
 end
