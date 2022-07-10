@@ -858,7 +858,49 @@ local function doorediting() --TEST: Can this edit the doors?
 end
 
 local function remotecontrol()
+    --setup the list of doors, sorted by list number.
+    modem.broadcast(modemPort,"rcdoors")
+    local e,_,_,_,_,msg = event.pull(3,"modem_message")
+    if e == nil then
+        print("No query received. Assuming version 2.3.1 and before is in use and will not work.")
+        os.exit()
+    end
+    local tempPasses = ser.unserialize(msg)
+    local passTable = {}
+    for key,value in pairs(tempPasses) do
+        if value.type == "multi" then
+            for keym,valuem in pairs(value.data) do
+                table.insert(passTable,{["call"]=key,["type"]=value.type,["data"]=valuem.data,["key"]=keym})
+            end
+        else
+            table.insert(passTable,{["call"]=key,["type"]=value.type,["data"]=value.data})
+        end
+    end
+    tempPasses = deepcopy(passTable)
+    passTable = {}
+    local counter = 1
+    for i=1,math.ceil(#tempPasses/9),1 do
+        passTable[i] = {}
+        for j=1,9,1 do
+            if counter <= #tempPasses then
+                table.insert(passTable[i],tempPasses[counter])
+                counter = counter + 1
+            else
+                break
+            end
+        end
+    end
+    --Screen GUI preparation
 
+
+    local rcfunc = function()
+        setGui(1,"Page" .. pageNum .. "/" .. #passTable)
+        setGui(2,"")
+        setGui(3,"Click the screen to exit")
+        setGui(4,"")
+    end
+
+    pageChange(1,#passTable,rcfunc)
 end
 
 --------Startup Code
