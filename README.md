@@ -45,7 +45,11 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
       
       Diagnostics: a special program that works with the new admin card to get info about a door and it's settings and if it works. It is best used with a tablet that has a tier 3 gpu, a wireless modem, and an internet card. When the admin card is scanned, it sends all the info of the computer to the tablet. It's most noteable use is with the multidoor computer, as it tells you if that magnetic card reader is connected to a door, what the key of the door is (if you want to edit door settings after first set up) and more.
 
-      Accelerated door setup program to put on a tablet. This helps accelerate multi-door setup time, as it is portable compared to moving back and forth between the pc and the door. Also, if your tablet has an analyzer with it, you can scan the blocks with the tablet instead of just entering the uuid manually (in beta)
+      Accelerated door setup program to put on a tablet. This helps accelerate multi-door setup time, as it is portable compared to moving back and forth between the pc and the door. Also, if your tablet has an analyzer with it, you can scan the blocks with the tablet instead of just entering the uuid manually
+
+      Door editing: Lets you edit doors with amazing ease. Just swipe the door with an admin card and change settings, add/delete doors, and more. Is a major game changer compared to autoinstaller door editing.
+
+      Remote Control: Open and close doors from any distance without having to swipe cards. You get access to every single door linked to the server. This also lets you open doors contrary to what the settings are set to for the door, like toggling doors that would normally be delayed.
 
    Security API so you can make your own programs that sync with the security system! ex. swipe a card and check its permissions, and if true, perform a function.
 
