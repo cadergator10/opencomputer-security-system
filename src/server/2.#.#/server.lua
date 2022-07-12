@@ -14,6 +14,7 @@ local gpu = component.gpu
 local version = "2.3.2"
 
 local redstone = {}
+local commands = {"updateuserlist","autoInstallerQuery","setDoor","loginfo","rcdoors","redstoneUpdated","checkLinked","getuserlist","getvar","setvar","checkRules"}
 
 --------Main Functions
 
@@ -82,6 +83,12 @@ local function deepcopy(orig)
       copy = orig
   end
   return copy
+end
+
+local function addcommands(table)
+  for _,value in pairs(table) do
+    table.insert(commands,value)
+  end
 end
 
 local function advWrite(text,color,wrap)
@@ -244,7 +251,7 @@ local function getDoorInfo(type,id,key)
         end
       end
     end
-  else
+  elseif type == "single" or type == "custom" then
     for i=1,#doorTable,1 do --doorTable[i] = {type="single or multi",id="computer's modem uuid",data={door's setting table}}
       if doorTable[i].id == id then
         return {["read"]=doorTable[i].data.cardRead,["name"]=doorTable[i].data.name}
@@ -273,150 +280,159 @@ while true do
 
   local _, _, from, port, _, command, msg, bypassLock = event.pull("modem_message")
   local data = msg
-  if command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" and command ~= "loginfo" then data = crypt(msg, settingTable.cryptKey, true) end
-  local thisUserName = false
-  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" and command ~= "loginfo" then
-    data = ser.unserialize(data)
-    thisUserName = getVar("name",data.uuid)
+  local go = false
+  for _,value in pairs(commands) do
+    if command == value then
+      go = true
+      break
+    end
   end
-  if command == "updateuserlist" then
-    userTable = ser.unserialize(data)
-    advWrite("Updated userlist received\n",0x0000C0)
-    saveTable(userTable, "userlist.txt")
-  elseif command == "autoInstallerQuery" then
-    data = {}
-    data.num = 2
-    data.version = version
-    data.data = userTable.settings
-    modem.send(from,port,ser.serialize(data))
-  elseif command == "setDoor" then
-    advWrite("Received door parameters from id: " .. from .. "\n",0xFFFF80)
-    local tmpTable = ser.unserialize(data)
-    tmpTable["id"] = from
-    local isInAlready = false
-    for i=1,#doorTable,1 do
-      if doorTable[i].id == from then
-        isInAlready = true
-        doorTable[i] = tmpTable
-        break
-      end
+  if go then
+    if command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" and command ~= "loginfo" then data = crypt(msg, settingTable.cryptKey, true) end
+    local thisUserName = false
+    if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" and command ~= "loginfo" then
+      data = ser.unserialize(data)
+      thisUserName = getVar("name",data.uuid)
     end
-    if isInAlready == false then table.insert(doorTable,tmpTable) end
-    saveTable(doorTable, "doorlist.txt")
-    modem.send(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
-  elseif command == "loginfo" then
-    data = ser.unserialize(data) --Array of arrays. Each array has text and color (color optional)
-    for i=1,#data,1 do
-      advWrite(data[i].text,data[i].color or 0xFFFFFF)
-    end
-  elseif command == "rcdoors" then
-    modem.send(from,port,ser.serialize(doorTable))
-  elseif command == "redstoneUpdated" then
-    advWrite("Redstone has been updated\n",0x0000C0)
-    local newRed = ser.unserialize(data)
-    if newRed["lock"] ~= redstone["lock"] then
-      lockDoors = newRed["lock"]
-    end
-    if newRed["forceopen"] ~= redstone["forceopen"] then
-      local forceopen = newRed["forceopen"]
-      if forceopen == true then
-        data = crypt("open",settingTable.cryptKey)
-        modem.broadcast(199,"forceopen",data)
-      else
-        data = crypt("close",settingTable.cryptKey)
-        modem.broadcast(199,"forceopen",data)
-      end
-    end
-    redstone = newRed
-  elseif command == "checkLinked" then
-    if false == true then
-      gpu.setForeground(0xFF0000)
-      term.write("DONT RUN or i b sad ;-;\n")
-    else
-      advWrite("-Checking if device is linked to a user:\n",0xFFFF80)
-      local cu, isBlocked, thisName = checkLink(data)
-      local dis = {}
-      if cu == true then
-        if isBlocked == false then
-          dis["status"] = false
-          dis["reason"] = 2
-          data = crypt(ser.serialize(dis), settingTable.cryptKey)
-          advWrite(" user " .. thisName .. "is blocked\n",0xFF0000)
-          modem.send(from, port, data)
-        else
-          dis["status"] = true
-          dis["name"] = thisName
-          data = crypt(ser.serialize(dis), settingTable.cryptKey)
-          advWrite(" tablet is connected to " .. thisName .. "\n",0x00FF00)
-          modem.send(from, port, data)
+    if command == "updateuserlist" then
+      userTable = ser.unserialize(data)
+      advWrite("Updated userlist received\n",0x0000C0)
+      saveTable(userTable, "userlist.txt")
+    elseif command == "autoInstallerQuery" then
+      data = {}
+      data.num = 2
+      data.version = version
+      data.data = userTable.settings
+      modem.send(from,port,ser.serialize(data))
+    elseif command == "setDoor" then
+      advWrite("Received door parameters from id: " .. from .. "\n",0xFFFF80)
+      local tmpTable = ser.unserialize(data)
+      tmpTable["id"] = from
+      local isInAlready = false
+      for i=1,#doorTable,1 do
+        if doorTable[i].id == from then
+          isInAlready = true
+          doorTable[i] = tmpTable
+          break
         end
-      else
-        dis["status"] = false
-        dis["reason"] = 1
-        data = crypt(ser.serialize(dis), settingTable.cryptKey)
-        advWrite(" tablet not linked\n",0x990000)
-        modem.send(from, port, data)
-      end--IMPORTANT: Hello
-    end
-  elseif command == "getuserlist" then
-    data = ser.serialize(userTable)
-    data = crypt(data,settingTable.cryptKey)
-    modem.send(from, port, data)
-  elseif command == "getvar" then
-    local worked = false
-    for key, value in pairs(userTable) do
-      if value.uuid == data.uuid then
-        worked = true
-        modem.send(from,port, crypt(value[data.var],settingTable.cryptKey))
       end
-    end
-  elseif command == "setvar" then
-    local worked = false
-    local counter = 1
-    for key, value in pairs(userTable) do
-      if value.uuid == data.uuid then
-        worked = true
-        userTable[counter][data.var] = data.data
-        modem.send(from,port, crypt("true",settingTable.cryptKey))
-      else
-        counter = counter + 1
+      if isInAlready == false then table.insert(doorTable,tmpTable) end
+      saveTable(doorTable, "doorlist.txt")
+      modem.send(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
+    elseif command == "loginfo" then
+      data = ser.unserialize(data) --Array of arrays. Each array has text and color (color optional)
+      for i=1,#data,1 do
+        advWrite(data[i].text,data[i].color or 0xFFFFFF)
       end
-    end
-  elseif command == "checkRules" then
-    if lockDoors == true and bypassLock ~= 1 then
-      advWrite("Doors have been locked. Unable to open door\n",0xFF0000)
-      data = crypt("locked", settingTable.cryptKey)
-      modem.send(from, port, data)
-    else
-      local currentDoor = getDoorInfo(data.type,from,data.key)
-      advWrite("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80)
-      local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
-      if cu then
-        if isBlocked then
-          if varCheck then
-            data = crypt("true", settingTable.cryptKey)
-            advWrite("\n" .. label .. "\n",color)
+    elseif command == "rcdoors" then
+      modem.send(from,port,ser.serialize(doorTable))
+    elseif command == "redstoneUpdated" then
+      advWrite("Redstone has been updated\n",0x0000C0)
+      local newRed = ser.unserialize(data)
+      if newRed["lock"] ~= redstone["lock"] then
+        lockDoors = newRed["lock"]
+      end
+      if newRed["forceopen"] ~= redstone["forceopen"] then
+        local forceopen = newRed["forceopen"]
+        if forceopen == true then
+          data = crypt("open",settingTable.cryptKey)
+          modem.broadcast(199,"forceopen",data)
+        else
+          data = crypt("close",settingTable.cryptKey)
+          modem.broadcast(199,"forceopen",data)
+        end
+      end
+      redstone = newRed
+    elseif command == "checkLinked" then
+      if false == true then
+        gpu.setForeground(0xFF0000)
+        term.write("DONT RUN or i b sad ;-;\n")
+      else
+        advWrite("-Checking if device is linked to a user:\n",0xFFFF80)
+        local cu, isBlocked, thisName = checkLink(data)
+        local dis = {}
+        if cu == true then
+          if isBlocked == false then
+            dis["status"] = false
+            dis["reason"] = 2
+            data = crypt(ser.serialize(dis), settingTable.cryptKey)
+            advWrite(" user " .. thisName .. "is blocked\n",0xFF0000)
             modem.send(from, port, data)
           else
-            if isStaff then
+            dis["status"] = true
+            dis["name"] = thisName
+            data = crypt(ser.serialize(dis), settingTable.cryptKey)
+            advWrite(" tablet is connected to " .. thisName .. "\n",0x00FF00)
+            modem.send(from, port, data)
+          end
+        else
+          dis["status"] = false
+          dis["reason"] = 1
+          data = crypt(ser.serialize(dis), settingTable.cryptKey)
+          advWrite(" tablet not linked\n",0x990000)
+          modem.send(from, port, data)
+        end--IMPORTANT: Hello
+      end
+    elseif command == "getuserlist" then
+      data = ser.serialize(userTable)
+      data = crypt(data,settingTable.cryptKey)
+      modem.send(from, port, data)
+    elseif command == "getvar" then
+      local worked = false
+      for key, value in pairs(userTable) do
+        if value.uuid == data.uuid then
+          worked = true
+          modem.send(from,port, crypt(value[data.var],settingTable.cryptKey))
+        end
+      end
+    elseif command == "setvar" then
+      local worked = false
+      local counter = 1
+      for key, value in pairs(userTable) do
+        if value.uuid == data.uuid then
+          worked = true
+          userTable[counter][data.var] = data.data
+          modem.send(from,port, crypt("true",settingTable.cryptKey))
+        else
+          counter = counter + 1
+        end
+      end
+    elseif command == "checkRules" then
+      if lockDoors == true and bypassLock ~= 1 then
+        advWrite("Doors have been locked. Unable to open door\n",0xFF0000)
+        data = crypt("locked", settingTable.cryptKey)
+        modem.send(from, port, data)
+      else
+        local currentDoor = getDoorInfo(data.type,from,data.key)
+        advWrite("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80)
+        local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
+        if cu then
+          if isBlocked then
+            if varCheck then
               data = crypt("true", settingTable.cryptKey)
-              advWrite("\naccess granted due to staff\n",0xFF00FF)
-              modem.send(from, port, data)
-            else
-              data = crypt("false", settingTable.cryptKey)
               advWrite("\n" .. label .. "\n",color)
               modem.send(from, port, data)
+            else
+              if isStaff then
+                data = crypt("true", settingTable.cryptKey)
+                advWrite("\naccess granted due to staff\n",0xFF00FF)
+                modem.send(from, port, data)
+              else
+                data = crypt("false", settingTable.cryptKey)
+                advWrite("\n" .. label .. "\n",color)
+                modem.send(from, port, data)
+              end
             end
+          else
+            data = crypt("false", settingTable.cryptKey)
+            advWrite("\nuser is blocked\n",0xFF0000)
+            modem.send(from, port, data)
           end
         else
           data = crypt("false", settingTable.cryptKey)
-          advWrite("\nuser is blocked\n",0xFF0000)
+          advWrite("\nuser not found\n",0x990000)
           modem.send(from, port, data)
         end
-      else
-        data = crypt("false", settingTable.cryptKey)
-        advWrite("\nuser not found\n",0x990000)
-        modem.send(from, port, data)
       end
     end
   end

@@ -269,7 +269,7 @@ local function convert( chars, dist, inv )
     settingData = loadTable("securitySettings.txt")
     extraConfig = loadTable("extraConfig.txt")
     fill = {}
-    fill["type"] = "single"
+    fill["type"] = "custom"
     fill["data"] = settingData
     modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
     local got, _, _, _, _, fill = event.pull(2, "modem_message")

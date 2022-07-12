@@ -877,7 +877,7 @@ local function remotecontrol()
             for keym,valuem in pairs(value.data) do
                 table.insert(passTable,{["call"]=value.id,["type"]=value.type,["data"]=valuem,["key"]=keym})
             end
-        else
+        elseif value.type == "single" then
             table.insert(passTable,{["call"]=value.id,["type"]=value.type,["data"]=value.data})
         end
     end
