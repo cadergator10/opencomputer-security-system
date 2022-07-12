@@ -324,8 +324,12 @@ while true do
       for i=1,#data,1 do
         advWrite(data[i].text,data[i].color or 0xFFFFFF)
       end
-    elseif command == "rcdoors" then
-      modem.send(from,port,ser.serialize(doorTable))
+    elseif command == "rcdoors" then --Cant send entire doorTable. Too big. Reduce to minimum required.
+      local sendTable = {}
+      for _,value in pairs(doorTable) do
+        table.insert(sendTable,{["id"]=value.id,["type"]=value.type,["data"]={["name"]=value.data.name}})
+      end
+      modem.send(from,port,ser.serialize(sendTable))
     elseif command == "redstoneUpdated" then
       advWrite("Redstone has been updated\n",0x0000C0)
       local newRed = ser.unserialize(data)
