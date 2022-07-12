@@ -3,6 +3,7 @@ local diagPort = 180
 local modemPort = 199
 
 local component = require("component")
+local gpu = component.gpu
 local event = require("event")
 local modem = component.modem 
 local ser = require ("serialization")
@@ -68,9 +69,10 @@ local function deepcopy(orig)
     return copy
 end
 
-local function setGui(pos, text, wrap)
+local function setGui(pos, text, wrap, color)
     term.setCursor(1,pos)
     term.clearLine()
+    if color then gpu.setForeground(color) else gpu.setForeground(0xFFFFFF) end
     if wrap then print(text) else term.write(text) end
 end
 
@@ -313,7 +315,7 @@ local function diagThr(num,diagInfo)
     local lengthMe = 2
     if diagInfo.version ~= "2.2.0" and diagInfo.type == "multi" then
         lengthMe = 3
-        print(lengthMe .. ". Entire door Info") 
+        print(lengthMe .. ". Entire door Info")
     end
     lengthNum = lengthMe
     _, nextVar = event.pull("numInput")
@@ -858,6 +860,8 @@ local function doorediting() --TEST: Can this edit the doors?
 end
 
 local function remotecontrol()
+    --Settings
+    local listAmt = 9
     --setup the list of doors, sorted by list number.
     modem.broadcast(modemPort,"rcdoors")
     local e,_,_,_,_,msg = event.pull(3,"modem_message")
@@ -881,7 +885,7 @@ local function remotecontrol()
     local counter = 1
     for i=1,math.ceil(#tempPasses/9),1 do
         passTable[i] = {}
-        for j=1,9,1 do
+        for j=1,listAmt,1 do
             if counter <= #tempPasses then
                 table.insert(passTable[i],tempPasses[counter])
                 counter = counter + 1
@@ -893,14 +897,77 @@ local function remotecontrol()
     --Screen GUI preparation
 
 
-    local rcfunc = function()
+    local rcfunc = function(chosen)
         setGui(1,"Page" .. pageNum .. "/" .. #passTable)
         setGui(2,"")
-        setGui(3,"Click the screen to exit")
-        setGui(4,"")
+        setGui(3,chosen and "Click screen to go back to door select" or "Click the screen to exit")
+        setGui(4,"------------------------------")
+        for i=1,listAmt,1 do
+            if passTable[pageNum] ~= nil then
+                setGui(i+4,chosen == nil and i .. ". " .. passTable[pageNum].data.name or passTable[pageNum].data.name, chosen == i and 0x00FF00 or nil)
+            else
+                break
+            end
+        end
+        setGui(listAmt+5,"------------------------------") --15
+        if chosen ~= nil and chosen ~= false then
+            setGui(16,"1. Toggle Open")
+            setGui(17,"2. Open for 5 seconds")
+            setGui(18,"3. Open for 10 seconds")
+            setGui(19,"4. Open for 30 seconds")
+            setGui(20,"5. Open for # seconds")
+        end
     end
 
+    local pig = true
     pageChange(1,#passTable,rcfunc)
+    while pig do
+        local flush = function()
+            for i=1,25,1 do
+                setGui(i,"")
+            end
+        end
+        lengthNum = #passTable[pageNum]
+        local ev, p1, p2, p3 = event.pullMultiple("touch","key_down","numInput")
+        if ev == "touch" then
+            pig = false
+        elseif ev == "key_down" then
+            local char = keyboard.keys[p3]
+            if char == "left" then
+                flush()
+                pageChange(false,#passTable,rcfunc)
+                os.sleep(1)
+            elseif char == "right" then
+                flush()
+                pageChange(true,#passTable,rcfunc)
+                os.sleep(1)
+            end
+        elseif ev == "numInput" then
+            flush()
+            pageChange(pageNum,#passTable,rcfunc,p1)
+            lengthNum = 5
+            ev, p2 = event.pullMultiple("touch,numInput")
+            if ev == "numInput" then
+                local send = {["id"]=passTable[pageNum][p1].call,["key"]=passTable[pageNum][p1].key,["type"]="base"}
+                if p2 == 1 then
+                    send.type = "toggle"
+                elseif p2 == 2 then
+                    send.type,send.delay = "delay", 5
+                elseif p2 == 3 then
+                    send.type,send.delay = "delay", 10
+                elseif p2 == 4 then
+                    send.type,send.delay = "delay", 30
+                elseif p2 == 5 then
+                    setGui(22,"How long do you want to open door?")
+                    term.setCursor(1,23)
+                    term.clearLine()
+                    local text = term.read()
+                    send.type,send.delay = "delay", tonumber(text)
+                end
+                modem.send(send.id,modemPort,ser.serialize(send))
+            end
+        end
+    end
 end
 
 --------Startup Code

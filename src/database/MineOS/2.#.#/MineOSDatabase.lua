@@ -353,8 +353,8 @@ local function writeAdminCardCallback()
   writer.write(crypted, loc.diagcardlabel, false, 14)
 end
 
-local function pageCallback(isPos)
-  if isPos then
+local function pageCallback(workspace,button)
+  if button.isPos then
     if listPageNumber < #userTable/pageMult - 1 then
       listPageNumber = listPageNumber + 1
     end
@@ -753,9 +753,9 @@ if enableLinking == true then linkUserButton.disabled = true end
 
 listPageLabel = window:addChild(GUI.label(4,38,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
 listUpButton = window:addChild(GUI.button(8,38,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
-listUpButton.onTouch = pageCallback,true
+listUpButton.onTouch, listUpButton.isPos = pageCallback,true
 listDownButton = window:addChild(GUI.button(12,38,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
-listDownButton.onTouch = pageCallback,false
+listDownButton.onTouch, listDownButton.isPos = pageCallback,false
  
 --Line and user buttons
 
