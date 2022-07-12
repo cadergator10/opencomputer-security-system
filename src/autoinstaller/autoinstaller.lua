@@ -479,7 +479,7 @@ if editorSettings.num == 2 then editorSettings.settings = query.data end
 editorSettings.scanner = false
 editorSettings.accelerate = false
 term.clear()
-text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires the program here to be set up on a tablet with a modem: https://github.com/cadergator10/opensecurity-scp-security-system/blob/main/src/extras/acceleratedDoorSetup.lua","1 for yes, 2 for no",1)
+local text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires the program here to be set up on a tablet with a modem: https://github.com/cadergator10/opensecurity-scp-security-system/blob/main/src/extras/acceleratedDoorSetup.lua","1 for yes, 2 for no",1)
 if tonumber(text) == 1 then
     local code = math.floor(math.random(1000,9999))
     modem.open(code)

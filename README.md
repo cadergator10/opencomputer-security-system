@@ -45,7 +45,11 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
       
       Diagnostics: a special program that works with the new admin card to get info about a door and it's settings and if it works. It is best used with a tablet that has a tier 3 gpu, a wireless modem, and an internet card. When the admin card is scanned, it sends all the info of the computer to the tablet. It's most noteable use is with the multidoor computer, as it tells you if that magnetic card reader is connected to a door, what the key of the door is (if you want to edit door settings after first set up) and more.
 
-      Accelerated door setup program to put on a tablet. This helps accelerate multi-door setup time, as it is portable compared to moving back and forth between the pc and the door. Also, if your tablet has an analyzer with it, you can scan the blocks with the tablet instead of just entering the uuid manually (in beta)
+      Accelerated door setup program to put on a tablet. This helps accelerate multi-door setup time, as it is portable compared to moving back and forth between the pc and the door. Also, if your tablet has an analyzer with it, you can scan the blocks with the tablet instead of just entering the uuid manually
+
+      Door editing: Lets you edit doors with amazing ease. Just swipe the door with an admin card and change settings, add/delete doors, and more. Is a major game changer compared to autoinstaller door editing.
+
+      Remote Control: Open and close doors from any distance without having to swipe cards. You get access to every single door linked to the server. This also lets you open doors contrary to what the settings are set to for the door, like toggling doors that would normally be delayed.
 
    Security API so you can make your own programs that sync with the security system! ex. swipe a card and check its permissions, and if true, perform a function.
 
@@ -82,17 +86,17 @@ Beta Changelog:
    <li>2.2.2 Runtime Editing update: Added the editor to the diagnostic tablet program, so you can now swipe the admin card in the door control and edit all the doors without having to use the autoinstaller! (Does not include pass editing which still requires the autoinstaller atm) Works with 2.2.2 and up Only. Also changed uuid resetting button to show a yes/no page. 5/18</li>
    <li>2.3.0 Functional string update: String and HiddenStrings can now be grabbed and set via the securityAPI. This allows you to make custom programs using it (such as a door you can only use 3 times, etc.) This gives a use for the hidden string, as it is now a string value unable to be edited in the database. Get and set with securityapi only works with strings, not int, group, or bool. Check SecurityAPI wiki page for more info. MineOS database now downloads userTable from server on reboot instead of using the one already saved on the database in order to avoid resetting string values set on the server. mineos also has option to turn on and off autoupdate (in dbsettings.txt in app folder) 5/30</li>
    <li>2.3.1 QOL update: MineOS database now has lang file support as well as a dark style you can enable in dbsettings. Diagnostic tablet's editing mode can now add and delete doors and change the pass settings 6/26</li>
+   <li>2.3.2 Remote Control update: Diagnostic tablet can now remote control doors! Either toggle a door open/closed or open with a delay. Server must be updated to version 2.3.2, but doors may not have to be updated (still recommended) 7/#</li>
 </ul>
 
 Queued updates:
 <ol>
-   <li>2.3.2: Remote control program for 2.#.# systems</li>
    <li>2.4.0: Security sectors for managing doors (locking certain doors from a seperate pc) </li>
 </ol>
 
 Future updates:
 <ol>
-   <li>none yet...</li>
+   <li>Ability to set a password on server that databases have to enter before editing passes</li>
 </ol>
 
 Important information:

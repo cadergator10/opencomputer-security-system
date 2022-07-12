@@ -3,6 +3,7 @@ local diagPort = 180
 local modemPort = 199
 
 local component = require("component")
+local gpu = component.gpu
 local event = require("event")
 local modem = component.modem 
 local ser = require ("serialization")
@@ -29,7 +30,7 @@ local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", 
 
 local settings
 
-lengthNum = 0
+local lengthNum = 0
 
 local pageNum = 1
 
@@ -53,7 +54,7 @@ local function convert( chars, dist, inv )
       return s
   end
 
-function deepcopy(orig)
+local function deepcopy(orig)
     local orig_type = type(orig)
     local copy
     if orig_type == 'table' then
@@ -68,13 +69,14 @@ function deepcopy(orig)
     return copy
 end
 
-function setGui(pos, text, wrap)
+local function setGui(pos, text, wrap, color)
     term.setCursor(1,pos)
     term.clearLine()
+    if color then gpu.setForeground(color) else gpu.setForeground(0xFFFFFF) end
     if wrap then print(text) else term.write(text) end
 end
 
-function getPassID(command,rules)
+local function getPassID(command,rules)
     local bill
     if rules ~= nil then
       for i=1,#rules,1 do
@@ -93,7 +95,7 @@ function getPassID(command,rules)
     return command == "checkstaff" and true or false, command == "checkstaff" and 0 or false
   end
 
-function pageChange(pos,length,call,...)
+local function pageChange(pos,length,call,...)
     if type(pos) == "boolean" then
         if pos then
             if pageNum < length then
@@ -110,7 +112,7 @@ function pageChange(pos,length,call,...)
     call(...)
 end
 
-function doorDiag(isMain,diagInfo2, diagInfo)
+local function doorDiag(isMain,diagInfo2, diagInfo)
     if isMain == false then
         local diagInfo3 = diagInfo["entireDoor"][diagInfo2[pageNum]]
         diagInfo3["type"] = diagInfo.type
@@ -243,7 +245,7 @@ end
 
   --------Program Function
 
-function accsetup()
+local function accsetup()
     term.clear()
     print("Enter 4 digit code")
     local text = term.read()
@@ -289,7 +291,7 @@ function accsetup()
     os.exit()
 end
 
-function diagThr(num,diagInfo)
+local function diagThr(num,diagInfo)
     local nextVar = 0
     local pickle = true
     ::Beg::
@@ -313,7 +315,7 @@ function diagThr(num,diagInfo)
     local lengthMe = 2
     if diagInfo.version ~= "2.2.0" and diagInfo.type == "multi" then
         lengthMe = 3
-        print(lengthMe .. ". Entire door Info") 
+        print(lengthMe .. ". Entire door Info")
     end
     lengthNum = lengthMe
     _, nextVar = event.pull("numInput")
@@ -427,7 +429,7 @@ function diagThr(num,diagInfo)
     end
 end
 
-function diagnostics()
+local function diagnostics()
     term.clear()
     local num = 0
     diagt = thread.create(diagThr,num)
@@ -446,7 +448,7 @@ function diagnostics()
     end
 end
 
-function doorediting() --TEST: Can this edit the doors?
+local function doorediting() --TEST: Can this edit the doors?
     term.clear()
     setGui(1,"Scan the door you would like to edit")
     setGui(2,"If the door is a multidoor, you can edit all doors connected")
@@ -854,7 +856,123 @@ function doorediting() --TEST: Can this edit the doors?
     end
     modem.send(from,modemPort,"changeSettings",ser.serialize(poo))
     print("finished")
-    .exit()
+    os.exit()
+end
+
+local function remotecontrol()
+    --Settings
+    local listAmt = 9
+    --setup the list of doors, sorted by list number.
+    modem.broadcast(modemPort,"rcdoors")
+    modem.open(modemPort)
+    local e,_,_,_,_,msg = event.pull(3,"modem_message")
+    if e == nil then
+        print("No query received. Assuming version 2.3.1 and before is in use and will not work.")
+        os.exit()
+    end
+    local tempPasses = ser.unserialize(msg)
+    local passTable = {}
+    for key,value in pairs(tempPasses) do
+        if value.type == "multi" then
+            for keym,valuem in pairs(value.data) do
+                table.insert(passTable,{["call"]=value.id,["type"]=value.type,["data"]=valuem,["key"]=keym})
+            end
+        elseif value.type == "single" then
+            table.insert(passTable,{["call"]=value.id,["type"]=value.type,["data"]=value.data})
+        end
+    end
+    tempPasses = deepcopy(passTable)
+    passTable = {}
+    local counter = 1
+    for i=1,math.ceil(#tempPasses/9),1 do
+        passTable[i] = {}
+        for j=1,listAmt,1 do
+            if counter <= #tempPasses then
+                table.insert(passTable[i],tempPasses[counter])
+                counter = counter + 1
+            else
+                break
+            end
+        end
+    end
+    --Screen GUI preparation
+
+
+    local rcfunc = function(chosen)
+        setGui(1,"Page" .. pageNum .. "/" .. #passTable)
+        setGui(2,"")
+        setGui(3,chosen and "Click screen to go back to door select" or "Click the screen to exit")
+        setGui(4,"------------------------------")
+        for i=1,listAmt,1 do
+            if passTable[pageNum][i] ~= nil then
+                setGui(i+4,chosen == nil and i .. ". " .. passTable[pageNum][i].data.name or passTable[pageNum][i].data.name, chosen == i and 0x00FF00 or nil)
+            else
+                break
+            end
+        end
+        setGui(listAmt+5,"------------------------------") --15
+        if chosen ~= nil and chosen ~= false then
+            setGui(16,"1. Toggle Open")
+            setGui(17,"2. Open for 5 seconds")
+            setGui(18,"3. Open for 10 seconds")
+            setGui(19,"4. Open for 30 seconds")
+            setGui(20,"5. Open for # seconds")
+        end
+    end
+
+    local pig = true
+    pageChange(1,#passTable,rcfunc)
+    while pig do
+        local flush = function()
+            for i=1,25,1 do
+                setGui(i,"")
+            end
+        end
+        flush()
+        pageChange(pageNum,#passTable,rcfunc)
+        lengthNum = #passTable[pageNum]
+        local ev, p1, p2, p3 = event.pullMultiple("touch","key_down","numInput")
+        if ev == "touch" then
+            pig = false
+        elseif ev == "key_down" then
+            local char = keyboard.keys[p3]
+            if char == "left" then
+                flush()
+                pageChange(false,#passTable,rcfunc)
+                os.sleep(1)
+            elseif char == "right" then
+                flush()
+                pageChange(true,#passTable,rcfunc)
+                os.sleep(1)
+            end
+        elseif ev == "numInput" then
+            flush()
+            pageChange(pageNum,#passTable,rcfunc,p1)
+            os.sleep(1)
+            lengthNum = 5
+            ev, p2 = event.pullMultiple("touch","numInput")
+            if ev == "numInput" then
+                local send = {["id"]=passTable[pageNum][p1].call,["key"]=passTable[pageNum][p1].key,["type"]="base"}
+                if p2 == 1 then
+                    send.type = "toggle"
+                elseif p2 == 2 then
+                    send.type,send.delay = "delay", 5
+                elseif p2 == 3 then
+                    send.type,send.delay = "delay", 10
+                elseif p2 == 4 then
+                    send.type,send.delay = "delay", 30
+                elseif p2 == 5 then
+                    setGui(22,"How long do you want to open door?")
+                    term.setCursor(1,23)
+                    term.clearLine()
+                    local text = term.read()
+                    send.type,send.delay = "delay", tonumber(text)
+                end
+                modem.send(send.id,modemPort,"remoteControl",ser.serialize(send))
+            end
+        end
+    end
+    os.exit()
 end
 
 --------Startup Code
@@ -893,7 +1011,8 @@ print("Which app would you like to run?")
 print("1. Diagnostics")
 print("2. Accelerated door setup")
 print("3. Door Editing")
-lengthNum = 3
+print("4. Remote Control")
+lengthNum = 4
 _, nextVar = event.pull("numInput")
 if nextVar == 1 then
     diagnostics()
@@ -901,4 +1020,6 @@ elseif nextVar == 2 then
     accsetup()
 elseif nextVar == 3 then
     doorediting()
+elseif nextVar == 4 then
+    remotecontrol()
 end
