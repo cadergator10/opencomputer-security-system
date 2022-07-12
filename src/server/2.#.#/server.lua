@@ -327,7 +327,16 @@ while true do
     elseif command == "rcdoors" then --Cant send entire doorTable. Too big. Reduce to minimum required.
       local sendTable = {}
       for _,value in pairs(doorTable) do
-        table.insert(sendTable,{["id"]=value.id,["type"]=value.type,["data"]={["name"]=value.data.name}})
+        local datar
+        if value.type == "multi" then
+          datar = {}
+          for key,pal in pairs(value.data) do
+            datar[key] = {["name"]=pal.name}
+          end
+        else
+          datar = {["name"]=value.data.name}
+        end
+        table.insert(sendTable,{["id"]=value.id,["type"]=value.type,["data"]=datar})
       end
       modem.send(from,port,ser.serialize(sendTable))
     elseif command == "redstoneUpdated" then
