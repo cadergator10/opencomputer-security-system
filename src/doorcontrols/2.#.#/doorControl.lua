@@ -222,21 +222,23 @@ local function convert( chars, dist, inv )
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
         data = ser.unserialize(data)
         if data.id == component.modem.address then
+          term.write("RemoteControl request received for ")
+          term.write(data.type == "single " and settingData.name or settingData[data.key].name)
           if extraConfig.type == "single" then
             if data.type == "base" then
-              openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,toggle,doorType,redSide)
+              openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,toggle,doorType,redSide,magReader.address)
             elseif data.type == "toggle" then
-              openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,1,doorType,redSide)
+              openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,1,doorType,redSide,magReader.address)
             elseif data.type == "delay" then
-              openDoor(data.delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,0,doorType,redSide)
+              openDoor(data.delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,0,doorType,redSide,magReader.address)
             end
           else
             if data.type == "base" then
-              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, settingData[data.key].redSide)
+              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
             elseif data.type == "toggle" then
-              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, settingData[data.key].redSide)
+              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
             elseif data.type == "delay" then
-              thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, settingData[data.key].redSide)
+              thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
             end
           end
         end
@@ -482,7 +484,6 @@ while true do
     end
     isOk = "incorrect magreader"
     if(keyed ~= nil)then
-      term.write(settingData[keyed].redColor)
       redColor = settingData[keyed].redColor
       delay = settingData[keyed].delay
       cardRead = settingData[keyed].cardRead

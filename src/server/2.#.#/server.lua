@@ -273,9 +273,9 @@ while true do
 
   local _, _, from, port, _, command, msg, bypassLock = event.pull("modem_message")
   local data = msg
-  if command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" then data = crypt(msg, settingTable.cryptKey, true) end
+  if command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" and command ~= "loginfo" then data = crypt(msg, settingTable.cryptKey, true) end
   local thisUserName = false
-  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" then
+  if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" and command ~= "loginfo" then
     data = ser.unserialize(data)
     thisUserName = getVar("name",data.uuid)
   end
@@ -304,6 +304,11 @@ while true do
     if isInAlready == false then table.insert(doorTable,tmpTable) end
     saveTable(doorTable, "doorlist.txt")
     modem.send(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
+  elseif command == "loginfo" then
+    data = ser.unserialize(data) --Array of arrays. Each array has text and color (color optional)
+    for i=1,#data,1 do
+      advWrite(data[i].text,data[i].color or 0xFFFFFF)
+    end
   elseif command == "rcdoors" then
     modem.send(from,port,ser.serialize(doorTable))
   elseif command == "redstoneUpdated" then
