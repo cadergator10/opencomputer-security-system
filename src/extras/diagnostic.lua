@@ -856,7 +856,7 @@ local function doorediting() --TEST: Can this edit the doors?
     end
     modem.send(from,modemPort,"changeSettings",ser.serialize(poo))
     print("finished")
-    .exit()
+    os.exit()
 end
 
 local function remotecontrol()
@@ -864,6 +864,7 @@ local function remotecontrol()
     local listAmt = 9
     --setup the list of doors, sorted by list number.
     modem.broadcast(modemPort,"rcdoors")
+    modem.open(modemPort)
     local e,_,_,_,_,msg = event.pull(3,"modem_message")
     if e == nil then
         print("No query received. Assuming version 2.3.1 and before is in use and will not work.")
@@ -874,10 +875,10 @@ local function remotecontrol()
     for key,value in pairs(tempPasses) do
         if value.type == "multi" then
             for keym,valuem in pairs(value.data) do
-                table.insert(passTable,{["call"]=key,["type"]=value.type,["data"]=valuem.data,["key"]=keym})
+                table.insert(passTable,{["call"]=value.id,["type"]=value.type,["data"]=valuem,["key"]=keym})
             end
         else
-            table.insert(passTable,{["call"]=key,["type"]=value.type,["data"]=value.data})
+            table.insert(passTable,{["call"]=value.id,["type"]=value.type,["data"]=value.data})
         end
     end
     tempPasses = deepcopy(passTable)
@@ -903,8 +904,8 @@ local function remotecontrol()
         setGui(3,chosen and "Click screen to go back to door select" or "Click the screen to exit")
         setGui(4,"------------------------------")
         for i=1,listAmt,1 do
-            if passTable[pageNum] ~= nil then
-                setGui(i+4,chosen == nil and i .. ". " .. passTable[pageNum].data.name or passTable[pageNum].data.name, chosen == i and 0x00FF00 or nil)
+            if passTable[pageNum][i] ~= nil then
+                setGui(i+4,chosen == nil and i .. ". " .. passTable[pageNum][i].data.name or passTable[pageNum][i].data.name, chosen == i and 0x00FF00 or nil)
             else
                 break
             end
@@ -927,6 +928,8 @@ local function remotecontrol()
                 setGui(i,"")
             end
         end
+        flush()
+        pageChange(pageNum,#passTable,rcfunc)
         lengthNum = #passTable[pageNum]
         local ev, p1, p2, p3 = event.pullMultiple("touch","key_down","numInput")
         if ev == "touch" then
@@ -945,8 +948,9 @@ local function remotecontrol()
         elseif ev == "numInput" then
             flush()
             pageChange(pageNum,#passTable,rcfunc,p1)
+            os.sleep(1)
             lengthNum = 5
-            ev, p2 = event.pullMultiple("touch,numInput")
+            ev, p2 = event.pullMultiple("touch","numInput")
             if ev == "numInput" then
                 local send = {["id"]=passTable[pageNum][p1].call,["key"]=passTable[pageNum][p1].key,["type"]="base"}
                 if p2 == 1 then
@@ -964,10 +968,11 @@ local function remotecontrol()
                     local text = term.read()
                     send.type,send.delay = "delay", tonumber(text)
                 end
-                modem.send(send.id,modemPort,ser.serialize(send))
+                modem.send(send.id,modemPort,"remoteControl",ser.serialize(send))
             end
         end
     end
+    os.exit()
 end
 
 --------Startup Code
