@@ -119,7 +119,10 @@ end
 for file in fs.list(modulepath .. "/") do
   local result, reason = loadfile(modulepath .. "/" .. file)
   if result then
-    table.insert(modules,result)
+    local success, result = pcall(result)
+    if success then
+      table.insert(modules,result)
+    end
   end
 end
 
