@@ -10,11 +10,19 @@ local ser = require ("serialization")
 local term = require("term")
 local ios = require("io")
 local gpu = component.gpu
+local fs = require("filesystem")
+local shell = require("shell")
+local process = require("process")
+local uuid = require("uuid")
 
 local version = "2.3.2"
 
 local redstone = {}
 local commands = {"updateuserlist","autoInstallerQuery","setDoor","loginfo","rcdoors","redstoneUpdated","checkLinked","getuserlist","getvar","setvar","checkRules"}
+local skipcrypt = {"autoInstallerQuery","rcdoors","getuserlist","loginfo"}
+
+local modules = {}
+local modulepath = "/modules"
 
 --------Main Functions
 
@@ -85,9 +93,12 @@ local function deepcopy(orig)
   return copy
 end
 
-local function addcommands(table)
+local function addcommands(table,crypttable)
   for _,value in pairs(table) do
     table.insert(commands,value)
+  end
+  for _,value in pairs(crypttable) do
+    table.insert(skipcrypt,value)
   end
 end
 
@@ -97,6 +108,21 @@ local function advWrite(text,color,wrap)
 end
 --------Getting tables and setting up terminal
 term.clear()
+modulepath = fs.path(shell.resolve(process.info().path)).. "/modules"
+if fs.exists(modulepath) == false then
+  os.execute("mkdir modules")
+  print("Downloading default modules...")
+  os.execute("wget -f habajagfa.lua modules/sectors.lua") --TODO: Add actual raw link to it
+  term.clear()
+end
+
+for file in fs.list(modulepath .. "/") do
+  local result, reason = loadfile(modulepath .. "/" .. file)
+  if result then
+    table.insert(modules,result)
+  end
+end
+
 local settingTable = loadTable("settings.txt")
 if settingTable == nil then
   print("Security server requires settings to be set")
@@ -114,11 +140,18 @@ local userTable = loadTable("userlist.txt")
 local doorTable = loadTable("doorlist.txt")
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 if userTable == nil then
-  userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}} --sets up setting var with one setting to start with.
+  userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false},["sectors"]={{["name"]="",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}}} --sets up setting var with one setting to start with.
+  --New Sectors system will be linked to the userTable settings arrays. name = display name; uuid = linking id to get this pass; type = lockdown bypass type: 1 = open door anyway, 2 = disable lockdown; pass = pass uuids that link with type to disable lockdown or enter anyways; status = sector status: 1 = normal operations, 2 = lockdown, 3 = lock open
   saveTable(userTable,"userlist.txt")
 end
 if doorTable == nil then
   doorTable = {}
+end
+
+for _,value in pairs(modules) do
+  addcommands(value.commands,value.skipcrypt)
+  value.init()
+  value.setup(userTable.settings)
 end
 
 --------account functions
@@ -288,9 +321,15 @@ while true do
     end
   end
   if go then
-    if command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" and command ~= "loginfo" then data = crypt(msg, settingTable.cryptKey, true) end
+    for _,value in pairs(skipcrypt) do
+      if command == value then
+        go = false
+        break
+      end
+    end
+    if go then data = crypt(msg, settingTable.cryptKey, true) end
     local thisUserName = false
-    if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" and command ~= "loginfo" then
+    if command == "setvar" or command == "getvar" or command == "checkRules" then
       data = ser.unserialize(data)
       thisUserName = getVar("name",data.uuid)
     end
@@ -298,6 +337,9 @@ while true do
       userTable = ser.unserialize(data)
       advWrite("Updated userlist received\n",0x0000C0)
       saveTable(userTable, "userlist.txt")
+      for _,value in pairs(modules) do
+        value.setup(userTable.settings)
+      end
     elseif command == "autoInstallerQuery" then
       data = {}
       data.num = 2
@@ -445,6 +487,18 @@ while true do
           data = crypt("false", settingTable.cryptKey)
           advWrite("\nuser not found\n",0x990000)
           modem.send(from, port, data)
+        end
+      end
+    else
+      for _,value in pairs(modules) do --p1 is true/false if program received command, p2 is data to send back to other device (nil if nothing is sent back), p3 is what to log on server (nil if nothing to log), p4 is color of logged text (nil if staying white or nothing to log)
+        local p1, p2, p3, p4 = value.message(command,data)
+        if p1 then
+          if p2 then
+            modem.send(from, port, p2)
+          end
+          if p3 then
+            advWrite(p3,p4 or 0xFFFFFF)
+          end
         end
       end
     end
