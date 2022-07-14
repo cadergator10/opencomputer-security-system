@@ -167,58 +167,8 @@ local function convert( chars, dist, inv )
 
   local function update(_, localAddress, remoteAddress, port, distance, msg, data)
     if (testR == true) then
-      if msg == "forceopen" then
-        data = crypt(data, extraConfig.cryptKey, true)
-        if extraConfig.type == "single" then
-          if(doorType == 0)then
-            if data == "open" then
-              component.os_doorcontroller.open()
-            else
-              component.os_doorcontroller.close()
-            end
-          elseif(doorType == 1)then
-            component.redstone.setOutput(redSide,data == "open" and 15 or 0)
-          elseif(doorType == 2)then
-            component.redstone.setBundledOutput(redSide, { [redColor] = data == "open" and 255 or 0 } )
-          else
-            if data == "open" then
-              component.os_rolldoorcontroller.open()
-            else
-              component.os_rolldoorcontroller.close()
-            end
-          end
-        else
-          local keyed = nil
-          if data == "open" then
-            for key, valued in pairs(settingData) do
-              if valued.forceOpen ~= 0 then
-                if valued.doorType == 0 then
-                  component.proxy(valued.doorAddress).open()
-                elseif valued.doorType == 1 then
-                  print("potentially broken door at key " .. key .. ": set to redstone")
-                elseif valued.doorType == 2 then
-                  component.redstone.setBundledOutput(redSide, { [valued.redColor] = 255})
-                elseif valued.doorType == 3 then
-                  component.proxy(valued.doorAddress).open()
-                end
-              end
-            end
-          else
-            for key, valued in pairs(settingData) do
-              if valued.forceOpen ~= 0 then
-                if valued.doorType == 0 then
-                  component.proxy(valued.doorAddress).close()
-                elseif valued.doorType == 1 then
-                  print("potentially broken door at key " .. key .. ": set to redstone")
-                elseif valued.doorType == 2 then
-                  component.redstone.setBundledOutput(redSide, { [valued.redColor] = 0})
-                elseif valued.doorType == 3 then
-                  component.proxy(valued.doorAddress).close()
-                end
-              end
-            end
-          end
-        end
+      if msg == "checkSector" then --Making forceopen obselete
+        --TODO: Add code for checking sectors & add code for actual sector identification.
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
         data = ser.unserialize(data)
         if data.id == component.modem.address then
@@ -357,6 +307,12 @@ if e ~= nil then
         settingData.cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
         ttf.save(settingData,"doorSettings.txt")
     end
+    if settingData.forceOpen ~= nil then
+      settingData.forceOpen = nil
+      settingData.bypassLock = nil
+      settingData.sector = false
+      ttf.save(settingData,"doorSettings.txt")
+    end
   else
     for key, value in pairs(settingData) do
       if type(value.cardRead) == "number" then
@@ -373,6 +329,12 @@ if e ~= nil then
           settingData[key].accessLevel = nil
           settingData[key].cardRead = {}
           settingData[key].cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
+      end
+      if value.forceOpen ~= nil then --TODO: Finish the rewrite to fix old settingdata to newer sector mode.
+        settingData.forceOpen = nil
+        settingData.bypassLock = nil
+        settingData.sector = false
+        ttf.save(settingData,"doorSettings.txt")
       end
     end
     if checkBool == true then

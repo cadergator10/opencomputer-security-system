@@ -24,6 +24,8 @@ local skipcrypt = {"autoInstallerQuery","rcdoors","getuserlist","loginfo"}
 local modules = {}
 local modulepath = "/modules"
 
+local debug = false
+
 --------Main Functions
 
 local function convert( chars, dist, inv )
@@ -153,6 +155,7 @@ end
 
 for _,value in pairs(modules) do
   addcommands(value.commands,value.skipcrypt)
+  value.debug = debug
   value.init()
   value.setup(userTable.settings)
 end
