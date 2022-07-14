@@ -23,8 +23,9 @@ local loc = system.getLocalization(aRD .. "Localizations/")
 local workspace, window, menu, userTable, settingTable
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
-local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, settingsButton
- 
+local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, extraVar3, settingsButton
+local sectComboBox, sectLockBox, sectNewButton, sectDelButton
+
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
 --[[set up on startup according to extra modifiers added by user.
@@ -610,6 +611,80 @@ local function changeSettings()
   end
 end
 
+--Sector functions
+local function createSector()
+  addVarArray = {["name"]="temp",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.sectornewname))
+  varInput.onInputFinished = function()
+    addVarArray.name = varInput.text
+  end
+  varYesButton = varContainer.layout:addChild(GUI.button(1,6,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.sectornewadd))
+  varYesButton.onTouch = function()
+    table.insert(userTable.sectors,addVarArray)
+    addVarArray = nil
+    varContainer:removeChildren()
+    varContainer:remove()
+    varContainer = nil
+    saveTable(userTable,aRD .. "userlist.txt")
+    GUI.alert(loc.sectadded)
+    updateServer()
+    window:remove()
+  end
+end
+local function deleteSector()
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+  for i=1,#userTable.settings.var,1 do
+    typeSelect:addItem(userTable.settings.sectors[i].name)
+  end
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvarcompletedbutton))
+  varYesButton.onTouch = function()
+    local selected = typeSelect.selectedItem
+    table.remove(userTable.settings.sectors,selected)
+    varContainer:removeChildren()
+    varContainer:remove()
+    varContainer = nil
+    saveTable(userTable,aRD .. "userlist.txt")
+    GUI.alert(loc.sectremoved)
+    updateServer()
+    window:remove()
+  end
+end
+
+local function uuidtopass(uuid)
+  for i=1,#userTable.settings.calls,1 do
+    if userTable.settings.calls[i] == uuid then
+      return true, i
+    end
+  end
+  return false
+end
+local function sectorPassManager()
+  addVarArray = {["all"]={0},["this"]={}}
+  local selected = 1
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  varContainer.layout:addChild(GUI.label(1,1,3,3,style.sectorText, "Added sector passes"))
+  typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+  local freshType = function()
+    selected = typeSelect.selectedItem
+    typeSelect:removeChildren()
+    addVarArray.this = {}
+    for i=1,#userTable.settings.sectors[sectComboBox.selectedItem].pass, 1 do
+      table.insert(addVarArray,uuidtopass(userTable.settings.sectors[sectComboBox.selectedItem].pass[i]))
+      typeSelect:addItem(userTable.settings.label[addVarArray[i]])
+    end
+    if typeSelect.count > selected then --FIXME: Figure out what the actual call is for the count of items
+      selected = typeSelect.count
+    end
+    typeSelect.selectedItem = selected
+  end
+  freshType()
+  varContainer.layout:addChild(GUI.label(1,1,3,3,style.sectorText, "All Passes"))
+  extraVar3 = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+  --TODO: Add all passes check (only bool passes)
+end
+
 ----------GUI SETUP
 if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
@@ -638,7 +713,7 @@ else
   GUI.alert(loc.userlistfailgrab)
   userTable = loadTable(aRD .. "userlist.txt")
   if userTable == nil then
-    userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
+    userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false},["sectors"]={{["name"]="",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}}}
   end
 end
 
@@ -789,6 +864,33 @@ cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,lo
 --write card button
 cardWriteButton = window:addChild(GUI.button(128,41,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.writebutton))
 cardWriteButton.onTouch = writeCardCallback
+
+--Sector Setup
+window:addChild(GUI.label(117,12,3,3,style.sectorText,loc.sectorlabel))
+sectComboBox = window:addChild(GUI.comboBox(135,12,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+local updateSeclist = function()
+  local selected = sectComboBox.selectedItem
+  sectLockBox.selectedItem = userTable.settings.sectors[selected].type
+end
+for _,value in pairs(userTable.settings.sectors) do
+  sectComboBox:addItem(value.name).onTouch = updateSeclist
+end
+sectNewButton = window:addChild(GUI.button(117,14,16,1,style.sectorButton, style.sectorText, style.sectorSelectButton, style.sectorSelectText, loc.sectornew))
+sectNewButton.onTouch = createSector
+sectDelButton = window:addChild(GUI.button(135,14,16,1,style.sectorButton, style.sectorText, style.sectorSelectButton, style.sectorSelectText, loc.sectordel))
+sectDelButton.onTouch = deleteSector
+window:addChild(GUI.label(117,16,3,3,style.sectorText,loc.sectorbypass))
+sectLockBox = window:addChild(GUI.comboBox(135,16,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+local freshBox = function()
+  local selected = sectLockBox.selectedItem
+  userTable.settings.sectors[sectComboBox.selectedItem].type = selected
+  updateSeclist()
+end
+sectLockBox:addItem(loc.sectoropen).onTouch = freshBox
+sectLockBox:additem(loc.sectordislock).onTouch = freshBox
+sectUserButton = window:addChild(GUI.button(117,18,16,1,style.sectorButton, style.sectorText, style.sectorSelectButton, style.sectorSelectText, loc.sectoruserbutton))
+sectUserButton.onTouch = sectorPassManager
+
 
 --Server Update button (only if setting is set to false)
 if settingTable.autoupdate == false then

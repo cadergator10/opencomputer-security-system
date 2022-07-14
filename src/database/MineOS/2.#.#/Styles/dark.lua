@@ -49,5 +49,19 @@
   containerComboBack = 0xEEEEEE,
   containerComboText = 0x2D2D2D,
   containerComboArrowBack = 0xCCCCCC,
-  containerComboArrowText = 0x888888
+  containerComboArrowText = 0x888888,
+
+  sectorText = 0xC3C3C3,
+  sectorButton = 0x5A5A5A,
+  sectorSelectButton = 0xC3C3C3,
+  sectorSelectText = 0x5A5A5A,
+  sectorInputBack = 0x696969,
+  sectorInputText = 0xC3C3C3,
+  sectorInputPlaceholder = 0xE1E1E1,
+  sectorInputFocusBack = 0x969696,
+  sectorInputFocusText = 0xE1E1E1,
+  sectorComboBack = 0xEEEEEE,
+  sectorComboText = 0x2D2D2D,
+  sectorComboArrowBack = 0xCCCCCC,
+  sectorComboArrowText = 0x888888
 }

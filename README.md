@@ -1,4 +1,4 @@
-# opensecurity-scp-security-system
+# opensecurity-security-system
 
 <a href="https://oc.cil.li/topic/994-security-system-for-opensecurity">This was built off of DustPuppy's system here</a>
 

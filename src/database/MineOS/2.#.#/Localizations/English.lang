@@ -54,5 +54,17 @@
     editvar = "edit var",
     settingsvar = "settings",
     writebutton = "write",
-    updateserver = "update server"
+    updateserver = "update server",
+
+    sectorlabel = "Sectors",
+    sectorbypass = "bypass type"
+    sectoropen = "open door",
+    sectordislock = "disable lockdown",
+    sectornew = "new sector",
+    sectordel = "del sector",
+    sectornewname = "sector name",
+    sectornewadd = "add sector",
+    sectadded = "Sector was added. Changes will be applied on next startup",
+    sectremoved = "Sector was removed. Changes will be applied on next startup"
+    sectoruserbutton = "manage passes"
 }
