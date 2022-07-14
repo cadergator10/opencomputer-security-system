@@ -157,7 +157,7 @@ for _,value in pairs(modules) do
   addcommands(value.commands,value.skipcrypt)
   value.debug = debug
   value.init()
-  value.setup(userTable.settings)
+  value.setup(userTable, doorTable)
 end
 
 --------account functions
@@ -344,7 +344,7 @@ while true do
       advWrite("Updated userlist received\n",0x0000C0)
       saveTable(userTable, "userlist.txt")
       for _,value in pairs(modules) do
-        value.setup(userTable.settings)
+        value.setup(userTable, doorTable)
       end
     elseif command == "autoInstallerQuery" then
       data = {}
@@ -367,6 +367,9 @@ while true do
       if isInAlready == false then table.insert(doorTable,tmpTable) end
       saveTable(doorTable, "doorlist.txt")
       modem.send(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
+      for _,value in pairs(modules) do
+        value.setup(userTable, doorTable)
+      end
     elseif command == "loginfo" then
       data = ser.unserialize(data) --Array of arrays. Each array has text and color (color optional)
       for i=1,#data,1 do

@@ -1,16 +1,19 @@
-local settings = {}
+local settingstable = {}
+local doortable = {}
 
 module = {}
 module.name = "module test"
 module.commands = {"test"}
 module.skipcrypt = {"test"}
+module.debug = false
 
 function module.init() --Called when server is first started
 
 end
 
-function module.setup(setit) --Called when userlist is updated or server is first started
-  settings = setit
+function module.setup(settings, doors) --Called when userlist is updated or server is first started
+  settingstable = settings
+  doortable = doors
 end
 
 function module.message(command,data) --Called when a command goes past all default commands and into modules.

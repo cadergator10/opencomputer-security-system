@@ -19,8 +19,7 @@ local delay = 5
 --Changed heavilly to table of passes. Info in singleDoor
 local cardRead = {};
 
-local forceOpen = 1
-local bypassLock = 0
+local sector
 
 local doorAddress = ""
 
@@ -331,10 +330,10 @@ if e ~= nil then
           settingData[key].cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
       end
       if value.forceOpen ~= nil then --TODO: Finish the rewrite to fix old settingdata to newer sector mode.
-        settingData.forceOpen = nil
-        settingData.bypassLock = nil
-        settingData.sector = false
-        ttf.save(settingData,"doorSettings.txt")
+        checkBool = true
+        settingData[key].forceOpen = nil
+        settingData[key].bypassLock = nil
+        settingData[key].sector = false
       end
     end
     if checkBool == true then
@@ -377,8 +376,7 @@ if extraConfig.type == "single" then
 	delay = settingData.delay
 	cardRead = settingData.cardRead
 	toggle = settingData.toggle
-	forceOpen = settingData.forceOpen
-	bypassLock = settingData.bypassLock
+	sector = settingData.sector
   if #cardRead == 1 then
     if cardRead[1].call == "checkstaff" then
       print("STAFF ONLY")
@@ -453,8 +451,7 @@ while true do
       doorType = settingData[keyed].doorType
       doorAddress = settingData[keyed].doorAddress
       toggle = settingData[keyed].toggle
-      forceOpen = settingData[keyed].forceOpen
-      bypassLock = settingData[keyed].bypassLock
+      sector = settingData[keyed].sector
       isOk = "ok"
     else
       print("MAG READER IS NOT SET UP! PLEASE FIX")
@@ -507,8 +504,12 @@ while true do
       end
       tmpTable["type"] = extraConfig.type
       tmpTable["key"] = extraConfig.type == "multi" and keyed or nil
+      tmpTable["sector"] = sector
       data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-      modem.broadcast(modemPort, "checkRules", data, bypassLock)
+      if sector ~= false then
+        modem.broadcast(modemPort,"doorsector",data)
+      end
+      modem.broadcast(modemPort, "checkRules", data)
       local e, _, from, port, _, msg = event.pull(1, "modem_message")
       if e then
         data = crypt(msg, extraConfig.cryptKey, true)
