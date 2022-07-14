@@ -660,18 +660,17 @@ local function uuidtopass(uuid)
   end
   return false
 end
-local function sectorPassManager()
-  addVarArray = {["all"]={0},["this"]={}}
+local function sectorPassManager() --Manages passes that bypass sector lockdown events. Was very difficult to think of & implement; Untested
   local selected = 1
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
-  varContainer.layout:addChild(GUI.label(1,1,3,3,style.sectorText, "Added sector passes"))
+  varContainer.layout:addChild(GUI.label(1,1,3,3,style.sectorText, loc.sectorpasslabel))
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
   local freshType = function()
     selected = typeSelect.selectedItem
     typeSelect:removeChildren()
-    addVarArray.this = {}
+    addVarArray = {} --Every spot: {["uuid"]="uuid for thing",["data"]="what it checks for"}
     for i=1,#userTable.settings.sectors[sectComboBox.selectedItem].pass, 1 do
-      table.insert(addVarArray,uuidtopass(userTable.settings.sectors[sectComboBox.selectedItem].pass[i]))
+      table.insert(addVarArray, uuidtopass(userTable.settings.sectors[sectComboBox.selectedItem].pass[i].uuid))
       typeSelect:addItem(userTable.settings.label[addVarArray[i]])
     end
     if typeSelect.count > selected then --FIXME: Figure out what the actual call is for the count of items
@@ -680,9 +679,69 @@ local function sectorPassManager()
     typeSelect.selectedItem = selected
   end
   freshType()
-  varContainer.layout:addChild(GUI.label(1,1,3,3,style.sectorText, "All Passes"))
-  extraVar3 = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
-  --TODO: Add all passes check (only bool passes)
+  varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
+  varYesButton.onTouch = function()
+    local selected = extraVar2.selectedItem
+    local data = userTable.settings.type[selected] == "-int" and varInput.selectedItem or userTable.settings.type[selected] == "bool" and nil or varInput.text
+    table.insert(userTable.settings.sectors[sectComboBox].pass,{["uuid"]=userTable.settings.calls[selected],["data"]=data})
+    freshType()
+  end
+  extraVar = varContainer.layout:addChild(GUI.button(1,21,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
+  extraVar.onTouch = function()
+    local selected = typeSelect.selectedItem
+    table.remove(userTable.settings.sectors[sectComboBox].pass,addVarArray[selected])
+    freshType()
+  end
+  local prev = "none"
+  local refreshInput = function()
+    local selected = extraVar2.selectedItem
+    if userTable.settings.type[selected] == "string" or userTable.settings.type[selected] == "-string" then
+      if prev == "-int" then
+        varInput:remove()
+        varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
+      else
+        varInput.placeholder = loc.inputtext --FIXME: Check if this is the correct var to change placeholder in and change all 3
+      end
+      varInput.text = ""
+      varInput.disabled = false
+    elseif userTable.settings.type[selected] == "int" then
+      if prev == "-int" then
+        varInput:remove()
+        varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputlevel))
+      else
+        varInput.placeholder = loc.inputlevel
+      end
+      varInput.text = ""
+      varInput.disabled = false
+    elseif userTable.settings.type[selected] == "-int" then
+      if prev ~= "-int" then
+        varInput:remove()
+        varInput = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+      else
+        varInput:removeChildren()
+      end
+      for _,value in pairs(userTable.settings.data[selected]) do
+        varInput:addItem(value)
+      end
+      varInput.selectedItem = 1
+    else
+      if prev == "-int" then
+        varInput:remove()
+        varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.disabled))
+      else
+        varInput.placeholder = loc.disabled
+      end
+      varInput.text = ""
+      varInput.disabled = true
+    end
+    prev = userTable.settings.type[selected]
+  end
+  varContainer.layout:addChild(GUI.label(1,1,3,3,style.sectorText, loc.allpasseslabel))
+  extraVar2 = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+  for i=1,#userTable.settings.var,1 do
+    extraVar2:addItem(userTable.settings.label[i]).onTouch = refreshInput
+  end
+  refreshInput()
 end
 
 ----------GUI SETUP
