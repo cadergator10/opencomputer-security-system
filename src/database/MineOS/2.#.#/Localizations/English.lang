@@ -67,7 +67,7 @@
     sectadded = "Sector was added. Changes will be applied on next startup",
     sectremoved = "Sector was removed. Changes will be applied on next startup",
     sectoruserbutton = "manage passes",
-    sectorpasslabel = Added sector passes",
+    sectorpasslabel = "Added sector passes",
     inputlevel = "input level",
     disabled = "disabled",
     allpasseslabel = "All Passes"

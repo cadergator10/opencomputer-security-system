@@ -95,8 +95,8 @@ local function deepcopy(orig)
   return copy
 end
 
-local function addcommands(table,crypttable)
-  for _,value in pairs(table) do
+local function addcommands(tabler,crypttable)
+  for _,value in pairs(tabler) do
     table.insert(commands,value)
   end
   for _,value in pairs(crypttable) do
@@ -145,12 +145,16 @@ local userTable = loadTable("userlist.txt")
 local doorTable = loadTable("doorlist.txt")
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 if userTable == nil then
-  userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false},["sectors"]={{["name"]="",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}}} --sets up setting var with one setting to start with.
+  userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false},["sectors"]={{["name"]="Placeholder Sector",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}}} --sets up setting var with one setting to start with.
   --New Sectors system will be linked to the userTable settings arrays. name = display name; uuid = linking id to get this pass; type = lockdown bypass type: 1 = open door anyway, 2 = disable lockdown; pass = pass uuids that link with type to disable lockdown or enter anyways; status = sector status: 1 = normal operations, 2 = lockdown, 3 = lock open
   saveTable(userTable,"userlist.txt")
 end
 if doorTable == nil then
   doorTable = {}
+end
+if userTable.sectors == nil then
+  userTable.settings.sectors = {{["name"]="",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}
+  saveTable(userTable,"userlist.txt")
 end
 
 for _,value in pairs(modules) do

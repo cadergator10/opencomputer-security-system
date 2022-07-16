@@ -24,7 +24,7 @@ local workspace, window, menu, userTable, settingTable
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
 local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, extraVar3, settingsButton
-local sectComboBox, sectLockBox, sectNewButton, sectDelButton
+local sectComboBox, sectLockBox, sectNewButton, sectDelButton, sectUserButton
 
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
@@ -940,7 +940,7 @@ local freshBox = function()
   updateSeclist()
 end
 sectLockBox:addItem(loc.sectoropen).onTouch = freshBox
-sectLockBox:additem(loc.sectordislock).onTouch = freshBox
+sectLockBox:addItem(loc.sectordislock).onTouch = freshBox
 sectUserButton = window:addChild(GUI.button(117,18,16,1,style.sectorButton, style.sectorText, style.sectorSelectButton, style.sectorSelectText, loc.sectoruserbutton))
 sectUserButton.onTouch = sectorPassManager
 
