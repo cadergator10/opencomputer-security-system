@@ -26,6 +26,11 @@ local lengthNum = 0
 local pageNum = 1
 local listNum = 1
 
+local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}
+local redSideTypes = {"bottom","top","back","front","right","left"}
+
+local updatePulse = false
+
 --------Table To File
 
 local function saveTable(  tbl,filename )
@@ -136,9 +141,112 @@ end
 
 --------Called Functions
 
+local function colorSearch(color,side)
+    local c,s = -1,-1
+    if type(color) == "number" then
+        c = color
+    else
+        for i=1,#redColorTypes,1 do
+            if redColorTypes[i] == color then
+                c = i
+            end
+        end
+    end
+    for i=1,#redSideTypes,1 do
+        if type(side) == "number" then
+            s = side
+        else
+            if redSideTypes[i] == side then
+                s = i
+            end
+        end
+    end
+    return c,s
+end
+
+local function redlinkcheck(color,side)
+    for key,value in pairs(sectorSettings) do
+        if value.open.color == color and value.open.side == side then
+            sectorSettings[key].open.color = -1
+            sectorSettings[key].open.side = -1
+        end
+        if value.lock.color == color and value.lock.side == side then
+            sectorSettings[key].lock.side = -1
+            sectorSettings[key].lock.color = -1
+        end
+    end
+end
+
 local function arrangeSectors(query)
     sector = {}
-    local amt = (#query+1) * 3
+    local amt = (#query) * 2
+    local count = 1
+    local save = false
+    for i=1,math.ceil(amt/8),1 do
+        sector[i] = {}
+        for j=i,4,1 do
+            if query[count] ~= nil then
+                sector[i][j] = deepcopy(query[count])
+                if sectorSettings[query[count].uuid] == nil then
+                    sectorSettings[query[count].uuid] = {["open"]={},["lock"]={}}
+                    save = true
+                end
+                count = count + 1
+            end
+        end
+    end
+    for key,value in pairs(sectorSettings) do
+        local here = false
+        for i=1,#query,1 do
+            if query[i].uuid == key then
+                here = true
+                break
+            end
+        end
+        if here == false then
+            sectorSettings[key] = nil
+            save = true
+        end
+    end
+    if save then
+        saveTable(sectorSettings,"redstonelinks.txt")
+    end
+end
+
+local function sectorGui(editmode)
+    setGui(1,"Sector Control Program")
+    if #sector == 0 then
+        setGui(2,"Create a sector to begin")
+    else
+        setGui(2,"Page" .. pageNum .. "/" .. #sector)
+        setGui(3,"")
+        setGui(4,"------------------------------")
+        local pre, count = "> ",1
+        if listNum == count then
+            pre = "> "
+        else
+            pre = "  "
+        end
+        setGui(5,pre .. "Update the server: " .. redSideTypes[sectorSettings.default.side + 1] or "unlinked" .. " : " .. redColorTypes[sectorSettings.default.color + 1] or "unlinked")
+        for i=1,#sector[pageNum],1 do
+            if listNum == count then
+                pre = "> "
+            else
+                pre = "  "
+            end
+            setGui(count + 5,pre .. "Lockdown sector " .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid].lock.side + 1] or "unlinked" .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid].lock.color + 1] or "unlinked")
+            count = count + 1
+            if listNum == count then
+                pre = "> "
+            else
+                pre = "  "
+            end
+            setGui(count + 5,pre .. "Open sector " .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid].open.side + 1] or "unlinked" .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid].open.color + 1] or "unlinked")
+            count = count + 1
+        end
+        count = count + 5
+        setGui(count,"------------------------------")
+    end
 end
 
 --------Main Program
@@ -158,9 +266,9 @@ else
 end
 modem.open(modemPort)
 
-arrangeSectors()
+arrangeSectors(query)
 
-thread.create(function()
+--[[thread.create(function() --Unneeded function.
     while true do
         local ev, p1, p2, p3, p4, p5 = event.pull("key_down")
         local char = tonumber(keyboard.keys[p3])
@@ -173,17 +281,120 @@ thread.create(function()
             end
         end
     end
-end)
+end)]]
 
 local fill = io.open("redstonelinks.txt", "r")
 if fill~=nil then
     io.close(fill)
 else
-    saveTable({},"redstonelinks.txt")
+    saveTable({["default"]={["side"]=2,["color"]=0}},"redstonelinks.txt")
 end
 
 sector = loadTable("redstonelinks.txt")
 
+local editmode = false
+
+pageChange("both",1,#sector, sectorGui, editmode)
+
 while true do
-    local ev,_,side,_,value,command,msg = event.pullMultiple("modem_message","redstone_changed")
+    local ev,num,side,key,value,command,msg = event.pullMultiple("modem_message","redstone_changed","key_down")
+    if #sector ~= 0 then
+        if ev == "modem_message" then
+            if command == "getSectorList" then
+                query = ser.unserialize(msg)
+                arrangeSectors(query)
+                pageChange("both",1,#sector, sectorGui, editmode)
+            end
+        elseif ev == "key_down" then
+            if editmode == false then
+                local char = keyboard.keys[key]
+                if char == "left" then
+                    term.clear()
+                    pageChange("hor",false,#sector, sectorGui, editmode)
+                    os.sleep(0.5)
+                elseif char == "right" then
+                    term.clear()
+                    pageChange("hor",true,#sector, sectorGui, editmode)
+                    os.sleep(0.5)
+                elseif char == "up" then
+                    term.clear()
+                    pageChange("ver",true,#sector, sectorGui, editmode)
+                    os.sleep(0.5)
+                elseif char == "down" then
+                    term.clear()
+                    pageChange("ver",false,#sector, sectorGui, editmode)
+                    os.sleep(0.5)
+                elseif char == "enter" then
+                    setGui(20,"Which side should redstone input from?")
+                    term.setCursor(1,21)
+                    term.clearLine()
+                    local side = term.read():sub(1,-2)
+                    if tonumber(side) ~= nil then
+                        side = tonumber(side)
+                    end
+                    setGui(20,"Which color should be checked?")
+                    term.setCursor(1,21)
+                    term.clearLine()
+                    local color = term.read():sub(1,-2)
+                    if tonumber(color) ~= nil then
+                        color = tonumber(color)
+                    end
+                    color, side = colorSearch(color,side)
+                    if color ~= -1 and side ~= -1 then
+                        redlinkcheck(color,side)
+                        if listNum == 1 then
+                            sectorSettings.default.side = side
+                            sectorSettings.default.color = color
+                        else
+                            if (listNum)%2 == 1 then
+                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].lock.color = color
+                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].lock.side = side
+                            else
+                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].open.color = color
+                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].open.side = side
+                            end
+                        end
+                    else
+
+                    end
+                    pageChange("hor",pageNum,#sector, sectorGui, editmode)
+                    os.sleep(0.5)
+                elseif char == "back" then
+                    if listNum == 1 then
+                        sectorSettings.default.side = -1
+                        sectorSettings.default.color = -1
+                    else
+                        if (listNum)%2 == 1 then
+                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].lock.color = -1
+                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].lock.side = -1
+                        else
+                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].open.color = -1
+                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].open.side = -1
+                        end
+                    end
+                    pageChange("hor",pageNum,#sector, sectorGui, editmode)
+                    os.sleep(0.5)
+                end
+            end
+        elseif ev == "redstone_changed" then
+            local red = redstone.getBundledInput()
+            for i=1,#query,1 do
+                if red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
+                    query[i].status = 2
+                elseif red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
+                    query[i].status = 3
+                else
+                    query[i].status = 1
+                end
+            end
+            if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
+                if updatePulse == false then
+                    updatePulse = true
+                    modem.broadcast(modemPort,"sectorupdate",ser.serialize(query))
+                end
+            end
+        end
+    else
+        os.sleep(1)
+    end
 end

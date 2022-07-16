@@ -4,6 +4,7 @@ local modemPort = 199
 
 local component = require("component")
 local modem = component.modem
+local ser = require("serialization")
 
 module = {}
 module.name = "sectors"
@@ -19,6 +20,7 @@ function module.setup(setit ,doors) --Called when userlist is updated or server 
   userTable = setit
   doorTable = doors
   if module.debug then print("Received " .. #userTable.settings.sectors .. " Sectors\n") end
+  modem.broadcast(modemPort,"getSectorList",ser.serialize(userTable.settings.sectors))
 end
 
 function module.message(command,data) --Called when a command goes past all default commands and into modules.
