@@ -180,7 +180,7 @@ local function userListCallback()
       if userTable.settings.type[i] == "-int" then
         guiCalls[i][3].text = tostring(guiCalls[i][4][userTable[selectedId][userTable.settings.var[i]]] or "none")
       else
-        guiCalls[i][3].text = tostring(userTable[selectedId][userTable.settings.var[i]]) --FIXME: Erroring here after deleting user
+        guiCalls[i][3].text = tostring(userTable[selectedId][userTable.settings.var[i]])
       end
       guiCalls[i][1].disabled = false
       guiCalls[i][2].disabled = false
@@ -395,7 +395,7 @@ local function linkUserCallback()
     userListCallback()
 end
 
-local function checkTypeCallback() --TODO: finish the checks for this
+local function checkTypeCallback()
   local typeArray = {"string","-string","int","-int","bool"}
   local selected
   if typeSelect.izit == "add" then
@@ -558,7 +558,7 @@ local function editVarYesCall()
   window:remove()
 end
 
-local function editVarCallback() --TODO: Add the ability to edit passes
+local function editVarCallback()
   addVarArray = {}
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
   varContainer.layout:addChild(GUI.label(1,1,3,3,style.containerLabel, "You can only edit level and group passes"))
@@ -673,8 +673,8 @@ local function sectorPassManager() --Manages passes that bypass sector lockdown 
       table.insert(addVarArray, uuidtopass(userTable.settings.sectors[sectComboBox.selectedItem].pass[i].uuid))
       typeSelect:addItem(userTable.settings.label[addVarArray[i]])
     end
-    if typeSelect.count > selected then --FIXME: Figure out what the actual call is for the count of items
-      selected = typeSelect.count
+    if typeSelect:count() > selected then
+      selected = typeSelect:count()
     end
     typeSelect.selectedItem = selected
   end
@@ -699,17 +699,13 @@ local function sectorPassManager() --Manages passes that bypass sector lockdown 
       if prev == "-int" then
         varInput:remove()
         varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
-      else
-        varInput.placeholder = loc.inputtext --FIXME: Check if this is the correct var to change placeholder in and change all 3
       end
       varInput.text = ""
       varInput.disabled = false
     elseif userTable.settings.type[selected] == "int" then
       if prev == "-int" then
         varInput:remove()
-        varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputlevel))
-      else
-        varInput.placeholder = loc.inputlevel
+        varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
       end
       varInput.text = ""
       varInput.disabled = false
@@ -727,9 +723,7 @@ local function sectorPassManager() --Manages passes that bypass sector lockdown 
     else
       if prev == "-int" then
         varInput:remove()
-        varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.disabled))
-      else
-        varInput.placeholder = loc.disabled
+        varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
       end
       varInput.text = ""
       varInput.disabled = true
@@ -798,7 +792,7 @@ if settingTable == nil then
 end
 updateList()
  
---user infos TODO: Make the page look better, be resizeable, use layouts instead, etc.
+--user infos
 local labelSpot = 12
 window:addChild(GUI.label(64,labelSpot,3,3,style.passNameLabel,"User name : "))
 userNameText = window:addChild(GUI.input(88,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))

@@ -669,7 +669,7 @@ local function doorediting() --TEST: Can this edit the doors?
                 term.clearLine()
                 text = term.read()
                 editTable[pageNum].bypassLock = tonumber(text)
-            elseif p1 == 5 then --TODO: Finish and test
+            elseif p1 == 5 then
                 local readCursor = function()
                     term.setCursor(1,25)
                     term.clearLine()

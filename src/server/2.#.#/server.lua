@@ -309,6 +309,15 @@ local function checkLink(user)
   return false
 end
 
+local function msgToModule(command, data) --Sends message to modules and returns the data.
+  for _,value in pairs(modules) do --p1 is true/false if program received command, p2 is data to send back to other device (nil if nothing is sent back), p3 is what to log on server (nil if nothing to log), p4 is color of logged text (nil if staying white or nothing to log), p5 is a change to userTable that must be saved & updated.
+    local p1, p2, p3, p4, p5, p6 = value.message(command,data)
+    if p1 then
+      return p1, p2, p3, p4, p5, p6
+    end
+  end
+  return false
+end
 redstone = {}
 redstone["lock"] = false
 redstone["forceopen"] = false
@@ -317,7 +326,7 @@ while true do
     modem.open(modemPort)
   end
 
-  local _, _, from, port, _, command, msg, bypassLock = event.pull("modem_message")
+  local _, _, from, port, _, command, msg = event.pull("modem_message")
   local data = msg
   local go = false
   for _,value in pairs(commands) do
@@ -462,51 +471,69 @@ while true do
         end
       end
     elseif command == "checkRules" then
-      if lockDoors == true and bypassLock ~= 1 then
-        advWrite("Doors have been locked. Unable to open door\n",0xFF0000)
-        data = crypt("locked", settingTable.cryptKey)
-        modem.send(from, port, data)
-      else
-        local currentDoor = getDoorInfo(data.type,from,data.key)
-        advWrite("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80)
-        local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
-        if cu then
-          if isBlocked then
-            if varCheck then
-              data = crypt("true", settingTable.cryptKey)
-              advWrite("\n" .. label .. "\n",color)
-              modem.send(from, port, data)
-            else
-              if isStaff then
-                data = crypt("true", settingTable.cryptKey)
-                advWrite("\naccess granted due to staff\n",0xFF00FF)
-                modem.send(from, port, data)
-              else
-                data = crypt("false", settingTable.cryptKey)
-                advWrite("\n" .. label .. "\n",color)
-                modem.send(from, port, data)
+      local currentDoor = getDoorInfo(data.type,from,data.key)
+      if data.sector ~= false then
+        local a,b,c,d = msgToModule("doorsector",data)
+        if a then
+          if b ~= "true" and b ~= "openbypass" then
+            if b == "false" then
+              modem.send(from, port, "false")
+              if c then
+                advWrite(c,d or 0xFFFFFF)
+              end
+            elseif b == "lockbypass" then
+              modem.send(from, port, "bypass")
+              if c then
+                advWrite(c,d or 0xFFFFFF)
               end
             end
-          else
-            data = crypt("false", settingTable.cryptKey)
-            advWrite("\nuser is blocked\n",0xFF0000)
+          end
+        end
+      end
+      advWrite("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80)
+      local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
+      if cu then
+        if isBlocked then
+          if varCheck then
+            data = crypt("true", settingTable.cryptKey)
+            advWrite("\n" .. label .. "\n",color)
             modem.send(from, port, data)
+          else
+            if isStaff then
+              data = crypt("true", settingTable.cryptKey)
+              advWrite("\naccess granted due to staff\n",0xFF00FF)
+              modem.send(from, port, data)
+            else
+              data = crypt("false", settingTable.cryptKey)
+              advWrite("\n" .. label .. "\n",color)
+              modem.send(from, port, data)
+            end
           end
         else
           data = crypt("false", settingTable.cryptKey)
-          advWrite("\nuser not found\n",0x990000)
+          advWrite("\nuser is blocked\n",0xFF0000)
           modem.send(from, port, data)
         end
+      else
+        data = crypt("false", settingTable.cryptKey)
+        advWrite("\nuser not found\n",0x990000)
+        modem.send(from, port, data)
       end
     else
-      for _,value in pairs(modules) do --p1 is true/false if program received command, p2 is data to send back to other device (nil if nothing is sent back), p3 is what to log on server (nil if nothing to log), p4 is color of logged text (nil if staying white or nothing to log)
-        local p1, p2, p3, p4 = value.message(command,data)
-        if p1 then
-          if p2 then
-            modem.send(from, port, p2)
-          end
-          if p3 then
-            advWrite(p3,p4 or 0xFFFFFF)
+      local p1,p2,p3,p4,p5,p6 = msgToModule(command,data)
+      if p1 then
+        if p2 then
+          modem.send(from, port, p2)
+        end
+        if p3 then
+          advWrite(p3,p4 or 0xFFFFFF)
+        end
+        if p5 then
+          saveTable(userTable,"backupuserlist.txt")
+          userTable = p5
+          saveTable(userTable, "userlist.txt")
+          for _,value in pairs(modules) do
+            value.setup(userTable, doorTable)
           end
         end
       end

@@ -7,7 +7,7 @@ local modem = component.modem
 
 module = {}
 module.name = "sectors"
-module.commands = {"sectorupdate","doorsector"}
+module.commands = {"sectorupdate","doorsector","doorsecupdate"}
 module.skipcrypt = {"sectorupdate"}
 module.debug = false
 
@@ -18,13 +18,19 @@ end
 function module.setup(setit ,doors) --Called when userlist is updated or server is first started
   userTable = setit
   doorTable = doors
-  if module.debug then print("Received " .. #userTable.settings.sectors .. " Sectors") end
+  if module.debug then print("Received " .. #userTable.settings.sectors .. " Sectors\n") end
 end
 
 function module.message(command,data) --Called when a command goes past all default commands and into modules.
   data = ser.unserialize(data)
   if command == "sectorupdate" then
-    modem.broadcast(modemPort,"checkSector")
+    userTable.settings.sectors = data
+    for _,value in pairs(doorTable) do
+      if value.type ~= "custom" then
+        modem.send(value.id,"checkSector",data)
+      end
+    end
+    return true,nil,"Sector data changed",nil,userTable
   elseif command == "doorsector" then
     for i=1,#userTable.settings.sectors,1 do
       if userTable.settings.sectors[i].uuid == data.sector then
@@ -69,14 +75,23 @@ function module.message(command,data) --Called when a command goes past all defa
           if passed then
             if userTable.settings.sectors[i].status == 3 and userTable.settings.sectors[i].type == 1 then
               return true, "false", "Cannot bypass open sectors"
-            else
-              return true, "true"
             end
-            return true, "true"
+            if userTable.settings.sectors[i].type == 1 then
+              return true, "openbypass"
+            else
+              return true, "lockbypass"
+            end
           else
-            return true, "false", "User " .. data.name .. " failed sector check"
+            return true, "false", "User " .. data.name .. " failed sector check\n"
           end
         end
+      end
+    end
+  elseif command == "doorsecupdate" then
+    for i=1,#userTable.settings.sectors,1 do
+      if userTable.settings.sectors[i].uuid == data then
+        userTable.settings.sectors[i].status = 1
+        return true,nil,"Sector Lockdown lifted",nil,userTable
       end
     end
   else
