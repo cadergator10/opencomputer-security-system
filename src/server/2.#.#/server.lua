@@ -15,7 +15,7 @@ local shell = require("shell")
 local process = require("process")
 local uuid = require("uuid")
 
-local version = "2.3.2"
+local version = "2.4.0"
 
 local redstone = {}
 local commands = {"updateuserlist","autoInstallerQuery","setDoor","loginfo","rcdoors","redstoneUpdated","checkLinked","getuserlist","getvar","setvar","checkRules"}

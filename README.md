@@ -86,12 +86,13 @@ Beta Changelog:
    <li>2.2.2 Runtime Editing update: Added the editor to the diagnostic tablet program, so you can now swipe the admin card in the door control and edit all the doors without having to use the autoinstaller! (Does not include pass editing which still requires the autoinstaller atm) Works with 2.2.2 and up Only. Also changed uuid resetting button to show a yes/no page. 5/18</li>
    <li>2.3.0 Functional string update: String and HiddenStrings can now be grabbed and set via the securityAPI. This allows you to make custom programs using it (such as a door you can only use 3 times, etc.) This gives a use for the hidden string, as it is now a string value unable to be edited in the database. Get and set with securityapi only works with strings, not int, group, or bool. Check SecurityAPI wiki page for more info. MineOS database now downloads userTable from server on reboot instead of using the one already saved on the database in order to avoid resetting string values set on the server. mineos also has option to turn on and off autoupdate (in dbsettings.txt in app folder) 5/30</li>
    <li>2.3.1 QOL update: MineOS database now has lang file support as well as a dark style you can enable in dbsettings. Diagnostic tablet's editing mode can now add and delete doors and change the pass settings 6/26</li>
-   <li>2.3.2 Remote Control update: Diagnostic tablet can now remote control doors! Either toggle a door open/closed or open with a delay. Server must be updated to version 2.3.2, but doors may not have to be updated (still recommended) 7/#</li>
+   <li>2.3.2 Remote Control update: Diagnostic tablet can now remote control doors! Either toggle a door open/closed or open with a delay. Server must be updated to version 2.3.2, but doors may not have to be updated (still recommended) 7/12</li>
+   <li>2.4.0 Sector Update: Replaced the useless forceOpen and bypassLock settings with the new sectors system. You can create however many sectors you like in the mineOS database and set doors to that sector. Then, with the new sectorcontrol program, you can control sectors with redstone, locking them down or locking them open. Certain passes can also be set to open locked down doors or just bypass the lockdown! This also comes with the range extender program for doorcontrols and modules system to build in your own programs to be part of the server. 7/#</li>
 </ul>
 
 Queued updates:
 <ol>
-   <li>2.4.0: Security sectors for managing doors (locking certain doors from a seperate pc) </li>
+   <li>None Yet...</li>
 </ol>
 
 Future updates:

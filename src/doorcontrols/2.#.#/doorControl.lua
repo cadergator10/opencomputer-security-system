@@ -2,7 +2,7 @@
 
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "2.3.0"
+local doorVersion = "2.4.0"
 local testR = true
 local saveRefresh = true
 

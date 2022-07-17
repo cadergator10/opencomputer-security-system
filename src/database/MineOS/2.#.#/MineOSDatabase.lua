@@ -38,7 +38,7 @@ If type is -int, [1] = minus button, [2] = plus button, [3] = value label, [4] =
 ----------
  
 local prgName = loc.name
-local version = "v2.3.2"
+local version = "v2.4.0"
  
 local modem
  

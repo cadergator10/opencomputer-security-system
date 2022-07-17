@@ -189,6 +189,10 @@ local function runInstall()
                 loopArray["accessLevel"] = 0
                 sendMsg("No need to set access level. This mode doesn't require it :)")
             end
+            text = sendMsg("Is this door opened whenever all doors are asked to open? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is yes",1)
+            loopArray["forceOpen"] = tonumber(text)
+            text = sendMsg("Is this door immune to lock door? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is no",1)
+            loopArray["bypassLock"] = tonumber(text)
         else --BEGINNING OF 2.0.0 -----------------------------------------------------
             if editorSettings.x == 2 then
                 local readLoad = {}
@@ -306,12 +310,18 @@ local function runInstall()
                         loopArray["cardRead"][1].param = 0
                     end
                 end
+            end --Sectors beginning
+            local nextmsg = "What sector would you like this door to be part of? 0 = no sector"
+            for i=1,#editorSettings.settings.sectors,1 do
+                nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.sectors[i].name
             end
-        end --END OF 2.0.0 -----------------------------------------------------
-        text = sendMsg("Is this door opened whenever all doors are asked to open? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is yes",1)
-        loopArray["forceOpen"] = tonumber(text)
-        text = sendMsg("Is this door immune to lock door? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is no",1)
-        loopArray["bypassLock"] = tonumber(text)
+            text = tonumber(sendMsg(nextmsg,1))
+            if text == 0 then
+                loopArray["sector"]=false
+            else
+                loopArray["sector"]=editorSettings.settings.sectors[text].uuid
+            end
+        end --END OF 2.0.0 & sectors -----------------------------------------------------
         if editorSettings.type == "multi" then tmpTable[j] = loopArray else tmpTable = loopArray end
     end
     text = sendMsg("All done with installer!","Would you like to start the computer now?","1 for yes, 2 for no",1)

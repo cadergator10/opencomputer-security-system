@@ -393,13 +393,15 @@ while true do
         elseif ev == "redstone_changed" then
             local red = redstone.getBundledInput()
             for i=1,#query,1 do
+                query[i].status = 1
+                if sectorSettings[query[i].uuid].open.side ~= -1 and sectorSettings[query[i].uuid].open.color ~= -1 then
+                    if red[sectorSettings[query[i].uuid].open.side][sectorSettings[query[i].uuid].open.color] > 0 then
+                        query[i].status = 3
+                    end
+                end
                 if sectorSettings[query[i].uuid].lock.side ~= -1 and sectorSettings[query[i].uuid].lock.color ~= -1 then
                     if red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
                         query[i].status = 2
-                    elseif red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
-                        query[i].status = 3
-                    else
-                        query[i].status = 1
                     end
                 end
             end
