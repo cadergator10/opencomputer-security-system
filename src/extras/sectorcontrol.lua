@@ -188,7 +188,7 @@ local function arrangeSectors(query)
             if query[count] ~= nil then
                 sector[i][j] = deepcopy(query[count])
                 if sectorSettings[query[count].uuid] == nil then
-                    sectorSettings[query[count].uuid] = {["open"]={},["lock"]={}}
+                    sectorSettings[query[count].uuid] = {["open"]={["side"]=-1,["color"]=-1},["lock"]={["side"]=-1,["color"]=-1}}
                     save = true
                 end
                 count = count + 1
@@ -197,10 +197,14 @@ local function arrangeSectors(query)
     end
     for key,value in pairs(sectorSettings) do
         local here = false
-        for i=1,#query,1 do
-            if query[i].uuid == key then
-                here = true
-                break
+        if key == "default" then
+            here = true
+        else
+            for i=1,#query,1 do
+                if query[i].uuid == key then
+                    here = true
+                    break
+                end
             end
         end
         if here == false then
@@ -227,21 +231,21 @@ local function sectorGui(editmode)
         else
             pre = "  "
         end
-        setGui(5,pre .. "Update the server: " .. redSideTypes[sectorSettings.default.side + 1] or "unlinked" .. " : " .. redColorTypes[sectorSettings.default.color + 1] or "unlinked")
+        setGui(5,sectorSettings.default.side ~= -1 and pre .. "Update the server: " .. redSideTypes[sectorSettings.default.side + 1] .. " : " .. redColorTypes[sectorSettings.default.color + 1] or pre .. "Update the server: unlinked : unlinked")
         for i=1,#sector[pageNum],1 do
             if listNum == count then
                 pre = "> "
             else
                 pre = "  "
             end
-            setGui(count + 5,pre .. "Lockdown sector " .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid].lock.side + 1] or "unlinked" .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid].lock.color + 1] or "unlinked")
+            setGui(count + 5,sectorSettings[sector[pageNum][i].uuid].lock.side ~= -1 and pre .. "Lockdown sector " .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid].lock.side + 1]  .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid].lock.color + 1] or pre .. "Lockdown sector " .. sector[pageNum][i].name .. ": " .. "unlinked : unlinked")
             count = count + 1
             if listNum == count then
                 pre = "> "
             else
                 pre = "  "
             end
-            setGui(count + 5,pre .. "Open sector " .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid].open.side + 1] or "unlinked" .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid].open.color + 1] or "unlinked")
+            setGui(count + 5,sectorSettings[sector[pageNum][i].uuid].open.side ~= -1 and pre .. "Open sector " .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid].open.side + 1] .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid].open.color + 1] or pre .. "Open sector " .. sector[pageNum][i].name .. ": " .. "unlinked : unlinked")
             count = count + 1
         end
         count = count + 5
@@ -262,7 +266,7 @@ if e == nil then
     os.exit()
 else
     print("Query received")
-    query = ser.unserialize(msg).sectors
+    query = ser.unserialize(msg).data.sectors
 end
 modem.open(modemPort)
 
@@ -290,7 +294,7 @@ else
     saveTable({["default"]={["side"]=2,["color"]=0}},"redstonelinks.txt")
 end
 
-sector = loadTable("redstonelinks.txt")
+sectorSettings = loadTable("redstonelinks.txt")
 
 local editmode = false
 

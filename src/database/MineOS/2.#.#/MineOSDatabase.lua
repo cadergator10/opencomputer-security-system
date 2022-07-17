@@ -621,7 +621,7 @@ local function createSector()
   end
   varYesButton = varContainer.layout:addChild(GUI.button(1,6,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.sectornewadd))
   varYesButton.onTouch = function()
-    table.insert(userTable.sectors,addVarArray)
+    table.insert(userTable.settings.sectors,addVarArray)
     addVarArray = nil
     varContainer:removeChildren()
     varContainer:remove()
@@ -635,7 +635,7 @@ end
 local function deleteSector()
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
-  for i=1,#userTable.settings.var,1 do
+  for i=1,#userTable.settings.sectors,1 do
     typeSelect:addItem(userTable.settings.sectors[i].name)
   end
   varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvarcompletedbutton))
@@ -663,15 +663,16 @@ end
 local function sectorPassManager() --Manages passes that bypass sector lockdown events. Was very difficult to think of & implement; Untested
   local selected = 1
   varContainer = GUI.addBackgroundContainer(workspace, true, true)
-  varContainer.layout:addChild(GUI.label(1,1,3,3,style.sectorText, loc.sectorpasslabel))
+  varContainer.layout:addChild(GUI.label(1,1,3,1,style.sectorText, loc.sectorpasslabel))
   typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
   local freshType = function()
     selected = typeSelect.selectedItem
-    typeSelect:removeChildren()
+    typeSelect:clear()
     addVarArray = {} --Every spot: {["uuid"]="uuid for thing",["data"]="what it checks for"}
     for i=1,#userTable.settings.sectors[sectComboBox.selectedItem].pass, 1 do
-      table.insert(addVarArray, uuidtopass(userTable.settings.sectors[sectComboBox.selectedItem].pass[i].uuid))
-      typeSelect:addItem(userTable.settings.label[addVarArray[i]])
+      local e,it = uuidtopass(userTable.settings.sectors[sectComboBox.selectedItem].pass[i].uuid)
+      table.insert(addVarArray, e == true and it or 0)
+      typeSelect:addItem(e == true and userTable.settings.label[addVarArray[i]] .. " : " .. userTable.settings.sectors[sectComboBox.selectedItem].pass[i].data)
     end
     if typeSelect:count() > selected then
       selected = typeSelect:count()
@@ -683,16 +684,16 @@ local function sectorPassManager() --Manages passes that bypass sector lockdown 
   varYesButton.onTouch = function()
     local selected = extraVar2.selectedItem
     local data = userTable.settings.type[selected] == "-int" and varInput.selectedItem or userTable.settings.type[selected] == "bool" and nil or varInput.text
-    table.insert(userTable.settings.sectors[sectComboBox].pass,{["uuid"]=userTable.settings.calls[selected],["data"]=data})
+    table.insert(userTable.settings.sectors[sectComboBox.selectedItem].pass,{["uuid"]=userTable.settings.calls[selected],["data"]=data})
     freshType()
   end
   extraVar = varContainer.layout:addChild(GUI.button(1,21,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
   extraVar.onTouch = function()
     local selected = typeSelect.selectedItem
-    table.remove(userTable.settings.sectors[sectComboBox].pass,addVarArray[selected])
+    table.remove(userTable.settings.sectors[sectComboBox].pass,selected)
     freshType()
   end
-  local prev = "none"
+  local prev = "string"
   local refreshInput = function()
     local selected = extraVar2.selectedItem
     if userTable.settings.type[selected] == "string" or userTable.settings.type[selected] == "-string" then
@@ -714,7 +715,7 @@ local function sectorPassManager() --Manages passes that bypass sector lockdown 
         varInput:remove()
         varInput = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
       else
-        varInput:removeChildren()
+        varInput:clear()
       end
       for _,value in pairs(userTable.settings.data[selected]) do
         varInput:addItem(value)
@@ -730,11 +731,12 @@ local function sectorPassManager() --Manages passes that bypass sector lockdown 
     end
     prev = userTable.settings.type[selected]
   end
-  varContainer.layout:addChild(GUI.label(1,1,3,3,style.sectorText, loc.allpasseslabel))
+  varContainer.layout:addChild(GUI.label(1,1,3,1,style.sectorText, loc.allpasseslabel))
   extraVar2 = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
   for i=1,#userTable.settings.var,1 do
     extraVar2:addItem(userTable.settings.label[i]).onTouch = refreshInput
   end
+  varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
   refreshInput()
 end
 
@@ -941,6 +943,9 @@ local freshBox = function()
 end
 sectLockBox:addItem(loc.sectoropen).onTouch = freshBox
 sectLockBox:addItem(loc.sectordislock).onTouch = freshBox
+if #userTable.settings.sectors ~= 0 then
+  sectLockBox.selectedItem = userTable.settings.sectors[1].type
+end
 sectUserButton = window:addChild(GUI.button(117,18,16,1,style.sectorButton, style.sectorText, style.sectorSelectButton, style.sectorSelectText, loc.sectoruserbutton))
 sectUserButton.onTouch = sectorPassManager
 
