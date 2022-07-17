@@ -476,17 +476,19 @@ while true do
       end
     elseif command == "checkRules" then
       local currentDoor = getDoorInfo(data.type,from,data.key)
+      local enter = true
       if data.sector ~= false then
-        local a,b,c,d = msgToModule("doorsector",data)
+        local a,b,c,d = msgToModule("doorsector",ser.serialize(data))
         if a then
           if b ~= "true" and b ~= "openbypass" then
+            enter = false
             if b == "false" then
-              modem.send(from, port, "false")
+              modem.send(from, port, crypt("false", settingTable.cryptKey))
               if c then
                 advWrite(c,d or 0xFFFFFF)
               end
             elseif b == "lockbypass" then
-              modem.send(from, port, "bypass")
+              modem.send(from, port, crypt("bypass", settingTable.cryptKey))
               if c then
                 advWrite(c,d or 0xFFFFFF)
               end
@@ -494,34 +496,36 @@ while true do
           end
         end
       end
-      advWrite("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80)
-      local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
-      if cu then
-        if isBlocked then
-          if varCheck then
-            data = crypt("true", settingTable.cryptKey)
-            advWrite("\n" .. label .. "\n",color)
-            modem.send(from, port, data)
-          else
-            if isStaff then
+      if enter then
+        advWrite("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80)
+        local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
+        if cu then
+          if isBlocked then
+            if varCheck then
               data = crypt("true", settingTable.cryptKey)
-              advWrite("\naccess granted due to staff\n",0xFF00FF)
-              modem.send(from, port, data)
-            else
-              data = crypt("false", settingTable.cryptKey)
               advWrite("\n" .. label .. "\n",color)
               modem.send(from, port, data)
+            else
+              if isStaff then
+                data = crypt("true", settingTable.cryptKey)
+                advWrite("\naccess granted due to staff\n",0xFF00FF)
+                modem.send(from, port, data)
+              else
+                data = crypt("false", settingTable.cryptKey)
+                advWrite("\n" .. label .. "\n",color)
+                modem.send(from, port, data)
+              end
             end
+          else
+            data = crypt("false", settingTable.cryptKey)
+            advWrite("\nuser is blocked\n",0xFF0000)
+            modem.send(from, port, data)
           end
         else
           data = crypt("false", settingTable.cryptKey)
-          advWrite("\nuser is blocked\n",0xFF0000)
+          advWrite("\nuser not found\n",0x990000)
           modem.send(from, port, data)
         end
-      else
-        data = crypt("false", settingTable.cryptKey)
-        advWrite("\nuser not found\n",0x990000)
-        modem.send(from, port, data)
       end
     else
       local p1,p2,p3,p4,p5,p6 = msgToModule(command,data)

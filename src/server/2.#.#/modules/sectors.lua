@@ -23,13 +23,13 @@ function module.setup(setit ,doors) --Called when userlist is updated or server 
   modem.broadcast(modemPort,"getSectorList",ser.serialize(userTable.settings.sectors))
 end
 
-function module.message(command,data) --Called when a command goes past all default commands and into modules.
-  data = ser.unserialize(data)
+function module.message(command,datar) --Called when a command goes past all default commands and into modules.
+  local data = ser.unserialize(datar)
   if command == "sectorupdate" then
     userTable.settings.sectors = data
     for _,value in pairs(doorTable) do
       if value.type ~= "custom" then
-        modem.send(value.id,"checkSector",data)
+        modem.send(value.id,modemPort,"checkSector",ser.serialize(data))
       end
     end
     return true,nil,"Sector data changed",nil,userTable
@@ -58,9 +58,9 @@ function module.message(command,data) --Called when a command goes past all defa
                     return userTable[user][userTable.settings.var[j]] == rule
                   elseif userTable.settings.type[j] == "int" or userTable.settings.type[j] == "-int" then
                     if userTable.settings.above[j] == false or userTable.settings.type[j] == "-int" then
-                      return userTable[user][userTable.settings.var[j]] == rule
+                      return userTable[user][userTable.settings.var[j]] == tonumber(rule)
                     else
-                      return userTable[user][userTable.settings.var[j]] >= rule
+                      return userTable[user][userTable.settings.var[j]] >= tonumber(rule)
                     end
                   elseif userTable.settings.type[j] == "bool" then
                     return userTable[user][userTable.settings.var[j]]
@@ -91,7 +91,7 @@ function module.message(command,data) --Called when a command goes past all defa
     end
   elseif command == "doorsecupdate" then
     for i=1,#userTable.settings.sectors,1 do
-      if userTable.settings.sectors[i].uuid == data then
+      if userTable.settings.sectors[i].uuid == datar then
         userTable.settings.sectors[i].status = 1
         return true,nil,"Sector Lockdown lifted",nil,userTable
       end

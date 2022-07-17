@@ -203,6 +203,7 @@ local function convert( chars, dist, inv )
   local function update(_, localAddress, remoteAddress, port, distance, msg, data)
     if (testR == true) then
       if msg == "checkSector" then --Making forceopen obselete
+        data = ser.unserialize(data)
         if extraConfig.type == "single" then
           if sector ~= false then
             for i=1,#data,1 do
@@ -242,7 +243,7 @@ local function convert( chars, dist, inv )
             end
           end
         else
-          for value in pairs(settingData) do
+          for _,value in pairs(settingData) do
             if value.sector ~= false then
               for i=1,#data,1 do
                 if data[i].uuid == value.sector then

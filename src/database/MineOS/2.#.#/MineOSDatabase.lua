@@ -690,7 +690,7 @@ local function sectorPassManager() --Manages passes that bypass sector lockdown 
   extraVar = varContainer.layout:addChild(GUI.button(1,21,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
   extraVar.onTouch = function()
     local selected = typeSelect.selectedItem
-    table.remove(userTable.settings.sectors[sectComboBox].pass,selected)
+    table.remove(userTable.settings.sectors[sectComboBox.selectedItem].pass,selected)
     freshType()
   end
   local prev = "string"

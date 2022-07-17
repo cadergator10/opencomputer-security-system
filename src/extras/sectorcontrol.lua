@@ -148,7 +148,7 @@ local function colorSearch(color,side)
     else
         for i=1,#redColorTypes,1 do
             if redColorTypes[i] == color then
-                c = i
+                c = i - 1
             end
         end
     end
@@ -157,7 +157,7 @@ local function colorSearch(color,side)
             s = side
         else
             if redSideTypes[i] == side then
-                s = i
+                s = i - 1
             end
         end
     end
@@ -166,13 +166,20 @@ end
 
 local function redlinkcheck(color,side)
     for key,value in pairs(sectorSettings) do
-        if value.open.color == color and value.open.side == side then
-            sectorSettings[key].open.color = -1
-            sectorSettings[key].open.side = -1
-        end
-        if value.lock.color == color and value.lock.side == side then
-            sectorSettings[key].lock.side = -1
-            sectorSettings[key].lock.color = -1
+        if key == "default" then
+            if value.color == color and value.side == side then
+                sectorSettings[key].color = -1
+                sectorSettings[key].side = -1
+            end
+        else
+            if value.open.color == color and value.open.side == side then
+                sectorSettings[key].open.color = -1
+                sectorSettings[key].open.side = -1
+            end
+            if value.lock.color == color and value.lock.side == side then
+                sectorSettings[key].lock.side = -1
+                sectorSettings[key].lock.color = -1
+            end
         end
     end
 end
@@ -226,6 +233,9 @@ local function sectorGui(editmode)
         setGui(3,"")
         setGui(4,"------------------------------")
         local pre, count = "> ",1
+        if (#sector[pageNum] * 2)+1<listNum then
+            listNum = (#sector[pageNum] * 2)+1
+        end
         if listNum == count then
             pre = "> "
         else
@@ -233,14 +243,14 @@ local function sectorGui(editmode)
         end
         setGui(5,sectorSettings.default.side ~= -1 and pre .. "Update the server: " .. redSideTypes[sectorSettings.default.side + 1] .. " : " .. redColorTypes[sectorSettings.default.color + 1] or pre .. "Update the server: unlinked : unlinked")
         for i=1,#sector[pageNum],1 do
-            if listNum == count then
+            if listNum == count + 1 then
                 pre = "> "
             else
                 pre = "  "
             end
             setGui(count + 5,sectorSettings[sector[pageNum][i].uuid].lock.side ~= -1 and pre .. "Lockdown sector " .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid].lock.side + 1]  .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid].lock.color + 1] or pre .. "Lockdown sector " .. sector[pageNum][i].name .. ": " .. "unlinked : unlinked")
             count = count + 1
-            if listNum == count then
+            if listNum == count + 1 then
                 pre = "> "
             else
                 pre = "  "
@@ -321,11 +331,11 @@ while true do
                     os.sleep(0.5)
                 elseif char == "up" then
                     term.clear()
-                    pageChange("ver",true,#sector, sectorGui, editmode)
+                    pageChange("ver",true,(#sector[pageNum]*2) + 1, sectorGui, editmode)
                     os.sleep(0.5)
                 elseif char == "down" then
                     term.clear()
-                    pageChange("ver",false,#sector, sectorGui, editmode)
+                    pageChange("ver",false,(#sector[pageNum]*2) + 1, sectorGui, editmode)
                     os.sleep(0.5)
                 elseif char == "enter" then
                     setGui(20,"Which side should redstone input from?")
@@ -349,17 +359,18 @@ while true do
                             sectorSettings.default.side = side
                             sectorSettings.default.color = color
                         else
-                            if (listNum)%2 == 1 then
-                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].lock.color = color
-                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].lock.side = side
+                            if (listNum - 1)%2 == 1 then
+                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.color = color
+                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.side = side
                             else
-                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].open.color = color
-                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].open.side = side
+                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].open.color = color
+                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].open.side = side
                             end
                         end
                     else
 
                     end
+                    saveTable(sectorSettings,"redstonelinks.txt")
                     pageChange("hor",pageNum,#sector, sectorGui, editmode)
                     os.sleep(0.5)
                 elseif char == "back" then
@@ -382,12 +393,14 @@ while true do
         elseif ev == "redstone_changed" then
             local red = redstone.getBundledInput()
             for i=1,#query,1 do
-                if red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
-                    query[i].status = 2
-                elseif red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
-                    query[i].status = 3
-                else
-                    query[i].status = 1
+                if sectorSettings[query[i].uuid].lock.side ~= -1 and sectorSettings[query[i].uuid].lock.color ~= -1 then
+                    if red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
+                        query[i].status = 2
+                    elseif red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
+                        query[i].status = 3
+                    else
+                        query[i].status = 1
+                    end
                 end
             end
             if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
@@ -395,6 +408,8 @@ while true do
                     updatePulse = true
                     modem.broadcast(modemPort,"sectorupdate",ser.serialize(query))
                 end
+            else
+                updatePulse = false
             end
         end
     else
