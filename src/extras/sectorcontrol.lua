@@ -14,7 +14,7 @@ local thread = require("thread")
 local process = require("process")
 local uuid = require("uuid")
 local computer = component.computer
-local keyboard = component.keyboard
+local keyboard = require("keyboard")
 
 local redstone = component.redstone
 local modem = component.modem
@@ -256,6 +256,14 @@ end
 --------Main Program
 
 term.clear()
+local fill = io.open("redstonelinks.txt", "r")
+if fill~=nil then
+    io.close(fill)
+else
+    saveTable({["default"]={["side"]=2,["color"]=0}},"redstonelinks.txt")
+end
+
+sectorSettings = loadTable("redstonelinks.txt")
 print("Sending query to server...")
 modem.open(modemPort)
 modem.broadcast(modemPort,"autoInstallerQuery")
@@ -286,15 +294,6 @@ arrangeSectors(query)
         end
     end
 end)]]
-
-local fill = io.open("redstonelinks.txt", "r")
-if fill~=nil then
-    io.close(fill)
-else
-    saveTable({["default"]={["side"]=2,["color"]=0}},"redstonelinks.txt")
-end
-
-sectorSettings = loadTable("redstonelinks.txt")
 
 local editmode = false
 
