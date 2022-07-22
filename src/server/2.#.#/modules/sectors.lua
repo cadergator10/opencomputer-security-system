@@ -20,24 +20,19 @@ function module.setup(setit ,doors) --Called when userlist is updated or server 
   userTable = setit
   doorTable = doors
   if module.debug then print("Received " .. #userTable.settings.sectors .. " Sectors\n") end
-  modem.broadcast(modemPort,"getSectorList",ser.serialize(userTable.settings.sectors))
+  return "getSectorList",ser.serialize(userTable.settings.sectors)
 end
 
 function module.message(command,datar) --Called when a command goes past all default commands and into modules.
   local data = ser.unserialize(datar)
   if command == "sectorupdate" then
     userTable.settings.sectors = data
-    for _,value in pairs(doorTable) do
-      if value.type ~= "custom" then
-        modem.send(value.id,modemPort,"checkSector",ser.serialize(data))
-      end
-    end
-    return true,nil,"Sector data changed",nil,userTable
+    return true,"Sector data changed",nil,userTable,false,"checkSector",ser.serialize(data)
   elseif command == "doorsector" then
     for i=1,#userTable.settings.sectors,1 do
       if userTable.settings.sectors[i].uuid == data.sector then
         if userTable.settings.sectors[i].status == 1 then
-          return true, "true"
+          return true,nil,nil,nil, true,"true"
         else
           local passed = false
           local user = false
@@ -48,7 +43,7 @@ function module.message(command,datar) --Called when a command goes past all def
             end
           end
           if user == false then
-            return false, nil, "Sector check failed: User Not Found\n"
+            return false, "Sector check failed: User Not Found\n"
           end
           for _,value in pairs(userTable.settings.sectors[i].pass) do
             for j=1,#userTable.settings.calls,1 do
@@ -76,15 +71,15 @@ function module.message(command,datar) --Called when a command goes past all def
           end
           if passed then
             if userTable.settings.sectors[i].status == 3 and userTable.settings.sectors[i].type == 1 then
-              return true, "false", "Cannot bypass open sectors"
+              return true, "Cannot bypass open sectors", nil, nil, true,"false"
             end
             if userTable.settings.sectors[i].type == 1 then
-              return true, "openbypass"
+              return true, nil,nil,nil,true,"openbypass"
             else
-              return true, "lockbypass"
+              return true, nil,nil,nil,true,"lockbypass"
             end
           else
-            return true, "false", "User " .. data.name .. " failed sector check\n"
+            return true, "User " .. data.name .. " failed sector check\n",nil,nil,true,"false"
           end
         end
       end
@@ -93,7 +88,7 @@ function module.message(command,datar) --Called when a command goes past all def
     for i=1,#userTable.settings.sectors,1 do
       if userTable.settings.sectors[i].uuid == datar then
         userTable.settings.sectors[i].status = 1
-        return true,nil,"Sector Lockdown lifted",nil,userTable
+        return true,"Sector Lockdown lifted",nil,userTable
       end
     end
   else

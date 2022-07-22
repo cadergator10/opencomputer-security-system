@@ -329,8 +329,15 @@ while true do
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end
-
+  local bing,add = false, false
   local _, _, from, port, _, command, msg = event.pull("modem_message")
+  if command == "rebroadcast" then
+    bing = true
+    msg = ser.unserialize(msg)
+    command = msg.command
+    add = msg.uuid
+    msg = msg.data
+  end
   local data = msg
   local go = false
   for _,value in pairs(commands) do
@@ -348,6 +355,17 @@ while true do
     end
     if go then data = crypt(msg, settingTable.cryptKey, true) end
     local thisUserName = false
+    local bdcst = function(address,port,data,data2)
+      if bing then
+        modem.send(address,port,"rebroadcast",ser.serialize({["uuid"]=add,["data"]=data,["data2"]=data2}))
+      else
+        if address then
+          modem.send(address,port,data)
+        else
+          modem.broadcast(port,data)
+        end
+      end
+    end
     if command == "setvar" or command == "getvar" or command == "checkRules" then
       data = ser.unserialize(data)
       thisUserName = getVar("name",data.uuid)
@@ -364,7 +382,7 @@ while true do
       data.num = 2
       data.version = version
       data.data = userTable.settings
-      modem.send(from,port,ser.serialize(data))
+      bdcst(from,port,ser.serialize(data))
     elseif command == "setDoor" then
       advWrite("Received door parameters from id: " .. from .. "\n",0xFFFF80)
       local tmpTable = ser.unserialize(data)
@@ -379,7 +397,7 @@ while true do
       end
       if isInAlready == false then table.insert(doorTable,tmpTable) end
       saveTable(doorTable, "doorlist.txt")
-      modem.send(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
+      bdcst(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
       for _,value in pairs(modules) do
         value.setup(userTable, doorTable)
       end
@@ -402,24 +420,7 @@ while true do
         end
         table.insert(sendTable,{["id"]=value.id,["type"]=value.type,["data"]=datar})
       end
-      modem.send(from,port,ser.serialize(sendTable))
-    elseif command == "redstoneUpdated" then
-      advWrite("Redstone has been updated\n",0x0000C0)
-      local newRed = ser.unserialize(data)
-      if newRed["lock"] ~= redstone["lock"] then
-        lockDoors = newRed["lock"]
-      end
-      if newRed["forceopen"] ~= redstone["forceopen"] then
-        local forceopen = newRed["forceopen"]
-        if forceopen == true then
-          data = crypt("open",settingTable.cryptKey)
-          modem.broadcast(199,"forceopen",data)
-        else
-          data = crypt("close",settingTable.cryptKey)
-          modem.broadcast(199,"forceopen",data)
-        end
-      end
-      redstone = newRed
+      bdcst(from,port,ser.serialize(sendTable))
     elseif command == "checkLinked" then
       if false == true then
         gpu.setForeground(0xFF0000)
@@ -434,32 +435,32 @@ while true do
             dis["reason"] = 2
             data = crypt(ser.serialize(dis), settingTable.cryptKey)
             advWrite(" user " .. thisName .. "is blocked\n",0xFF0000)
-            modem.send(from, port, data)
+            bdcst(from, port, data)
           else
             dis["status"] = true
             dis["name"] = thisName
             data = crypt(ser.serialize(dis), settingTable.cryptKey)
             advWrite(" tablet is connected to " .. thisName .. "\n",0x00FF00)
-            modem.send(from, port, data)
+            bdcst(from, port, data)
           end
         else
           dis["status"] = false
           dis["reason"] = 1
           data = crypt(ser.serialize(dis), settingTable.cryptKey)
           advWrite(" tablet not linked\n",0x990000)
-          modem.send(from, port, data)
+          bdcst(from, port, data)
         end--IMPORTANT: Hello
       end
     elseif command == "getuserlist" then
       data = ser.serialize(userTable)
       data = crypt(data,settingTable.cryptKey)
-      modem.send(from, port, data)
+      bdcst(from, port, data)
     elseif command == "getvar" then
       local worked = false
       for key, value in pairs(userTable) do
         if value.uuid == data.uuid then
           worked = true
-          modem.send(from,port, crypt(value[data.var],settingTable.cryptKey))
+          bdcst(from,port, crypt(value[data.var],settingTable.cryptKey))
         end
       end
     elseif command == "setvar" then
@@ -469,7 +470,7 @@ while true do
         if value.uuid == data.uuid then
           worked = true
           userTable[counter][data.var] = data.data
-          modem.send(from,port, crypt("true",settingTable.cryptKey))
+          bdcst(from,port, crypt("true",settingTable.cryptKey))
         else
           counter = counter + 1
         end
@@ -483,12 +484,12 @@ while true do
           if b ~= "true" and b ~= "openbypass" then
             enter = false
             if b == "false" then
-              modem.send(from, port, crypt("false", settingTable.cryptKey))
+              bdcst(from, port, crypt("false", settingTable.cryptKey))
               if c then
                 advWrite(c,d or 0xFFFFFF)
               end
             elseif b == "lockbypass" then
-              modem.send(from, port, crypt("bypass", settingTable.cryptKey))
+              bdcst(from, port, crypt("bypass", settingTable.cryptKey))
               if c then
                 advWrite(c,d or 0xFFFFFF)
               end
@@ -504,41 +505,45 @@ while true do
             if varCheck then
               data = crypt("true", settingTable.cryptKey)
               advWrite("\n" .. label .. "\n",color)
-              modem.send(from, port, data)
+              bdcst(from, port, data)
             else
               if isStaff then
                 data = crypt("true", settingTable.cryptKey)
                 advWrite("\naccess granted due to staff\n",0xFF00FF)
-                modem.send(from, port, data)
+                bdcst(from, port, data)
               else
                 data = crypt("false", settingTable.cryptKey)
                 advWrite("\n" .. label .. "\n",color)
-                modem.send(from, port, data)
+                bdcst(from, port, data)
               end
             end
           else
             data = crypt("false", settingTable.cryptKey)
             advWrite("\nuser is blocked\n",0xFF0000)
-            modem.send(from, port, data)
+            bdcst(from, port, data)
           end
         else
           data = crypt("false", settingTable.cryptKey)
           advWrite("\nuser not found\n",0x990000)
-          modem.send(from, port, data)
+          bdcst(from, port, data)
         end
       end
     else
-      local p1,p2,p3,p4,p5,p6 = msgToModule(command,data)
+      local p1,p2,p3,p4,p5,p6,p7 = msgToModule(command,data)
       if p1 then
-        if p2 then
-          modem.send(from, port, p2)
-        end
-        if p3 then
-          advWrite(p3,p4 or 0xFFFFFF)
-        end
         if p5 then
+          if p5 == false then
+            bdcst(nil,port,p6,p7)
+          else
+            bdcst(from, port, p6,p7)
+          end
+        end
+        if p2 then
+          advWrite(p2,p3 or 0xFFFFFF)
+        end
+        if p4 then
           saveTable(userTable,"backupuserlist.txt")
-          userTable = p5
+          userTable = p4
           saveTable(userTable, "userlist.txt")
           for _,value in pairs(modules) do
             value.setup(userTable, doorTable)

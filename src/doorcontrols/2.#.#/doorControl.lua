@@ -43,7 +43,8 @@ local uuid = require("uuid")
 local computer = component.computer
 
 local magReader = component.os_magreader
-local modem = component.modem 
+local modem = component.modem
+local link
 
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 local varSettings = {}
@@ -91,6 +92,21 @@ local function convert( chars, dist, inv )
     end
     return copy
   end
+
+local function send(port,linker,...)
+  if linker and link ~= nil then
+    link.send(modem.address,...)
+    return
+  end
+  modem.broadcast(port,...)
+end
+local function modemadd()
+  if link then
+    return modem.address
+  else
+    return link.address
+  end
+end
 
   local function colorupdate() --A seperate thread that reads a table of readers and can control their lights.
     for key,value in pairs(readerLights) do
@@ -278,10 +294,10 @@ local function convert( chars, dist, inv )
         --TODO: Add code for checking sectors & add code for actual sector identification.
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
         data = ser.unserialize(data)
-        if data.id == component.modem.address then
+        if data.id == modemadd() then
           term.write("RemoteControl request received for ")
           term.write(data.type == "single" and settingData.name or settingData[data.key].name)
-          modem.broadcast(modemPort,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=data.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF},{["text"]="\n"}}))
+          send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=data.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF},{["text"]="\n"}}))
           if extraConfig.type == "single" then
             if data.type == "base" then
               openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,toggle,doorType,redSide,magReader.address)
@@ -315,7 +331,7 @@ local function convert( chars, dist, inv )
           local fill = {}
           fill["type"] = extraConfig.type
           fill["data"] = settingData
-          modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+          send(modemPort,true,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
           local got, _, _, _, _, fill = event.pull(2, "modem_message")
           if got then
             varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
@@ -363,6 +379,10 @@ local function convert( chars, dist, inv )
     end
   end
 
+if component.isAvailable("tunnel") then
+  link = component.tunnel
+end
+
 term.clear()
 local fill = io.open("doorSettings.txt", "r")
 if fill~=nil then 
@@ -383,26 +403,23 @@ settingData = ttf.load("doorSettings.txt")
 extraConfig.version = version
 ttf.save(extraConfig,"extraConfig.txt")
 
-if modem.isOpen(modemPort) == false then
+if modem.isOpen(modemPort) == false and link == nil then
   modem.open(modemPort)
+elseif link ~= nil then
+  modem.close(modemPort)
 end
 if magReader.swipeIndicator ~= nil then
   osVersion = true
 end
 
 local checkBool = false
-modem.broadcast(modemPort,"autoInstallerQuery")
+send(modemPort,true,"autoInstallerQuery")
 local e,_,_,_,_,query = event.pull(3,"modem_message")
 query = ser.unserialize(query)
 if e ~= nil then
   if extraConfig.type == "single" then
     if type(settingData.cardRead) == "number" then
-      modem.broadcast(modemPort,"autoInstallerQuery")
-      local e,_,from,port,_,query = event.pull(3,"modem_message")
-      query = ser.unserialize(query)
-      if e ~= nil then
-          settingData.cardRead = settingData.cardRead == 6 and "checkstaff" or query.data.calls[settingData.cardRead - #baseVariables]
-      end
+      settingData.cardRead = settingData.cardRead == 6 and "checkstaff" or query.data.calls[settingData.cardRead - #baseVariables]
       ttf.save(settingData,"doorSettings.txt")
     end
     if type(settingData.cardRead) ~= "table" then
@@ -452,7 +469,7 @@ checkBool = nil
 fill = {}
 fill["type"] = extraConfig.type
 fill["data"] = settingData
-modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+send(modemPort,true,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
 local got, _, _, _, _, fill = event.pull(2, "modem_message")
 if got then
   varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
@@ -527,9 +544,6 @@ else
 end
 print("---------------------------------------------------------------------------")
 
-if modem.isOpen(modemPort) == false then
-  modem.open(modemPort)
-end
 event.listen("modem_message", update)
 process.info().data.signal = function(...)
   print("caught hard interrupt")
@@ -541,9 +555,6 @@ end
 local bypassallowed = false
 
 while true do
-  if modem.isOpen(modemPort) == false then
-    modem.open(modemPort)
-  end
   local ev, address, user, str, uuid, data = event.pull("magData")
   if osVersion then colorLink(address,2) end
   local isOk = "ok"
@@ -595,7 +606,7 @@ while true do
         diagData["entries"] = counter
       end
       data = ser.serialize(diagData)
-      modem.broadcast(diagPort, "diag", data)
+      send(diagPort,false, "diag", data)
       if osVersion then
         colorLink(address,{{["color"]=1,["delay"]=0.3},{["color"]=2,["delay"]=0.3},{["color"]=4,["delay"]=0.3},{["color"]=0,["delay"]=0}})
       end
@@ -610,14 +621,11 @@ while true do
         os.exit()
       end
       term.write(tmpTable["name"] .. ":")
-      if modem.isOpen(modemPort) == false then
-        modem.open(modemPort)
-      end
       tmpTable["type"] = extraConfig.type
       tmpTable["key"] = extraConfig.type == "multi" and keyed or nil
       tmpTable["sector"] = sector
       data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-      modem.broadcast(modemPort, "checkRules", data)
+      send(modemPort,true, "checkRules", data)
       local e, _, from, port, _, msg = event.pull(1, "modem_message")
       if e then
         data = crypt(msg, extraConfig.cryptKey, true)
@@ -643,7 +651,7 @@ while true do
               colorLink(address,{{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
             end
             data = crypt(tmpTable.sector,extraConfig.cryptKey)
-            modem.broadcast(modemPort, "doorsecupdate", data)
+            send(modemPort,true, "doorsecupdate", data)
             computer.beep()
             computer.beep()
             computer.beep()
