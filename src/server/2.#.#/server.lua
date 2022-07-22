@@ -479,7 +479,7 @@ while true do
       local currentDoor = getDoorInfo(data.type,from,data.key)
       local enter = true
       if data.sector ~= false then
-        local a,b,c,d = msgToModule("doorsector",ser.serialize(data))
+        local a,_,c,d,_,b = msgToModule("doorsector",ser.serialize(data))
         if a then
           if b ~= "true" and b ~= "openbypass" then
             enter = false

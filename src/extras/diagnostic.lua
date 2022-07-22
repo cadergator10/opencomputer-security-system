@@ -933,7 +933,7 @@ local function doorediting() --TEST: Can this edit the doors?
         poo.version = nil
         poo.num = nil
     end
-    modem.send(from,modemPort,"changeSettings",ser.serialize(poo))
+    modem.send(from,diagPort,"changeSettings",ser.serialize(poo))
     print("finished")
     os.exit()
 end
@@ -1047,7 +1047,7 @@ local function remotecontrol()
                     local text = term.read()
                     send.type,send.delay = "delay", tonumber(text)
                 end
-                modem.send(send.id,modemPort,"remoteControl",ser.serialize(send))
+                modem.send(send.id,diagPort,"remoteControl",ser.serialize(send))
             end
         end
     end

@@ -7,6 +7,7 @@ local shell = require("shell")
 local event = require("event")
 local uuid = require("uuid")
 local modem = component.modem
+local link
 local modemPort = 199
 
 local program = "ctrl.lua"
@@ -37,15 +38,23 @@ local function loadTable(location)
     return ser.unserialize(tableFile:read("*all"))
 end
 
+local function send(port,linker,...)
+    if linker and link ~= nil then
+        link.send(modem.address,...)
+        return
+    end
+    modem.broadcast(port,...)
+end
+
 local function sendMsg(...)
     local arg = table.pack(...)
     for i=1,#arg,1 do
         local argType = type(arg[i])
         if editorSettings.accelerate == true then
             if argType == "string" then
-                modem.send(editorSettings.from,editorSettings.port,"print",arg[i])
+                send(editorSettings.from,editorSettings.port,false,"print",arg[i])
             elseif argType == "number" then
-                modem.send(editorSettings.from,editorSettings.port,commandArray[arg[i]])
+                send(editorSettings.from,editorSettings.port,false,commandArray[arg[i]])
                 if arg[i] < 3 then
                     local e, _, _, _, _, text = event.pull("modem_message")
                     return text
@@ -54,7 +63,7 @@ local function sendMsg(...)
                     print("terminated connection")
                 end
             else
-                modem.send(editorSettings.from,editorSettings.port,"print","potential error in code for sendMsg")
+                send(editorSettings.from,editorSettings.port,false,"print","potential error in code for sendMsg")
             end
         else
             if argType == "string" then
@@ -472,9 +481,16 @@ end
 
 modem.close()
 term.clear()
+
+if component.isAvailable("tunnel") then
+    link = component.tunnel
+end
+
 print("Sending query to server...")
-modem.open(modemPort)
-modem.broadcast(modemPort,"autoInstallerQuery")
+if link == nil then
+    modem.open(modemPort)
+end
+send(nil,modemPort,true,"autoInstallerQuery")
 local e,_,from,port,_,msg = event.pull(3,"modem_message")
 if e == nil then
     print("Failed. Is the server on?")
@@ -496,7 +512,7 @@ if tonumber(text) == 1 then
     sendMsg("Code is:  " .. tostring(code),"Enter the code into the door setup tablet. In 60 seconds setup will cancel.")
     local e, _, from, port, _, msg, barcode = event.pull(60, "modem_message")
     if e then
-        modem.send(from,port,"connected")
+        send(from,port,false,"connected")
         term.clear()
         sendMsg("Connection successful! All prompts will be on the tablet now on.")
         os.sleep(1)

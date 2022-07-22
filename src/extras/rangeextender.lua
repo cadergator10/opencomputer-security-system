@@ -12,7 +12,7 @@ local uuid = require("uuid")
 local computer = component.computer
 
 local modem = component.modem
-local links
+local links = {}
 
 local modemPort = 199
 
@@ -22,27 +22,33 @@ end
 
 modem.open(modemPort)
 
+term.clear()
+print("Range Extender started with " .. #links .. " devices")
+
 while true do
-    local e, _, from, port, _, msg, msg2, msg3 = event.pull("modem_message")
+    local e, dees, from, port, _, msg, msg2, msg3 = event.pull("modem_message")
     if port == 0 then
         for i=1,#links,1 do
-            if links[i].dev.address == from then
+            if links[i].dev.address == dees then
                 links[i].uuid = msg
             end
         end
         modem.broadcast(modemPort,"rebroadcast",ser.serialize({["uuid"]=msg,["command"]=msg2,["data"]=msg3}))
+        print("Got message from device: " .. msg)
     else
         if msg == "rebroadcast" then
             msg2 = ser.unserialize(msg2)
             for i=1,#links,1 do
-                if msg2.uuid == links[i].address then
+                if msg2.uuid == links[i].uuid then
                     links[i].dev.send(msg2.data,msg2.data2)
+                    print("Sending message directly to " .. msg2.uuid)
                 end
             end
         else
             for i=1,#links,1 do
                 links[i].dev.send(msg,msg2,msg3)
             end
+            print("Sending message to all devices")
         end
     end
 end
