@@ -331,6 +331,7 @@ while true do
   end
   local bing,add = false, false
   local _, _, from, port, _, command, msg = event.pull("modem_message")
+  add = from
   if command == "rebroadcast" then
     bing = true
     msg = ser.unserialize(msg)
@@ -384,12 +385,12 @@ while true do
       data.data = userTable.settings
       bdcst(from,port,ser.serialize(data))
     elseif command == "setDoor" then
-      advWrite("Received door parameters from id: " .. from .. "\n",0xFFFF80)
+      advWrite("Received door parameters from id: " .. add .. "\n",0xFFFF80)
       local tmpTable = ser.unserialize(data)
-      tmpTable["id"] = from
+      tmpTable["id"] = add
       local isInAlready = false
       for i=1,#doorTable,1 do
-        if doorTable[i].id == from then
+        if doorTable[i].id == add then
           isInAlready = true
           doorTable[i] = tmpTable
           break
