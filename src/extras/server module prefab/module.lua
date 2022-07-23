@@ -18,7 +18,7 @@ end
 
 function module.message(command,data) --Called when a command goes past all default commands and into modules.
   if command == "test" then
-    return true, "true", "It worked!", 0xFFFFFF
+    return true, "It worked!", 0xFFFFFF,nil,"true"
   else
 
   end

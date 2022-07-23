@@ -15,6 +15,8 @@ local process = require("process")
 local uuid = require("uuid")
 local computer = require("computer")
 
+local link
+
 --------Extra Arrays
 
 local toggleTypes = {"not toggleable","toggleable"}
@@ -53,6 +55,18 @@ local function convert( chars, dist, inv )
       s = string.gsub( s,string.char(26),"\"..string.char(26)..\"" )
       return s
   end
+
+local function send(label,port,linker,...)
+    if linker and link ~= nil then
+        link.send(modem.address,...)
+        return
+    end
+    if label then
+        modem.send(label,port,...)
+    else
+        modem.broadcast(port,...)
+    end
+end
 
 local function deepcopy(orig)
     local orig_type = type(orig)
@@ -299,7 +313,7 @@ local function accsetup()
     modem.open(code)
     --local temp = {}
     --temp["analyzer"]=component.isAvailable("barcode_reader")
-    modem.broadcast(code,"link",component.isAvailable("barcode_reader"))
+    send(nil,code,false,"link",component.isAvailable("barcode_reader"))
     print("linking...")
     local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
@@ -314,7 +328,7 @@ local function accsetup()
                 term.write(data)
             elseif msg == "getInput" then
                 text = term.read()
-                modem.send(from,port,text:sub(1,-2))
+                send(from,port,false,text:sub(1,-2))
             elseif msg == "clearTerm" then
                 term.clear()
             elseif msg == "terminate" then
@@ -325,7 +339,7 @@ local function accsetup()
                 print("Scan the device with your tablet")
                 _, text = event.pull("tablet_use")
                 computer.beep()
-                modem.send(from,port,text.analyzed[1].address)
+                send(from,port,false,text.analyzed[1].address)
             end
         end
         print("Finished")
@@ -612,7 +626,7 @@ local function doorediting() --TEST: Can this edit the doors?
                 pageChange(true,#editTable,editChange)
                 os.sleep(1)
             elseif char == "enter" and diagInfo.type == "multi" then
-                modem.send(from,port,"identifyMag",ser.serialize(editTable[pageNum]))
+                send(from,port,false,"identifyMag",ser.serialize(editTable[pageNum]))
                 os.sleep(1)
             elseif char == "n" and diagInfo.type == "multi" then
                 local keepLoop = true
@@ -933,7 +947,7 @@ local function doorediting() --TEST: Can this edit the doors?
         poo.version = nil
         poo.num = nil
     end
-    modem.send(from,diagPort,"changeSettings",ser.serialize(poo))
+    send(from,diagPort,false,"changeSettings",ser.serialize(poo))
     print("finished")
     os.exit()
 end
@@ -942,8 +956,12 @@ local function remotecontrol()
     --Settings
     local listAmt = 9
     --setup the list of doors, sorted by list number.
-    modem.broadcast(modemPort,"rcdoors")
-    modem.open(modemPort)
+    send(nil,modemPort,true,"rcdoors")
+    if link == nil then
+        modem.open(modemPort)
+    else
+        modem.close(modemPort)
+    end
     local e,_,_,_,_,msg = event.pull(3,"modem_message")
     if e == nil then
         print("No query received. Assuming version 2.3.1 and before is in use and will not work.")
@@ -1047,7 +1065,7 @@ local function remotecontrol()
                     local text = term.read()
                     send.type,send.delay = "delay", tonumber(text)
                 end
-                modem.send(send.id,diagPort,"remoteControl",ser.serialize(send))
+                send(send.id,diagPort,false,"remoteControl",ser.serialize(send))
             end
         end
     end
@@ -1057,9 +1075,18 @@ end
 --------Startup Code
 
 term.clear()
+
+if component.isAvailable("tunnel") then
+    link = component.tunnel
+end
+
 print("Sending query to server...")
-modem.open(modemPort)
-modem.broadcast(modemPort,"autoInstallerQuery")
+if link == nil then
+    modem.open(modemPort)
+else
+    modem.close(modemPort)
+end
+send(nil,modemPort,true,"autoInstallerQuery")
 local e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then
