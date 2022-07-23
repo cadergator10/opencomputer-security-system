@@ -291,7 +291,6 @@ end
             end
           end
         end
-        --TODO: Add code for checking sectors & add code for actual sector identification.
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
         data = ser.unserialize(data)
         if data.id == modem.address then

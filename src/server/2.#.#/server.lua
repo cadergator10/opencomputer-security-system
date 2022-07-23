@@ -114,7 +114,7 @@ modulepath = fs.path(shell.resolve(process.info().path)).. "/modules"
 if fs.exists(modulepath) == false then
   os.execute("mkdir modules")
   print("Downloading default modules...")
-  os.execute("wget -f habajagfa.lua modules/sectors.lua") --TODO: Add actual raw link to it
+  os.execute("wget -f https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/modules/sectors.lua modules/sectors.lua")
   term.clear()
 end
 
@@ -133,7 +133,7 @@ if settingTable == nil then
   print("Security server requires settings to be set")
   print("...")
   print("If you are not leaving cryptKey at default, make sure you change it in settings.txt")
-  settingTable = {["cryptKey"]={1,2,3,4,5}}
+  settingTable = {["cryptKey"]={1,2,3,4,5},["pass"]=false}
   saveTable(settingTable,"settings.txt")
 end
 
@@ -155,6 +155,10 @@ end
 if userTable.sectors == nil then
   userTable.settings.sectors = {{["name"]="",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}
   saveTable(userTable,"userlist.txt")
+end
+if settingTable.pass == nil then
+  settingTable.pass = false
+  saveTable(settingTable,"settings.txt")
 end
 
 for _,value in pairs(modules) do
@@ -373,6 +377,10 @@ while true do
     end
     if command == "updateuserlist" then
       userTable = ser.unserialize(data)
+      local goboi = false
+      if settingTable.pass == false then
+        goboi = true
+      end
       advWrite("Updated userlist received\n",0x0000C0)
       saveTable(userTable, "userlist.txt")
       for _,value in pairs(modules) do

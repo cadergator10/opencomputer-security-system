@@ -17,7 +17,9 @@ local configFileName = "extraConfig.txt"
 local tableToFileCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/libraries/tableToFile.lua"
 local singleCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/doorControl.lua"}
 local multiCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/doorControl.lua"}
+local serverCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/server.lua"
 local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
+local serverModules = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/modules/modules.txt"
 
 local settingData = {}
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
@@ -497,8 +499,71 @@ end
 send(nil,modemPort,true,"autoInstallerQuery")
 local e,_,from,port,_,msg = event.pull(3,"modem_message")
 if e == nil then
-    print("Failed. Is the server on?")
-    os.exit()
+    local text
+    local fill = io.open("server.lua","r")
+    local modulePrg = function()
+        os.execute("wget -f " .. serverModules .. " temp.txt")
+        local mlist = loadTable("temp.txt")
+        local skip = true
+        while skip do
+            term.clear()
+            for i=1,#mlist,1 do
+                print(i .. ". " .. mlist[i].name)
+            end
+            text = tonumber(sendMsg("Enter the number of the module you want to install","If you dont want to install any more modules, enter 0",1))
+            if text ~= 0 and text <= #mlist then
+                print("Downloading " .. mlist[text].name .. ": as " .. mlist[text].filename)
+                os.execute("wget -f " .. mlist[text].url .. " modules/" .. mlist[text].filename)
+            else
+                skip = false
+            end
+            print("finished")
+            os.execute("del temp.txt")
+        end
+    end
+    if fill~=nil then
+        fill:close()
+        local path = shell.getWorkingDirectory()
+        print("Server Files detected. Please select an option")
+        print("What would you like to do?")
+        print("1 = Wipe All Files")
+        print("2 = Wipe Modules Only")
+        print("3 = Install Modules")
+        print("4 = Update Server")
+        text = tonumber(term.read())
+        if text == 1 then
+            print("Removing all files...")
+            fs.remove(path .. "/server.lua")
+            fs.remove(path .. "/modules")
+        elseif text == 2 then
+            print("Clearing module folder...")
+            fs.remove(path .. "/modules")
+            os.execute("mkdir modules")
+        elseif text == 3 then
+            modulePrg()
+        elseif text == 4 then
+            print("Downloading server...")
+            os.execute("wget -f " .. serverCode .. " server.lua")
+        end
+    else
+        print("Failed to connect to server. Either there is no server running or one needs to be installed")
+        print("Would you like to download the server? 1 = yes, 2 = no")
+        text = tonumber(term.read())
+        if text == 1 then
+            print("Downloading server...")
+            os.execute("wget -f " .. serverCode .. " server.lua")
+            os.execute("mkdir modules")
+            editorSettings.num = 2
+            editorSettings.scanner = false
+            editorSettings.accelerate = false
+            text = tonumber(sendMsg("Would you like to install some modules? 1 = yes, 2 = no",1))
+            if text == 1 then
+                modulePrg()
+            end
+            print("done")
+        end
+        os.exit()
+    end
 end
 print("Query received")
 query = ser.unserialize(msg)
