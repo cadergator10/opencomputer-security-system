@@ -38,12 +38,16 @@ local function loadTable(location)
     return ser.unserialize(tableFile:read("*all"))
 end
 
-local function send(port,linker,...)
+local function send(label,port,linker,...) --Pingme
     if linker and link ~= nil then
         link.send(modem.address,...)
         return
     end
-    modem.broadcast(port,...)
+    if label then
+        modem.send(label,port,...)
+    else
+        modem.broadcast(port,...)
+    end
 end
 
 local function sendMsg(...)
@@ -486,7 +490,7 @@ if component.isAvailable("tunnel") then
     link = component.tunnel
 end
 
-print("Sending query to server...")
+print("Sending query to server...") --Pingme
 if link == nil then
     modem.open(modemPort)
 end

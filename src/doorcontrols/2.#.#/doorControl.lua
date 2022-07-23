@@ -102,9 +102,9 @@ local function send(port,linker,...)
 end
 local function modemadd()
   if link then
-    return modem.address
-  else
     return link.address
+  else
+    return modem.address
   end
 end
 
@@ -294,7 +294,7 @@ end
         --TODO: Add code for checking sectors & add code for actual sector identification.
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
         data = ser.unserialize(data)
-        if data.id == modemadd() then
+        if data.id == modem.address then
           term.write("RemoteControl request received for ")
           term.write(data.type == "single" and settingData.name or settingData[data.key].name)
           send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=data.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF},{["text"]="\n"}}))
