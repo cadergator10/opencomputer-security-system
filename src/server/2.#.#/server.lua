@@ -477,7 +477,7 @@ while true do
         end
       end
     elseif command == "checkRules" then
-      local currentDoor = getDoorInfo(data.type,from,data.key)
+      local currentDoor = getDoorInfo(data.type,add,data.key)
       local enter = true
       if data.sector ~= false then
         local a,_,c,d,_,b = msgToModule("doorsector",ser.serialize(data))

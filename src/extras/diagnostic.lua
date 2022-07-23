@@ -56,7 +56,7 @@ local function convert( chars, dist, inv )
       return s
   end
 
-local function send(label,port,linker,...)
+local function sendit(label,port,linker,...)
     if linker and link ~= nil then
         link.send(modem.address,...)
         return
@@ -313,7 +313,7 @@ local function accsetup()
     modem.open(code)
     --local temp = {}
     --temp["analyzer"]=component.isAvailable("barcode_reader")
-    send(nil,code,false,"link",component.isAvailable("barcode_reader"))
+    sendit(nil,code,false,"link",component.isAvailable("barcode_reader"))
     print("linking...")
     local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
@@ -328,7 +328,7 @@ local function accsetup()
                 term.write(data)
             elseif msg == "getInput" then
                 text = term.read()
-                send(from,port,false,text:sub(1,-2))
+                sendit(from,port,false,text:sub(1,-2))
             elseif msg == "clearTerm" then
                 term.clear()
             elseif msg == "terminate" then
@@ -339,7 +339,7 @@ local function accsetup()
                 print("Scan the device with your tablet")
                 _, text = event.pull("tablet_use")
                 computer.beep()
-                send(from,port,false,text.analyzed[1].address)
+                sendit(from,port,false,text.analyzed[1].address)
             end
         end
         print("Finished")
@@ -626,7 +626,7 @@ local function doorediting() --TEST: Can this edit the doors?
                 pageChange(true,#editTable,editChange)
                 os.sleep(1)
             elseif char == "enter" and diagInfo.type == "multi" then
-                send(from,port,false,"identifyMag",ser.serialize(editTable[pageNum]))
+                sendit(from,port,false,"identifyMag",ser.serialize(editTable[pageNum]))
                 os.sleep(1)
             elseif char == "n" and diagInfo.type == "multi" then
                 local keepLoop = true
@@ -947,7 +947,7 @@ local function doorediting() --TEST: Can this edit the doors?
         poo.version = nil
         poo.num = nil
     end
-    send(from,diagPort,false,"changeSettings",ser.serialize(poo))
+    sendit(from,diagPort,false,"changeSettings",ser.serialize(poo))
     print("finished")
     os.exit()
 end
@@ -956,7 +956,7 @@ local function remotecontrol()
     --Settings
     local listAmt = 9
     --setup the list of doors, sorted by list number.
-    send(nil,modemPort,true,"rcdoors")
+    sendit(nil,modemPort,true,"rcdoors")
     if link == nil then
         modem.open(modemPort)
     else
@@ -1065,7 +1065,7 @@ local function remotecontrol()
                     local text = term.read()
                     send.type,send.delay = "delay", tonumber(text)
                 end
-                send(send.id,diagPort,false,"remoteControl",ser.serialize(send))
+                sendit(send.id,diagPort,false,"remoteControl",ser.serialize(send))
             end
         end
     end
@@ -1086,7 +1086,7 @@ if link == nil then
 else
     modem.close(modemPort)
 end
-send(nil,modemPort,true,"autoInstallerQuery")
+sendit(nil,modemPort,true,"autoInstallerQuery")
 local e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then
