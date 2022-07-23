@@ -517,9 +517,9 @@ if e == nil then
             else
                 skip = false
             end
-            print("finished")
-            os.execute("del temp.txt")
         end
+        print("finished")
+        os.execute("del temp.txt")
     end
     if fill~=nil then
         fill:close()
@@ -545,6 +545,7 @@ if e == nil then
             print("Downloading server...")
             os.execute("wget -f " .. serverCode .. " server.lua")
         end
+        os.exit()
     else
         print("Failed to connect to server. Either there is no server running or one needs to be installed")
         print("Would you like to download the server? 1 = yes, 2 = no")

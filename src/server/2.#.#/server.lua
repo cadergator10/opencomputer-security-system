@@ -134,10 +134,14 @@ local function historyUpdate(text,color,wrap,newline,rewrite)
         viewhistory[i-1] = viewhistory[i]
       end
       viewhistory[#viewhistory] = {}
+      advWrite("",0xFFFFFF,false,true,#viewhistory + 3)
     end
-    advWrite(text,color,wrap,false,#viewhistory + 3)
-    table.insert(viewhistory[#viewhistory],text)
-    table.insert(viewhistory[#viewhistory],color)
+  table.insert(viewhistory[#viewhistory],text)
+  table.insert(viewhistory[#viewhistory],color)
+  advWrite("",0xFFFFFF,wrap,true,#viewhistory + 3)
+  for i=1,#viewhistory[#viewhistory],2 do
+    advWrite(viewhistory[#viewhistory][i],viewhistory[#viewhistory][i+1],wrap)
+  end
 end
 --------Getting tables and setting up terminal
 term.clear()
@@ -172,7 +176,7 @@ end
 advWrite("Security server version: " .. version,0xFFFFFF,false,true,1,true)
 advWrite(#modules .. " modules loaded",nil,false,true,2,true)
 advWrite("---------------------------------------------------------------------------",0xFFFFFF,false,true,3,true)
-advWrite("---------------------------------------------------------------------------",0xFFFFFF,false,true,#viewhistory + 3,true)
+advWrite("---------------------------------------------------------------------------",0xFFFFFF,false,true,#viewhistory + 4,true)
 
 
 settingTable = loadTable("settings.txt")
@@ -354,9 +358,9 @@ end
 
 local function msgToModule(command, data) --Sends message to modules and returns the data.
   for _,value in pairs(modules) do --p1 is true/false if program received command, p2 is data to send back to other device (nil if nothing is sent back), p3 is what to log on server (nil if nothing to log), p4 is color of logged text (nil if staying white or nothing to log), p5 is a change to userTable that must be saved & updated.
-    local p1, p2, p3, p4, p5, p6 = value.message(command,data)
+    local p1, p2, p3, p4, p5, p6, p7 = value.message(command,data)
     if p1 then
-      return p1, p2, p3, p4, p5, p6
+      return p1, p2, p3, p4, p5, p6, p7
     end
   end
   return false
@@ -400,9 +404,9 @@ while true do
         modem.send(address,port,"rebroadcast",ser.serialize({["uuid"]=add,["data"]=data,["data2"]=data2}))
       else
         if address then
-          modem.send(address,port,data)
+          modem.send(address,port,data,data2)
         else
-          modem.broadcast(port,data)
+          modem.broadcast(port,data,data2)
         end
       end
     end
@@ -575,7 +579,7 @@ while true do
     else
       local p1,p2,p3,p4,p5,p6,p7 = msgToModule(command,data)
       if p1 then
-        if p5 then
+        if p5 ~= nil then
           if p5 == false then
             bdcst(nil,port,p6,p7)
           else
