@@ -24,6 +24,10 @@ local skipcrypt = {"autoInstallerQuery","rcdoors","getuserlist","loginfo"}
 local modules = {}
 local modulepath = "/modules"
 
+local viewport = 0
+local viewhistory = {}
+local dohistory = true
+
 local debug = false
 
 --------Main Functions
@@ -104,12 +108,43 @@ local function addcommands(tabler,crypttable)
   end
 end
 
-local function advWrite(text,color,wrap)
-  gpu.setForeground(color or gpu.getForeground())
-  term.write(text,wrap or true)
+local function advWrite(text,color,wrap,clear,pos,bypass)
+  if dohistory or bypass then
+    if pos then term.setCursor(1,pos) end
+    if clear then term.clearLine() end
+    gpu.setForeground(color or gpu.getForeground())
+    term.write(text,wrap or true)
+  end
+end
+local function historyUpdate(text,color,wrap,newline,rewrite)
+    if rewrite then
+      dohistory = true
+      for i=1,#viewhistory,1 do
+        advWrite("",nil,false,true,i+3)
+        for j=1,#viewhistory[i],2 do
+          advWrite(viewhistory[i][j],viewhistory[i][j+1],false)
+        end
+      end
+    elseif newline then
+      for i=2,#viewhistory,1 do
+        advWrite("",nil,false,true,i+2)
+        for j=1,#viewhistory[i],2 do
+          advWrite(viewhistory[i][j],viewhistory[i][j+1],false)
+        end
+        viewhistory[i-1] = viewhistory[i]
+      end
+      viewhistory[#viewhistory] = {}
+    end
+    advWrite(text,color,wrap,false,#viewhistory + 3)
+    table.insert(viewhistory[#viewhistory],text)
+    table.insert(viewhistory[#viewhistory],color)
 end
 --------Getting tables and setting up terminal
 term.clear()
+_,viewport = term.getViewport()
+for i=1,viewport - 5,1 do
+  viewhistory[i] = {"",0xFFFFFF}
+end
 modulepath = fs.path(shell.resolve(process.info().path)).. "/modules"
 if fs.exists(modulepath) == false then
   os.execute("mkdir modules")
@@ -130,15 +165,15 @@ end
 
 local settingTable = loadTable("settings.txt")
 if settingTable == nil then
-  print("Security server requires settings to be set")
-  print("...")
-  print("If you are not leaving cryptKey at default, make sure you change it in settings.txt")
   settingTable = {["cryptKey"]={1,2,3,4,5},["pass"]=false}
   saveTable(settingTable,"settings.txt")
 end
 
-advWrite("Security server version: " .. version .. "\n",0xFFFFFF)
-advWrite("---------------------------------------------------------------------------\n")
+advWrite("Security server version: " .. version,0xFFFFFF,false,true,1,true)
+advWrite(#modules .. " modules loaded",nil,false,true,2,true)
+advWrite("---------------------------------------------------------------------------",0xFFFFFF,false,true,3,true)
+advWrite("---------------------------------------------------------------------------",0xFFFFFF,false,true,#viewhistory + 3,true)
+
 
 settingTable = loadTable("settings.txt")
 local userTable = loadTable("userlist.txt")
@@ -381,7 +416,7 @@ while true do
       if settingTable.pass == false then
         goboi = true
       end
-      advWrite("Updated userlist received\n",0x0000C0)
+      historyUpdate("Updated userlist received",0x0000C0,false,true)
       saveTable(userTable, "userlist.txt")
       for _,value in pairs(modules) do
         value.setup(userTable, doorTable)
@@ -393,7 +428,7 @@ while true do
       data.data = userTable.settings
       bdcst(from,port,ser.serialize(data))
     elseif command == "setDoor" then
-      advWrite("Received door parameters from id: " .. add .. "\n",0xFFFF80)
+      historyUpdate("Received door parameters from id: " .. add,0xFFFF80,false,true)
       local tmpTable = ser.unserialize(data)
       tmpTable["id"] = add
       local isInAlready = false
@@ -413,7 +448,7 @@ while true do
     elseif command == "loginfo" then
       data = ser.unserialize(data) --Array of arrays. Each array has text and color (color optional)
       for i=1,#data,1 do
-        advWrite(data[i].text,data[i].color or 0xFFFFFF)
+        historyUpdate(data[i].text,data[i].color or 0xFFFFFF,false,true)
       end
     elseif command == "rcdoors" then --Cant send entire doorTable. Too big. Reduce to minimum required.
       local sendTable = {}
@@ -435,7 +470,7 @@ while true do
         gpu.setForeground(0xFF0000)
         term.write("DONT RUN or i b sad ;-;\n")
       else
-        advWrite("-Checking if device is linked to a user:\n",0xFFFF80)
+        historyUpdate("-Checking if device is linked to a user:",0xFFFF80,false,true)
         local cu, isBlocked, thisName = checkLink(data)
         local dis = {}
         if cu == true then
@@ -443,20 +478,20 @@ while true do
             dis["status"] = false
             dis["reason"] = 2
             data = crypt(ser.serialize(dis), settingTable.cryptKey)
-            advWrite(" user " .. thisName .. "is blocked\n",0xFF0000)
+            historyUpdate(" user " .. thisName .. "is blocked",0xFF0000,false,true)
             bdcst(from, port, data)
           else
             dis["status"] = true
             dis["name"] = thisName
             data = crypt(ser.serialize(dis), settingTable.cryptKey)
-            advWrite(" tablet is connected to " .. thisName .. "\n",0x00FF00)
+            historyUpdate(" tablet is connected to " .. thisName,0x00FF00,false,true)
             bdcst(from, port, data)
           end
         else
           dis["status"] = false
           dis["reason"] = 1
           data = crypt(ser.serialize(dis), settingTable.cryptKey)
-          advWrite(" tablet not linked\n",0x990000)
+          historyUpdate(" tablet not linked\n",0x990000,false,true)
           bdcst(from, port, data)
         end--IMPORTANT: Hello
       end
@@ -495,45 +530,45 @@ while true do
             if b == "false" then
               bdcst(from, port, crypt("false", settingTable.cryptKey))
               if c then
-                advWrite(c,d or 0xFFFFFF)
+                historyUpdate(c,d or 0xFFFFFF,false,true)
               end
             elseif b == "lockbypass" then
               bdcst(from, port, crypt("bypass", settingTable.cryptKey))
               if c then
-                advWrite(c,d or 0xFFFFFF)
+                historyUpdate(c,d or 0xFFFFFF,false,true)
               end
             end
           end
         end
       end
       if enter then
-        advWrite("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80)
+        historyUpdate("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80,true,true)
         local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
         if cu then
           if isBlocked then
             if varCheck then
               data = crypt("true", settingTable.cryptKey)
-              advWrite("\n" .. label .. "\n",color)
+              historyUpdate(label, color,false,true)
               bdcst(from, port, data)
             else
               if isStaff then
                 data = crypt("true", settingTable.cryptKey)
-                advWrite("\naccess granted due to staff\n",0xFF00FF)
+                historyUpdate("access granted due to staff",0xFF00FF,false,true)
                 bdcst(from, port, data)
               else
                 data = crypt("false", settingTable.cryptKey)
-                advWrite("\n" .. label .. "\n",color)
+                historyUpdate(label,color,false,true)
                 bdcst(from, port, data)
               end
             end
           else
             data = crypt("false", settingTable.cryptKey)
-            advWrite("\nuser is blocked\n",0xFF0000)
+            historyUpdate("user is blocked",0xFF0000,false,true)
             bdcst(from, port, data)
           end
         else
           data = crypt("false", settingTable.cryptKey)
-          advWrite("\nuser not found\n",0x990000)
+          historyUpdate("user not found",0x990000,false,true)
           bdcst(from, port, data)
         end
       end
@@ -548,7 +583,7 @@ while true do
           end
         end
         if p2 then
-          advWrite(p2,p3 or 0xFFFFFF)
+          historyUpdate(p2,p3 or 0xFFFFFF,false,true)
         end
         if p4 then
           saveTable(userTable,"backupuserlist.txt")
