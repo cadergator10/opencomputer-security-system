@@ -551,7 +551,7 @@ process.info().data.signal = function(...)
   testR = false
   os.exit()
 end
-
+modem.open(diagPort)
 local bypassallowed = false
 
 while true do

@@ -187,7 +187,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
             print(diagInfo2.toggle == 0 and "Delay: " .. diagInfo2.delay or "***")
             local works = false
             for i=6,#supportedVersions,1 do
-                if supportedVersions[i] == diagInfo.version then
+                if supportedVersions[i] == diagInfo2.version then
                     works = true
                 end
             end
