@@ -310,7 +310,7 @@ end
     else
         send(nil,modemPort,true,"checkRules",data,true)
     end
-    local e, _, from, port, _, msg = event.pull(1, "modem_message")
+    local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
         data = crypt(msg, extraConfig.cryptKey, true)
         if data == "true" then
@@ -342,7 +342,7 @@ end
     else
       send(nil,modemPort,true,"getvar",data)
     end
-    local e, _, from, port, _, msg = event.pull(1, "modem_message")
+    local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
       data = crypt(msg, extraConfig.cryptKey, true)
       return true, data
@@ -370,13 +370,33 @@ end
     else
       send(nil,modemPort,true,"setvar",data)
     end
-    local e, _, from, port, _, msg = event.pull(1, "modem_message")
+    local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
       return true, "no error"
     else
       return false, "timed out"
     end
   end
+
+function security.crypt(str,reverse)
+  return true,crypt(str,extraConfig.cryptKey,reverse)
+  return false, "unknown error"
+end
+
+function security.send(wait,...)
+  send(nil,modemPort,true,...)
+  if wait then
+    local e, _, _, _, _, msg,msg2 = event.pull(3, "modem_message")
+    if e then
+      return true,msg,msg2
+    else
+      return false,"timed out"
+    end
+  else
+    return true,"no return requested"
+  end
+  return false, "unknown error"
+end
 
 return security
 
