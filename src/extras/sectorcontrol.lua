@@ -331,11 +331,11 @@ while true do
                     os.sleep(0.5)
                 elseif char == "up" then
                     term.clear()
-                    pageChange("ver",true,(#sector[pageNum]*2) + 1, sectorGui, editmode)
+                    pageChange("ver",false,(#sector[pageNum]*2) + 1, sectorGui, editmode)
                     os.sleep(0.5)
                 elseif char == "down" then
                     term.clear()
-                    pageChange("ver",false,(#sector[pageNum]*2) + 1, sectorGui, editmode)
+                    pageChange("ver",true,(#sector[pageNum]*2) + 1, sectorGui, editmode)
                     os.sleep(0.5)
                 elseif char == "enter" then
                     setGui(20,"Which side should redstone input from?")

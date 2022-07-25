@@ -109,28 +109,30 @@ local function modemadd()
 end
 
   local function colorupdate() --A seperate thread that reads a table of readers and can control their lights.
-    for key,value in pairs(readerLights) do
-      if type(value.new) == "table" then
-        if #value.new == 0 then
-          readerLights[key].new = readerLights[key].old
-        else
-          if value.new[1].status == nil then
-            readerLights[key].new[1].status = true
-            component.proxy[key].setLightState(value.new[1])
-            readerLights[key].old = readerLights[key].new[1].color
+    while true do
+      for key,value in pairs(readerLights) do
+        if type(value.new) == "table" then
+          if #value.new == 0 then
+            readerLights[key].new = readerLights[key].old
           else
-            readerLights[key].new[1].delay = readerLights[key].new[1].delay - 0.1
-            if readerLights[key].new[1].delay <= 0 then
-              table.remove(readerLights[key].new,1)
+            if value.new[1].status == nil then
+              readerLights[key].new[1].status = true
+              component.proxy[key].setLightState(value.new[1])
+              readerLights[key].old = readerLights[key].new[1].color
+            else
+              readerLights[key].new[1].delay = readerLights[key].new[1].delay - 0.1
+              if readerLights[key].new[1].delay <= 0 then
+                table.remove(readerLights[key].new,1)
+              end
             end
           end
+        elseif value.new ~= value.old then
+          component.proxy(key).setLightState(value.new)
+          readerLights[key].old = readerLights[key].new
         end
-      elseif value.new ~= value.old then
-        component.proxy(key).setLightState(value.new)
-        readerLights[key].old = readerLights[key].new
       end
+      os.sleep(0.1)
     end
-    os.sleep(0.1)
   end
 
   local function colorLink(key, var) --{["color"]=0,["delay"]=1} or just a number
@@ -187,7 +189,7 @@ end
       end
       if osVersion then colorLink(key,0) end
     else
-      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}}) end
+      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}}) end --FIXME: Fix the colorLink when it sends tables. It crashes.
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).toggle()
@@ -218,7 +220,7 @@ end
 
   local function update(_, localAddress, remoteAddress, port, distance, msg, data)
     if (testR == true) then
-      if msg == "checkSector" then --Making forceopen obselete
+      if msg == "checkSector" then --Making forceopen obselete. FIXME: Multiple sectors breaks this.
         data = ser.unserialize(data)
         if extraConfig.type == "single" then
           if sector ~= false then
@@ -485,7 +487,7 @@ if osVersion then
     colorLink(key,0)
     readerLights[key] = {["new"]=0,["old"]=-1}
   end
-  --thread.create(colorupdate)
+  thread.create(colorupdate)
 end
 for key,_ in pairs(component.list("os_doorcontrol")) do
   component.proxy(key).close()
