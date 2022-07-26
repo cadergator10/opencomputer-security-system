@@ -298,8 +298,8 @@ end
         data = ser.unserialize(data)
         if data.id == modem.address then
           term.write("RemoteControl request received for ")
-          term.write(data.type == "single" and settingData.name or settingData[data.key].name)
-          send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=data.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF}}))
+          term.write(extraConfig.type == "single" and settingData.name or settingData[data.key].name)
+          send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=extraConfig.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF}}))
           if extraConfig.type == "single" then
             if data.type == "base" then
               openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,toggle,doorType,redSide,magReader.address)
