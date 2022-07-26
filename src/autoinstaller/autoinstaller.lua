@@ -535,6 +535,9 @@ if e == nil then
             print("Removing all files...")
             fs.remove(path .. "/server.lua")
             fs.remove(path .. "/modules")
+            if fs.exists(path .. "/userlist.txt") then fs.remove(path .. "/userlist.txt") end
+            if fs.exists(path .. "/doorlist.txt") then fs.remove(path .. "/doorlist.txt") end
+            if fs.exists(path .. "/settings.txt") then fs.remove(path .. "/settings.txt") end
         elseif text == 2 then
             print("Clearing module folder...")
             fs.remove(path .. "/modules")
