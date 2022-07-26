@@ -54,5 +54,21 @@
     editvar = "Изменить переменную",
     settingsvar = "настройки",
     writebutton = "Записать",
-    updateserver = "Обновить сервер"
+    updateserver = "Обновить сервер",
+
+    sectorlabel = "Секторы",
+    sectorbypass = "байпасный тип",
+    sectoropen = "открытые двери",
+    sectordislock = "отключить блокировку",
+    sectornew = "новый сектор",
+    sectordel = "дель сектор",
+    sectornewname = "имя сектора",
+    sectornewadd = "добавить сектор",
+    sectadded = "Добавлен сектор. Изменения будут применены при следующем запуске",
+    sectremoved = "Сектор удален. Изменения будут применены при следующем запуске",
+    sectoruserbutton = "управлять пропусками",
+    sectorpasslabel = "Добавлены проходы в сектора",
+    inputlevel = "входной уровень",
+    disabled = "запрещать",
+    allpasseslabel = "Все пропуска"
 }

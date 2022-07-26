@@ -10,11 +10,25 @@ local ser = require ("serialization")
 local term = require("term")
 local ios = require("io")
 local gpu = component.gpu
+local fs = require("filesystem")
+local shell = require("shell")
+local process = require("process")
+local uuid = require("uuid")
 
-local version = "2.3.2"
+local version = "2.4.0"
 
 local redstone = {}
 local commands = {"updateuserlist","autoInstallerQuery","setDoor","loginfo","rcdoors","redstoneUpdated","checkLinked","getuserlist","getvar","setvar","checkRules"}
+local skipcrypt = {"autoInstallerQuery","rcdoors","getuserlist","loginfo"}
+
+local modules = {}
+local modulepath = "/modules"
+
+local viewport = 0
+local viewhistory = {}
+local dohistory = true
+
+local debug = false
 
 --------Main Functions
 
@@ -85,40 +99,139 @@ local function deepcopy(orig)
   return copy
 end
 
-local function addcommands(table)
-  for _,value in pairs(table) do
+local function addcommands(tabler,crypttable)
+  for _,value in pairs(tabler) do
     table.insert(commands,value)
+  end
+  for _,value in pairs(crypttable) do
+    table.insert(skipcrypt,value)
   end
 end
 
-local function advWrite(text,color,wrap)
-  gpu.setForeground(color or gpu.getForeground())
-  term.write(text,wrap or true)
+local function advWrite(text,color,wrap,clear,pos,bypass)
+  if dohistory or bypass then
+    if pos then term.setCursor(1,pos) end
+    if clear then term.clearLine() end
+    gpu.setForeground(color or gpu.getForeground())
+    term.write(text,wrap or true)
+  end
+end
+local function historyUpdate(text,color,wrap,newline,rewrite)
+    if rewrite then
+      dohistory = true
+      for i=1,#viewhistory,1 do
+        advWrite("",nil,false,true,i+3)
+        for j=1,#viewhistory[i],2 do
+          advWrite(viewhistory[i][j],viewhistory[i][j+1],false)
+        end
+      end
+    elseif newline then
+      for i=2,#viewhistory,1 do
+        advWrite("",nil,false,true,i+2)
+        for j=1,#viewhistory[i],2 do
+          advWrite(viewhistory[i][j],viewhistory[i][j+1],false)
+        end
+        viewhistory[i-1] = viewhistory[i]
+      end
+      viewhistory[#viewhistory] = {}
+      advWrite("",0xFFFFFF,false,true,#viewhistory + 3)
+    end
+  table.insert(viewhistory[#viewhistory],text)
+  table.insert(viewhistory[#viewhistory],color)
+  advWrite("",0xFFFFFF,wrap,true,#viewhistory + 3)
+  for i=1,#viewhistory[#viewhistory],2 do
+    advWrite(viewhistory[#viewhistory][i],viewhistory[#viewhistory][i+1],wrap)
+  end
 end
 --------Getting tables and setting up terminal
 term.clear()
+_,viewport = term.getViewport()
+for i=1,viewport - 5,1 do
+  viewhistory[i] = {"",0xFFFFFF}
+end
+modulepath = fs.path(shell.resolve(process.info().path)).. "/modules"
+if fs.exists(modulepath) == false then
+  os.execute("mkdir modules")
+  print("Downloading default modules...")
+  os.execute("wget -f https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/modules/sectors.lua modules/sectors.lua")
+  term.clear()
+end
+
+for file in fs.list(modulepath .. "/") do
+  local result, reason = loadfile(modulepath .. "/" .. file)
+  if result then
+    local success, result = pcall(result)
+    if success then
+      table.insert(modules,result)
+    end
+  end
+end
+
 local settingTable = loadTable("settings.txt")
 if settingTable == nil then
-  print("Security server requires settings to be set")
-  print("...")
-  print("If you are not leaving cryptKey at default, make sure you change it in settings.txt")
-  settingTable = {["cryptKey"]={1,2,3,4,5}}
+  settingTable = {["cryptKey"]={1,2,3,4,5},["pass"]=false}
   saveTable(settingTable,"settings.txt")
 end
 
-advWrite("Security server version: " .. version .. "\n",0xFFFFFF)
-advWrite("---------------------------------------------------------------------------\n")
+term.clear()
+local doorTable = loadTable("doorlist.txt")
+if doorTable == nil then
+  doorTable = {}
+end
+print("Checking all doors saved in doorlist...")
+if modem.isOpen(modemPort) == false then
+  modem.open(modemPort)
+end
+local count = 1
+local check = false
+for _,value in pairs(doorTable) do
+  if value["repeat"] ~= false then
+    modem.send(value["repeat"],modemPort,"rebroadcast",ser.serialize({["uuid"]=value.id,["data"]="doorCheck"}))
+  else
+    modem.send(value.id,modemPort,"doorCheck")
+  end
+  local e, _, from, port, _, command, msg = event.pull(1,"modem_message")
+  if e then
+
+  else
+    table.remove(doorTable,count)
+    check = true
+  end
+  count = count + 1
+end
+if check then
+  saveTable(doorTable,"doorlist.txt")
+end
+
+
+advWrite("Security server version: " .. version,0xFFFFFF,false,true,1,true)
+advWrite(#modules .. " modules loaded",nil,false,true,2,true)
+advWrite("---------------------------------------------------------------------------",0xFFFFFF,false,true,3,true)
+advWrite("---------------------------------------------------------------------------",0xFFFFFF,false,true,#viewhistory + 4,true)
+
 
 settingTable = loadTable("settings.txt")
 local userTable = loadTable("userlist.txt")
-local doorTable = loadTable("doorlist.txt")
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 if userTable == nil then
-  userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}} --sets up setting var with one setting to start with.
+  userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false},["sectors"]={{["name"]="Placeholder Sector",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}}} --sets up setting var with one setting to start with.
+  --New Sectors system will be linked to the userTable settings arrays. name = display name; uuid = linking id to get this pass; type = lockdown bypass type: 1 = open door anyway, 2 = disable lockdown; pass = pass uuids that link with type to disable lockdown or enter anyways; status = sector status: 1 = normal operations, 2 = lockdown, 3 = lock open
   saveTable(userTable,"userlist.txt")
 end
-if doorTable == nil then
-  doorTable = {}
+if userTable.settings.sectors == nil then
+  userTable.settings.sectors = {{["name"]="",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}
+  saveTable(userTable,"userlist.txt")
+end
+if settingTable.pass == nil then
+  settingTable.pass = false
+  saveTable(settingTable,"settings.txt")
+end
+
+for _,value in pairs(modules) do
+  addcommands(value.commands,value.skipcrypt)
+  value.debug = debug
+  value.init()
+  value.setup(userTable, doorTable)
 end
 
 --------account functions
@@ -270,6 +383,15 @@ local function checkLink(user)
   return false
 end
 
+local function msgToModule(command, data) --Sends message to modules and returns the data.
+  for _,value in pairs(modules) do --p1 is true/false if program received command, p2 is data to send back to other device (nil if nothing is sent back), p3 is what to log on server (nil if nothing to log), p4 is color of logged text (nil if staying white or nothing to log), p5 is a change to userTable that must be saved & updated.
+    local p1, p2, p3, p4, p5, p6, p7 = value.message(command,data)
+    if p1 then
+      return p1, p2, p3, p4, p5, p6, p7
+    end
+  end
+  return false
+end
 redstone = {}
 redstone["lock"] = false
 redstone["forceopen"] = false
@@ -277,8 +399,16 @@ while true do
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end
-
-  local _, _, from, port, _, command, msg, bypassLock = event.pull("modem_message")
+  local bing,add = false, false
+  local _, _, from, port, _, command, msg = event.pull("modem_message")
+  add = from
+  if command == "rebroadcast" then
+    bing = true
+    msg = ser.unserialize(msg)
+    command = msg.command
+    add = msg.uuid
+    msg = msg.data
+  end
   local data = msg
   local go = false
   for _,value in pairs(commands) do
@@ -288,29 +418,54 @@ while true do
     end
   end
   if go then
-    if command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" and command ~= "loginfo" then data = crypt(msg, settingTable.cryptKey, true) end
+    for _,value in pairs(skipcrypt) do
+      if command == value then
+        go = false
+        break
+      end
+    end
+    if go then data = crypt(msg, settingTable.cryptKey, true) end
     local thisUserName = false
-    if command ~= "updateuserlist" and command ~= "setDoor" and command ~= "redstoneUpdated" and command ~= "checkLinked" and command ~= "autoInstallerQuery" and command ~= "rcdoors" and command ~= "getuserlist" and command ~= "loginfo" then
+    local bdcst = function(address,port,data,data2)
+      if bing then
+        modem.send(address,port,"rebroadcast",ser.serialize({["uuid"]=add,["data"]=data,["data2"]=data2}))
+      else
+        if address then
+          modem.send(address,port,data,data2)
+        else
+          modem.broadcast(port,data,data2)
+        end
+      end
+    end
+    if command == "setvar" or command == "getvar" or command == "checkRules" then
       data = ser.unserialize(data)
       thisUserName = getVar("name",data.uuid)
     end
     if command == "updateuserlist" then
       userTable = ser.unserialize(data)
-      advWrite("Updated userlist received\n",0x0000C0)
+      local goboi = false
+      if settingTable.pass == false then
+        goboi = true
+      end
+      historyUpdate("Updated userlist received",0x0000C0,false,true)
       saveTable(userTable, "userlist.txt")
+      for _,value in pairs(modules) do
+        value.setup(userTable, doorTable)
+      end
     elseif command == "autoInstallerQuery" then
       data = {}
       data.num = 2
       data.version = version
       data.data = userTable.settings
-      modem.send(from,port,ser.serialize(data))
+      bdcst(from,port,ser.serialize(data))
     elseif command == "setDoor" then
-      advWrite("Received door parameters from id: " .. from .. "\n",0xFFFF80)
+      historyUpdate("Received door parameters from id: " .. add,0xFFFF80,false,true)
       local tmpTable = ser.unserialize(data)
-      tmpTable["id"] = from
+      tmpTable["id"] = add
+      tmpTable["repeat"] = bing == true and from or false
       local isInAlready = false
       for i=1,#doorTable,1 do
-        if doorTable[i].id == from then
+        if doorTable[i].id == add then
           isInAlready = true
           doorTable[i] = tmpTable
           break
@@ -318,11 +473,15 @@ while true do
       end
       if isInAlready == false then table.insert(doorTable,tmpTable) end
       saveTable(doorTable, "doorlist.txt")
-      modem.send(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
+      bdcst(from,port,crypt(ser.serialize(userTable.settings),settingTable.cryptKey))
+      for _,value in pairs(modules) do
+        value.setup(userTable, doorTable)
+      end
     elseif command == "loginfo" then
       data = ser.unserialize(data) --Array of arrays. Each array has text and color (color optional)
-      for i=1,#data,1 do
-        advWrite(data[i].text,data[i].color or 0xFFFFFF)
+      historyUpdate(data[1].text,data[1].color or 0xFFFFFF,false,true)
+      for i=2,#data,1 do
+        historyUpdate(data[i].text,data[i].color or 0xFFFFFF,false,false)
       end
     elseif command == "rcdoors" then --Cant send entire doorTable. Too big. Reduce to minimum required.
       local sendTable = {}
@@ -338,30 +497,13 @@ while true do
         end
         table.insert(sendTable,{["id"]=value.id,["type"]=value.type,["data"]=datar})
       end
-      modem.send(from,port,ser.serialize(sendTable))
-    elseif command == "redstoneUpdated" then
-      advWrite("Redstone has been updated\n",0x0000C0)
-      local newRed = ser.unserialize(data)
-      if newRed["lock"] ~= redstone["lock"] then
-        lockDoors = newRed["lock"]
-      end
-      if newRed["forceopen"] ~= redstone["forceopen"] then
-        local forceopen = newRed["forceopen"]
-        if forceopen == true then
-          data = crypt("open",settingTable.cryptKey)
-          modem.broadcast(199,"forceopen",data)
-        else
-          data = crypt("close",settingTable.cryptKey)
-          modem.broadcast(199,"forceopen",data)
-        end
-      end
-      redstone = newRed
+      bdcst(from,port,ser.serialize(sendTable))
     elseif command == "checkLinked" then
       if false == true then
         gpu.setForeground(0xFF0000)
         term.write("DONT RUN or i b sad ;-;\n")
       else
-        advWrite("-Checking if device is linked to a user:\n",0xFFFF80)
+        historyUpdate("-Checking if device is linked to a user:",0xFFFF80,false,true)
         local cu, isBlocked, thisName = checkLink(data)
         local dis = {}
         if cu == true then
@@ -369,33 +511,33 @@ while true do
             dis["status"] = false
             dis["reason"] = 2
             data = crypt(ser.serialize(dis), settingTable.cryptKey)
-            advWrite(" user " .. thisName .. "is blocked\n",0xFF0000)
-            modem.send(from, port, data)
+            historyUpdate(" user " .. thisName .. "is blocked",0xFF0000,false,true)
+            bdcst(from, port, data)
           else
             dis["status"] = true
             dis["name"] = thisName
             data = crypt(ser.serialize(dis), settingTable.cryptKey)
-            advWrite(" tablet is connected to " .. thisName .. "\n",0x00FF00)
-            modem.send(from, port, data)
+            historyUpdate(" tablet is connected to " .. thisName,0x00FF00,false,true)
+            bdcst(from, port, data)
           end
         else
           dis["status"] = false
           dis["reason"] = 1
           data = crypt(ser.serialize(dis), settingTable.cryptKey)
-          advWrite(" tablet not linked\n",0x990000)
-          modem.send(from, port, data)
+          historyUpdate(" tablet not linked\n",0x990000,false,true)
+          bdcst(from, port, data)
         end--IMPORTANT: Hello
       end
     elseif command == "getuserlist" then
       data = ser.serialize(userTable)
       data = crypt(data,settingTable.cryptKey)
-      modem.send(from, port, data)
+      bdcst(from, port, data)
     elseif command == "getvar" then
       local worked = false
       for key, value in pairs(userTable) do
         if value.uuid == data.uuid then
           worked = true
-          modem.send(from,port, crypt(value[data.var],settingTable.cryptKey))
+          bdcst(from,port, crypt(value[data.var],settingTable.cryptKey))
         end
       end
     elseif command == "setvar" then
@@ -405,46 +547,93 @@ while true do
         if value.uuid == data.uuid then
           worked = true
           userTable[counter][data.var] = data.data
-          modem.send(from,port, crypt("true",settingTable.cryptKey))
+          bdcst(from,port, crypt("true",settingTable.cryptKey))
         else
           counter = counter + 1
         end
       end
     elseif command == "checkRules" then
-      if lockDoors == true and bypassLock ~= 1 then
-        advWrite("Doors have been locked. Unable to open door\n",0xFF0000)
-        data = crypt("locked", settingTable.cryptKey)
-        modem.send(from, port, data)
-      else
-        local currentDoor = getDoorInfo(data.type,from,data.key)
-        advWrite("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80)
+      local currentDoor = getDoorInfo(data.type,add,data.key)
+      local enter = true
+      if data.sector ~= false then
+        local a,c,_,_,b = msgToModule("doorsector",ser.serialize(data))
+        if a then
+          if b ~= "true" and b ~= "openbypass" then
+            enter = false
+            if b == "false" then
+              bdcst(from, port, crypt("false", settingTable.cryptKey))
+              if c then
+                historyUpdate(c[1].text,c[1].color or 0xFFFFFF,false,true)
+                for i=2,#c,1 do
+                  historyUpdate(c[i].text,c[i].color or 0xFFFFFF,false,c[i].line or false)
+                end
+              end
+            elseif b == "lockbypass" then
+              bdcst(from, port, crypt("bypass", settingTable.cryptKey))
+              if c then
+                historyUpdate(c[1].text,c[1].color or 0xFFFFFF,false,true)
+                for i=2,#c,1 do
+                  historyUpdate(c[i].text,c[i].color or 0xFFFFFF,false,c[i].line or false)
+                end
+              end
+            end
+          end
+        end
+      end
+      if enter then
+        historyUpdate("-Checking user " .. thisUserName .. "'s credentials on " .. currentDoor.name .. ":",0xFFFF80,true,true)
         local cu, isBlocked, varCheck, isStaff,label,color = checkAdvVar(data.uuid,currentDoor.read)
         if cu then
           if isBlocked then
             if varCheck then
               data = crypt("true", settingTable.cryptKey)
-              advWrite("\n" .. label .. "\n",color)
-              modem.send(from, port, data)
+              historyUpdate(label, color,false,true)
+              bdcst(from, port, data)
             else
               if isStaff then
                 data = crypt("true", settingTable.cryptKey)
-                advWrite("\naccess granted due to staff\n",0xFF00FF)
-                modem.send(from, port, data)
+                historyUpdate("access granted due to staff",0xFF00FF,false,true)
+                bdcst(from, port, data)
               else
                 data = crypt("false", settingTable.cryptKey)
-                advWrite("\n" .. label .. "\n",color)
-                modem.send(from, port, data)
+                historyUpdate(label,color,false,true)
+                bdcst(from, port, data)
               end
             end
           else
             data = crypt("false", settingTable.cryptKey)
-            advWrite("\nuser is blocked\n",0xFF0000)
-            modem.send(from, port, data)
+            historyUpdate("user is blocked",0xFF0000,false,true)
+            bdcst(from, port, data)
           end
         else
           data = crypt("false", settingTable.cryptKey)
-          advWrite("\nuser not found\n",0x990000)
-          modem.send(from, port, data)
+          historyUpdate("user not found",0x990000,false,true)
+          bdcst(from, port, data)
+        end
+      end
+    else
+      local p1,p2,p3,p4,p5,p6,p7 = msgToModule(command,data)
+      if p1 then
+        if p4 ~= nil then
+          if p4 == false then
+            bdcst(nil,port,p5,p6)
+          else
+            bdcst(from, port, p5,p6)
+          end
+        end
+        if p2 then --holdup
+          historyUpdate(p2[1].text,p2[1].color or 0xFFFFFF,false,true)
+          for i=2,#p2,1 do
+            historyUpdate(p2[i].text,p2[i].color or 0xFFFFFF,false,p2[i].line or false)
+          end
+        end
+        if p3 then
+          saveTable(userTable,"backupuserlist.txt")
+          userTable = p3
+          saveTable(userTable, "userlist.txt")
+          for _,value in pairs(modules) do
+            value.setup(userTable, doorTable)
+          end
         end
       end
     end

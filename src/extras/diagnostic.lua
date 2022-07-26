@@ -15,6 +15,8 @@ local process = require("process")
 local uuid = require("uuid")
 local computer = require("computer")
 
+local link
+
 --------Extra Arrays
 
 local toggleTypes = {"not toggleable","toggleable"}
@@ -24,7 +26,7 @@ local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","
 local forceOpenTypes = {"False","True"}
 local passTypes = {["string"]="Inputtable String",["-string"]="Hidden String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"2.2.0","2.2.1","2.2.2","2.3.0","2.3.1"}
+local supportedVersions = {"2.2.0","2.2.1","2.2.2","2.3.0","2.3.1","2.4.0"}
 
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
 
@@ -53,6 +55,18 @@ local function convert( chars, dist, inv )
       s = string.gsub( s,string.char(26),"\"..string.char(26)..\"" )
       return s
   end
+
+local function sendit(label,port,linker,...)
+    if linker and link ~= nil then
+        link.send(modem.address,...)
+        return
+    end
+    if label then
+        modem.send(label,port,...)
+    else
+        modem.broadcast(port,...)
+    end
+end
 
 local function deepcopy(orig)
     local orig_type = type(orig)
@@ -171,8 +185,32 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
             end
             print("Toggleable: " .. toggleTypes[diagInfo2.toggle + 1])
             print(diagInfo2.toggle == 0 and "Delay: " .. diagInfo2.delay or "***")
-            print("ForceOpen: " .. forceOpenTypes[diagInfo2.forceOpen + 1])
-            print("BypassLock: " .. forceOpenTypes[diagInfo2.bypassLock + 1])
+            local works = false
+            for i=6,#supportedVersions,1 do
+                if supportedVersions[i] == diagInfo2.version then
+                    works = true
+                end
+            end
+            if works == false then
+                print("ForceOpen: " .. forceOpenTypes[diagInfo2.forceOpen + 1])
+                print("BypassLock: " .. forceOpenTypes[diagInfo2.bypassLock + 1])
+            else
+                if diagInfo2.sector == false then
+                    print("No Sector")
+                else
+                    local it = false
+                    for _,value in pairs(settings.data.sectors) do
+                        if value.uuid == diagInfo2.sector then
+                            print("Sector: " .. value.name)
+                            it = true
+                            break
+                        end
+                    end
+                    if it == false then
+                        print("Sector: Error: Incorrect sector uuid")
+                    end
+                end
+            end
         else
             if diagInfo2["type"] == "multi" then
                 print("number of door entries: " .. diagInfo2["entries"])
@@ -238,8 +276,32 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
         end
         print("Toggleable: " .. toggleTypes[diagInfo2.toggle + 1])
         print(diagInfo2.toggle == 0 and "Delay: " .. diagInfo2.delay or "***")
-        print("ForceOpen: " .. forceOpenTypes[diagInfo2.forceOpen + 1])
-        print("BypassLock: " .. forceOpenTypes[diagInfo2.bypassLock + 1])
+        local works = false
+        for i=6,#supportedVersions,1 do
+            if supportedVersions[i] == diagInfo.version then
+                works = true
+            end
+        end
+        if works == false then
+            print("ForceOpen: " .. forceOpenTypes[diagInfo2.forceOpen + 1])
+            print("BypassLock: " .. forceOpenTypes[diagInfo2.bypassLock + 1])
+        else
+            if diagInfo2.sector == false then
+                print("No Sector")
+            else
+                local it = false
+                for _,value in pairs(settings.data.sectors) do
+                    if value.uuid == diagInfo2.sector then
+                        print("Sector: " .. value.name)
+                        it = true
+                        break
+                    end
+                end
+                if it == false then
+                    print("Sector: Error: Incorrect sector uuid")
+                end
+            end
+        end
     end
 end
 
@@ -253,7 +315,7 @@ local function accsetup()
     modem.open(code)
     --local temp = {}
     --temp["analyzer"]=component.isAvailable("barcode_reader")
-    modem.broadcast(code,"link",component.isAvailable("barcode_reader"))
+    sendit(nil,code,false,"link",component.isAvailable("barcode_reader"))
     print("linking...")
     local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
@@ -268,7 +330,7 @@ local function accsetup()
                 term.write(data)
             elseif msg == "getInput" then
                 text = term.read()
-                modem.send(from,port,text:sub(1,-2))
+                sendit(from,port,false,text:sub(1,-2))
             elseif msg == "clearTerm" then
                 term.clear()
             elseif msg == "terminate" then
@@ -279,7 +341,7 @@ local function accsetup()
                 print("Scan the device with your tablet")
                 _, text = event.pull("tablet_use")
                 computer.beep()
-                modem.send(from,port,text.analyzed[1].address)
+                sendit(from,port,false,text.analyzed[1].address)
             end
         end
         print("Finished")
@@ -458,10 +520,14 @@ local function doorediting() --TEST: Can this edit the doors?
     local _, _, from, port, _, command, msg = event.pull("modem_message")
     local diagInfo = ser.unserialize(msg)
     local ver = true
+    local sec = false
     for i=3,#supportedVersions,1 do
         if diagInfo.version == supportedVersions[i] then
             ver = false
-            break
+            if i >= 6 then
+                sec = true
+                break
+            end
         end
     end
     if ver then
@@ -507,6 +573,9 @@ local function doorediting() --TEST: Can this edit the doors?
             if editTable[pageNum].doorType == 0 or editTable[pageNum].doorType == 3 then
                 setGui(16,"Door Address: " .. editTable[pageNum].doorAddress)
                 setGui(17,"Reader Address: " .. editTable[pageNum].reader)
+            elseif editTable[pageNum].doorType == 2 then
+                setGui(16,"Bundled redstone color: " .. redColorTypes[editTable[pageNum].redColor + 1])
+                setGui(17,"Reader Address: " .. editTable[pageNum].reader)
             else
                 setGui(16,"***")
                 setGui(17,"Reader Address: " .. editTable[pageNum].reader)
@@ -515,13 +584,23 @@ local function doorediting() --TEST: Can this edit the doors?
         setGui(8,"1. Change Door Name: " .. editTable[pageNum].name)
         setGui(9,diagInfo.type == "multi" and "2. Change Door type/color/uuid" or "2. Change Door type/color/side")
         setGui(10,"3. Change toggle and delay")
-        setGui(11,"4. Change force open and bypass lock")
+        setGui(11,sec == true and "4. Change Sector" or "4. Change force open and bypass lock")
         setGui(12,"5. Change passes")
         setGui(13,diagInfo.type == "multi" and "6. Change card reader uuid" or "")
         setGui(14,"")
         setGui(15,"Door type: " .. doorTypeTypes[editTable[pageNum].doorType + 1])
         setGui(18,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
-        setGui(19,"Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
+        local pee = "Error: incorrect uuid"
+        if sec then
+            if editTable[pageNum].sector ~= 0 then
+                for _,value in pairs(settings.data.sectors) do
+                    if value.uuid == editTable[pageNum].sector then
+                        pee = value.name
+                    end
+                end
+            end
+        end
+        setGui(19,sec == true and editTable[pageNum].sector == false and "No Sector Assigned " or sec == true and "Sector: " .. pee or "Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
         setGui(20,"Amount of passes: " .. #editTable[pageNum].cardRead)
         setGui(21,"----------------------")
         setGui(22,"Press a number to edit those parameters")
@@ -549,7 +628,7 @@ local function doorediting() --TEST: Can this edit the doors?
                 pageChange(true,#editTable,editChange)
                 os.sleep(1)
             elseif char == "enter" and diagInfo.type == "multi" then
-                modem.send(from,port,"identifyMag",ser.serialize(editTable[pageNum]))
+                sendit(from,port,false,"identifyMag",ser.serialize(editTable[pageNum]))
                 os.sleep(1)
             elseif char == "n" and diagInfo.type == "multi" then
                 local keepLoop = true
@@ -656,20 +735,36 @@ local function doorediting() --TEST: Can this edit the doors?
                 end
             elseif p1 == 4 then
                 flush()
-                setGui(22,"Is this door opened whenever all doors are asked to open?")
-                setGui(23,"0 if no, 1 if yes. Default is yes")
-                term.setCursor(1,25)
-                term.clearLine()
-                text = term.read()
-                editTable[pageNum].forceOpen = tonumber(text)
-                flush()
-                setGui(22,"Is this door immune to lock door?")
-                setGui(23,"0 if no, 1 if yes. Default is no")
-                term.setCursor(1,25)
-                term.clearLine()
-                text = term.read()
-                editTable[pageNum].bypassLock = tonumber(text)
-            elseif p1 == 5 then --TODO: Finish and test
+                if sec then
+                    local nextmsg = "What sector would you like this door to be part of? 0 = no sector"
+                    for i=1,#settings.data.sectors,1 do
+                        nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.sectors[i].name
+                    end
+                    setGui(22,nextmsg,true)
+                    term.setCursor(1,25)
+                    term.clearLine()
+                    text = tonumber(term.read())
+                    if text == 0 then
+                        editTable[pageNum].sector=false
+                    else
+                        editTable[pageNum].sector= settings.data.sectors[text].uuid
+                    end
+                else
+                    setGui(22,"Is this door opened whenever all doors are asked to open?")
+                    setGui(23,"0 if no, 1 if yes. Default is yes")
+                    term.setCursor(1,25)
+                    term.clearLine()
+                    text = term.read()
+                    editTable[pageNum].forceOpen = tonumber(text)
+                    flush()
+                    setGui(22,"Is this door immune to lock door?")
+                    setGui(23,"0 if no, 1 if yes. Default is no")
+                    term.setCursor(1,25)
+                    term.clearLine()
+                    text = term.read()
+                    editTable[pageNum].bypassLock = tonumber(text)
+                end
+            elseif p1 == 5 then
                 local readCursor = function()
                     term.setCursor(1,25)
                     term.clearLine()
@@ -854,7 +949,7 @@ local function doorediting() --TEST: Can this edit the doors?
         poo.version = nil
         poo.num = nil
     end
-    modem.send(from,modemPort,"changeSettings",ser.serialize(poo))
+    sendit(from,diagPort,false,"changeSettings",ser.serialize(poo))
     print("finished")
     os.exit()
 end
@@ -863,8 +958,12 @@ local function remotecontrol()
     --Settings
     local listAmt = 9
     --setup the list of doors, sorted by list number.
-    modem.broadcast(modemPort,"rcdoors")
-    modem.open(modemPort)
+    sendit(nil,modemPort,true,"rcdoors")
+    if link == nil then
+        modem.open(modemPort)
+    else
+        modem.close(modemPort)
+    end
     local e,_,_,_,_,msg = event.pull(3,"modem_message")
     if e == nil then
         print("No query received. Assuming version 2.3.1 and before is in use and will not work.")
@@ -968,7 +1067,7 @@ local function remotecontrol()
                     local text = term.read()
                     send.type,send.delay = "delay", tonumber(text)
                 end
-                modem.send(send.id,modemPort,"remoteControl",ser.serialize(send))
+                sendit(send.id,diagPort,false,"remoteControl",ser.serialize(send))
             end
         end
     end
@@ -978,9 +1077,18 @@ end
 --------Startup Code
 
 term.clear()
+
+if component.isAvailable("tunnel") then
+    link = component.tunnel
+end
+
 print("Sending query to server...")
-modem.open(modemPort)
-modem.broadcast(modemPort,"autoInstallerQuery")
+if link == nil then
+    modem.open(modemPort)
+else
+    modem.close(modemPort)
+end
+sendit(nil,modemPort,true,"autoInstallerQuery")
 local e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then

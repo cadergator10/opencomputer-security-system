@@ -7,6 +7,7 @@ local shell = require("shell")
 local event = require("event")
 local uuid = require("uuid")
 local modem = component.modem
+local link
 local modemPort = 199
 
 local program = "ctrl.lua"
@@ -16,7 +17,9 @@ local configFileName = "extraConfig.txt"
 local tableToFileCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/libraries/tableToFile.lua"
 local singleCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/doorControl.lua"}
 local multiCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/doorControl.lua"}
+local serverCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/server.lua"
 local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
+local serverModules = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/modules/modules.txt"
 
 local settingData = {}
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
@@ -37,15 +40,27 @@ local function loadTable(location)
     return ser.unserialize(tableFile:read("*all"))
 end
 
+local function send(label,port,linker,...) --Pingme
+    if linker and link ~= nil then
+        link.send(modem.address,...)
+        return
+    end
+    if label then
+        modem.send(label,port,...)
+    else
+        modem.broadcast(port,...)
+    end
+end
+
 local function sendMsg(...)
     local arg = table.pack(...)
     for i=1,#arg,1 do
         local argType = type(arg[i])
         if editorSettings.accelerate == true then
             if argType == "string" then
-                modem.send(editorSettings.from,editorSettings.port,"print",arg[i])
+                send(editorSettings.from,editorSettings.port,false,"print",arg[i])
             elseif argType == "number" then
-                modem.send(editorSettings.from,editorSettings.port,commandArray[arg[i]])
+                send(editorSettings.from,editorSettings.port,false,commandArray[arg[i]])
                 if arg[i] < 3 then
                     local e, _, _, _, _, text = event.pull("modem_message")
                     return text
@@ -54,7 +69,7 @@ local function sendMsg(...)
                     print("terminated connection")
                 end
             else
-                modem.send(editorSettings.from,editorSettings.port,"print","potential error in code for sendMsg")
+                send(editorSettings.from,editorSettings.port,false,"print","potential error in code for sendMsg")
             end
         else
             if argType == "string" then
@@ -189,6 +204,10 @@ local function runInstall()
                 loopArray["accessLevel"] = 0
                 sendMsg("No need to set access level. This mode doesn't require it :)")
             end
+            text = sendMsg("Is this door opened whenever all doors are asked to open? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is yes",1)
+            loopArray["forceOpen"] = tonumber(text)
+            text = sendMsg("Is this door immune to lock door? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is no",1)
+            loopArray["bypassLock"] = tonumber(text)
         else --BEGINNING OF 2.0.0 -----------------------------------------------------
             if editorSettings.x == 2 then
                 local readLoad = {}
@@ -306,12 +325,18 @@ local function runInstall()
                         loopArray["cardRead"][1].param = 0
                     end
                 end
+            end --Sectors beginning
+            local nextmsg = "What sector would you like this door to be part of? 0 = no sector"
+            for i=1,#editorSettings.settings.sectors,1 do
+                nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.sectors[i].name
             end
-        end --END OF 2.0.0 -----------------------------------------------------
-        text = sendMsg("Is this door opened whenever all doors are asked to open? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is yes",1)
-        loopArray["forceOpen"] = tonumber(text)
-        text = sendMsg("Is this door immune to lock door? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is no",1)
-        loopArray["bypassLock"] = tonumber(text)
+            text = tonumber(sendMsg(nextmsg,1))
+            if text == 0 then
+                loopArray["sector"]=false
+            else
+                loopArray["sector"]=editorSettings.settings.sectors[text].uuid
+            end
+        end --END OF 2.0.0 & sectors -----------------------------------------------------
         if editorSettings.type == "multi" then tmpTable[j] = loopArray else tmpTable = loopArray end
     end
     text = sendMsg("All done with installer!","Would you like to start the computer now?","1 for yes, 2 for no",1)
@@ -462,13 +487,84 @@ end
 
 modem.close()
 term.clear()
-print("Sending query to server...")
-modem.open(modemPort)
-modem.broadcast(modemPort,"autoInstallerQuery")
+
+if component.isAvailable("tunnel") then
+    link = component.tunnel
+end
+
+print("Sending query to server...") --Pingme
+if link == nil then
+    modem.open(modemPort)
+end
+send(nil,modemPort,true,"autoInstallerQuery")
 local e,_,from,port,_,msg = event.pull(3,"modem_message")
 if e == nil then
-    print("Failed. Is the server on?")
-    os.exit()
+    local text
+    local fill = io.open("server.lua","r")
+    local modulePrg = function()
+        os.execute("wget -f " .. serverModules .. " temp.txt")
+        local mlist = loadTable("temp.txt")
+        local skip = true
+        while skip do
+            term.clear()
+            for i=1,#mlist,1 do
+                print(i .. ". " .. mlist[i].name)
+            end
+            text = tonumber(sendMsg("Enter the number of the module you want to install","If you dont want to install any more modules, enter 0",1))
+            if text ~= 0 and text <= #mlist then
+                print("Downloading " .. mlist[text].name .. ": as " .. mlist[text].filename)
+                os.execute("wget -f " .. mlist[text].url .. " modules/" .. mlist[text].filename)
+            else
+                skip = false
+            end
+        end
+        print("finished")
+        os.execute("del temp.txt")
+    end
+    if fill~=nil then
+        fill:close()
+        local path = shell.getWorkingDirectory()
+        print("Server Files detected. Please select an option")
+        print("What would you like to do?")
+        print("1 = Wipe All Files")
+        print("2 = Wipe Modules Only")
+        print("3 = Install Modules")
+        print("4 = Update Server")
+        text = tonumber(term.read())
+        if text == 1 then
+            print("Removing all files...")
+            fs.remove(path .. "/server.lua")
+            fs.remove(path .. "/modules")
+        elseif text == 2 then
+            print("Clearing module folder...")
+            fs.remove(path .. "/modules")
+            os.execute("mkdir modules")
+        elseif text == 3 then
+            modulePrg()
+        elseif text == 4 then
+            print("Downloading server...")
+            os.execute("wget -f " .. serverCode .. " server.lua")
+        end
+        os.exit()
+    else
+        print("Failed to connect to server. Either there is no server running or one needs to be installed")
+        print("Would you like to download the server? 1 = yes, 2 = no")
+        text = tonumber(term.read())
+        if text == 1 then
+            print("Downloading server...")
+            os.execute("wget -f " .. serverCode .. " server.lua")
+            os.execute("mkdir modules")
+            editorSettings.num = 2
+            editorSettings.scanner = false
+            editorSettings.accelerate = false
+            text = tonumber(sendMsg("Would you like to install some modules? 1 = yes, 2 = no",1))
+            if text == 1 then
+                modulePrg()
+            end
+            print("done")
+        end
+        os.exit()
+    end
 end
 print("Query received")
 query = ser.unserialize(msg)
@@ -486,7 +582,7 @@ if tonumber(text) == 1 then
     sendMsg("Code is:  " .. tostring(code),"Enter the code into the door setup tablet. In 60 seconds setup will cancel.")
     local e, _, from, port, _, msg, barcode = event.pull(60, "modem_message")
     if e then
-        modem.send(from,port,"connected")
+        send(from,port,false,"connected")
         term.clear()
         sendMsg("Connection successful! All prompts will be on the tablet now on.")
         os.sleep(1)

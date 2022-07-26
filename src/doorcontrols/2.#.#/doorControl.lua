@@ -2,7 +2,7 @@
 
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "2.3.0"
+local doorVersion = "2.4.0"
 local testR = true
 local saveRefresh = true
 
@@ -19,8 +19,9 @@ local delay = 5
 --Changed heavilly to table of passes. Info in singleDoor
 local cardRead = {};
 
-local forceOpen = 1
-local bypassLock = 0
+local readerLights = {} --Table full of all reader id's, which a thread uses.
+
+local sector
 
 local doorAddress = ""
 
@@ -42,7 +43,8 @@ local uuid = require("uuid")
 local computer = component.computer
 
 local magReader = component.os_magreader
-local modem = component.modem 
+local modem = component.modem
+local link
 
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 local varSettings = {}
@@ -91,16 +93,67 @@ local function convert( chars, dist, inv )
     return copy
   end
 
-  local function colorLink(key, var) --{["color"]=0,["delay"]=1} or just a number
-    if type(var) == "table" then
-      thread.create(function(args)
-        for i=1,#args,1 do
-          component.proxy(key).setLightState(args[i].color)
-          os.sleep(args[i].delay)
+local function send(port,linker,...)
+  if linker and link ~= nil then
+    link.send(modem.address,...)
+    return
+  end
+  modem.broadcast(port,...)
+end
+local function modemadd()
+  if link then
+    return link.address
+  else
+    return modem.address
+  end
+end
+
+  local function colorupdate() --A seperate thread that reads a table of readers and can control their lights.
+    while true do
+      for key,value in pairs(readerLights) do
+        if type(value.new) == "table" then
+          if #value.new == 0 then
+            readerLights[key].new = readerLights[key].old
+          else
+            if value.new[1].status == nil then
+              readerLights[key].new[1].status = true
+              component.proxy(key).setLightState(value.new[1].color)
+              readerLights[key].old = readerLights[key].new[1].color
+            else
+              readerLights[key].new[1].delay = readerLights[key].new[1].delay - 0.1
+              if readerLights[key].new[1].delay <= 0 then
+                table.remove(readerLights[key].new,1)
+              end
+            end
+          end
+        elseif value.new ~= value.old then
+          component.proxy(key).setLightState(value.new)
+          readerLights[key].old = readerLights[key].new
         end
-      end, var)
+      end
+      os.sleep(0.1)
+    end
+  end
+
+  local function colorLink(key, var) --{["color"]=0,["delay"]=1} or just a number
+    local beta = true
+    if beta then
+      if readerLights[key] == nil then
+        component.proxy(key).swipeIndicator(false)
+        readerLights[key] = {["new"]=0,["old"]=-1}
+      end
+      readerLights[key].new = var
     else
-      component.proxy(key).setLightState(var)
+      if type(var) == "table" then
+        thread.create(function(args)
+          for i=1,#args,1 do
+            component.proxy(key).setLightState(args[i].color)
+            os.sleep(args[i].delay)
+          end
+        end, var)
+      else
+        component.proxy(key).setLightState(var)
+      end
     end
   end
   
@@ -167,53 +220,75 @@ local function convert( chars, dist, inv )
 
   local function update(_, localAddress, remoteAddress, port, distance, msg, data)
     if (testR == true) then
-      if msg == "forceopen" then
-        data = crypt(data, extraConfig.cryptKey, true)
+      if msg == "checkSector" then --Making forceopen obselete. FIXME: Multiple sectors breaks this.
+        data = ser.unserialize(data)
         if extraConfig.type == "single" then
-          if(doorType == 0)then
-            if data == "open" then
-              component.os_doorcontroller.open()
-            else
-              component.os_doorcontroller.close()
-            end
-          elseif(doorType == 1)then
-            component.redstone.setOutput(redSide,data == "open" and 15 or 0)
-          elseif(doorType == 2)then
-            component.redstone.setBundledOutput(redSide, { [redColor] = data == "open" and 255 or 0 } )
-          else
-            if data == "open" then
-              component.os_rolldoorcontroller.open()
-            else
-              component.os_rolldoorcontroller.close()
-            end
-          end
-        else
-          local keyed = nil
-          if data == "open" then
-            for key, valued in pairs(settingData) do
-              if valued.forceOpen ~= 0 then
-                if valued.doorType == 0 then
-                  component.proxy(valued.doorAddress).open()
-                elseif valued.doorType == 1 then
-                  print("potentially broken door at key " .. key .. ": set to redstone")
-                elseif valued.doorType == 2 then
-                  component.redstone.setBundledOutput(redSide, { [valued.redColor] = 255})
-                elseif valued.doorType == 3 then
-                  component.proxy(valued.doorAddress).open()
+          if sector ~= false then
+            for i=1,#data,1 do
+              if data[i].uuid == sector then
+                if data[i].status == 1 then
+                  if doorType == 0 then
+                    component.os_doorcontroller.close()
+                  elseif doorType == 3 then
+                    component.os_rolldoorcontroller.close()
+                  elseif doorType == 1 then
+                    component.redstone.setOutput(redSide,0)
+                  elseif doorType == 2 then
+                    component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
+                  end
+                  if osVersion then
+                    colorLink(magReader.address,0)
+                  end
+                elseif data[i].status == 2 then
+                  if osVersion then
+                    colorLink(magReader.address,1)
+                  end
+                elseif data[i].status == 3 then
+                  if doorType == 0 then
+                    component.os_doorcontroller.open()
+                  elseif doorType == 3 then
+                    component.os_rolldoorcontroller.open()
+                  elseif doorType == 1 then
+                    component.redstone.setOutput(redSide,15)
+                  elseif doorType == 2 then
+                    component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
+                  end
+                  if osVersion then
+                    colorLink(magReader.address,4)
+                  end
                 end
               end
             end
-          else
-            for key, valued in pairs(settingData) do
-              if valued.forceOpen ~= 0 then
-                if valued.doorType == 0 then
-                  component.proxy(valued.doorAddress).close()
-                elseif valued.doorType == 1 then
-                  print("potentially broken door at key " .. key .. ": set to redstone")
-                elseif valued.doorType == 2 then
-                  component.redstone.setBundledOutput(redSide, { [valued.redColor] = 0})
-                elseif valued.doorType == 3 then
-                  component.proxy(valued.doorAddress).close()
+          end
+        else
+          for _,value in pairs(settingData) do
+            if value.sector ~= false then
+              for i=1,#data,1 do
+                if data[i].uuid == value.sector then
+                  if data[i].status == 1 then
+                    if value.doorType == 0 or value.doorType == 3 then
+                      component.proxy(value.doorAddress).close()
+                    elseif value.doorType == 2 then
+                      component.redstone.setBundledOutput(2, { [value.redColor] = 0 } )
+                    end
+                    if osVersion then
+                      colorLink(value.reader,0)
+                    end
+                  elseif data[i].status == 2 then
+                    if osVersion then
+                      colorLink(value.reader,1)
+                    end
+                  elseif data[i].status == 3 then
+                    if value.doorType == 0 or value.doorType == 3 then
+                      component.proxy(value.doorAddress).open()
+                    elseif value.doorType == 2 then
+                      component.redstone.setBundledOutput(2, { [value.redColor] = 255 } )
+                    end
+                    if osVersion then
+                      colorLink(value.reader,4)
+                    end
+                  end
+                  break
                 end
               end
             end
@@ -221,10 +296,10 @@ local function convert( chars, dist, inv )
         end
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
         data = ser.unserialize(data)
-        if data.id == component.modem.address then
+        if data.id == modem.address then
           term.write("RemoteControl request received for ")
           term.write(extraConfig.type == "single" and settingData.name or settingData[data.key].name)
-          modem.broadcast(modemPort,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=extraConfig.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF},{["text"]="\n"}}))
+          send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=extraConfig.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF}}))
           if extraConfig.type == "single" then
             if data.type == "base" then
               openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,toggle,doorType,redSide,magReader.address)
@@ -258,7 +333,7 @@ local function convert( chars, dist, inv )
           local fill = {}
           fill["type"] = extraConfig.type
           fill["data"] = settingData
-          modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+          send(modemPort,true,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
           local got, _, _, _, _, fill = event.pull(2, "modem_message")
           if got then
             varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
@@ -269,8 +344,6 @@ local function convert( chars, dist, inv )
               delay = settingData.delay
               cardRead = settingData.cardRead
               toggle = settingData.toggle
-              forceOpen = settingData.forceOpen
-              bypassLock = settingData.bypassLock
             end
           else
             print("Failed to receive confirmation from server")
@@ -304,9 +377,15 @@ local function convert( chars, dist, inv )
           end
         end
         thread.create(lightShow,ser.unserialize(data))
+      elseif msg == "doorCheck" then
+        send(modemPort,true,"true")
       end
     end
   end
+
+if component.isAvailable("tunnel") then
+  link = component.tunnel
+end
 
 term.clear()
 local fill = io.open("doorSettings.txt", "r")
@@ -325,29 +404,26 @@ end
 
 extraConfig = ttf.load("extraConfig.txt")
 settingData = ttf.load("doorSettings.txt")
-extraConfig.version = version
+extraConfig.version = doorVersion
 ttf.save(extraConfig,"extraConfig.txt")
 
-if modem.isOpen(modemPort) == false then
+if modem.isOpen(modemPort) == false and link == nil then
   modem.open(modemPort)
+elseif link ~= nil then
+  modem.close(modemPort)
 end
 if magReader.swipeIndicator ~= nil then
   osVersion = true
 end
 
 local checkBool = false
-modem.broadcast(modemPort,"autoInstallerQuery")
+send(modemPort,true,"autoInstallerQuery")
 local e,_,_,_,_,query = event.pull(3,"modem_message")
 query = ser.unserialize(query)
 if e ~= nil then
   if extraConfig.type == "single" then
     if type(settingData.cardRead) == "number" then
-      modem.broadcast(modemPort,"autoInstallerQuery")
-      local e,_,from,port,_,query = event.pull(3,"modem_message")
-      query = ser.unserialize(query)
-      if e ~= nil then
-          settingData.cardRead = settingData.cardRead == 6 and "checkstaff" or query.data.calls[settingData.cardRead - #baseVariables]
-      end
+      settingData.cardRead = settingData.cardRead == 6 and "checkstaff" or query.data.calls[settingData.cardRead - #baseVariables]
       ttf.save(settingData,"doorSettings.txt")
     end
     if type(settingData.cardRead) ~= "table" then
@@ -356,6 +432,12 @@ if e ~= nil then
         settingData.cardRead = {}
         settingData.cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
         ttf.save(settingData,"doorSettings.txt")
+    end
+    if settingData.forceOpen ~= nil then
+      settingData.forceOpen = nil
+      settingData.bypassLock = nil
+      settingData.sector = false
+      ttf.save(settingData,"doorSettings.txt")
     end
   else
     for key, value in pairs(settingData) do
@@ -374,6 +456,12 @@ if e ~= nil then
           settingData[key].cardRead = {}
           settingData[key].cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
       end
+      if value.forceOpen ~= nil then
+        checkBool = true
+        settingData[key].forceOpen = nil
+        settingData[key].bypassLock = nil
+        settingData[key].sector = false
+      end
     end
     if checkBool == true then
       ttf.save(settingData,"doorSettings.txt")
@@ -385,7 +473,7 @@ checkBool = nil
 fill = {}
 fill["type"] = extraConfig.type
 fill["data"] = settingData
-modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+send(modemPort,true,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
 local got, _, _, _, _, fill = event.pull(2, "modem_message")
 if got then
   varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
@@ -396,16 +484,19 @@ end
 got = nil
 
 if osVersion then
+  readerLights = {}
   for key,_ in pairs(component.list("os_magreader")) do
     component.proxy(key).swipeIndicator(false)
     colorLink(key,0)
+    readerLights[key] = {["new"]=0,["old"]=-1}
   end
-  for key,_ in pairs(component.list("os_doorcontrol")) do
-    component.proxy(key).close()
-  end
-  for key,_ in pairs(component.list("os_rolldoorcontrol")) do
-    component.proxy(key).close()
-  end
+  thread.create(colorupdate)
+end
+for key,_ in pairs(component.list("os_doorcontrol")) do
+  component.proxy(key).close()
+end
+for key,_ in pairs(component.list("os_rolldoorcontrol")) do
+  component.proxy(key).close()
 end
 
 if extraConfig.type == "single" then
@@ -415,8 +506,7 @@ if extraConfig.type == "single" then
 	delay = settingData.delay
 	cardRead = settingData.cardRead
 	toggle = settingData.toggle
-	forceOpen = settingData.forceOpen
-	bypassLock = settingData.bypassLock
+	sector = settingData.sector
   if #cardRead == 1 then
     if cardRead[1].call == "checkstaff" then
       print("STAFF ONLY")
@@ -458,9 +548,6 @@ else
 end
 print("---------------------------------------------------------------------------")
 
-if modem.isOpen(modemPort) == false then
-  modem.open(modemPort)
-end
 event.listen("modem_message", update)
 process.info().data.signal = function(...)
   print("caught hard interrupt")
@@ -468,11 +555,10 @@ process.info().data.signal = function(...)
   testR = false
   os.exit()
 end
+modem.open(diagPort)
+local bypassallowed = false
 
 while true do
-  if modem.isOpen(modemPort) == false then
-    modem.open(modemPort)
-  end
   local ev, address, user, str, uuid, data = event.pull("magData")
   if osVersion then colorLink(address,2) end
   local isOk = "ok"
@@ -491,8 +577,7 @@ while true do
       doorType = settingData[keyed].doorType
       doorAddress = settingData[keyed].doorAddress
       toggle = settingData[keyed].toggle
-      forceOpen = settingData[keyed].forceOpen
-      bypassLock = settingData[keyed].bypassLock
+      sector = settingData[keyed].sector
       isOk = "ok"
     else
       print("MAG READER IS NOT SET UP! PLEASE FIX")
@@ -525,7 +610,7 @@ while true do
         diagData["entries"] = counter
       end
       data = ser.serialize(diagData)
-      modem.broadcast(diagPort, "diag", data)
+      send(diagPort,false, "diag", data)
       if osVersion then
         colorLink(address,{{["color"]=1,["delay"]=0.3},{["color"]=2,["delay"]=0.3},{["color"]=4,["delay"]=0.3},{["color"]=0,["delay"]=0}})
       end
@@ -540,13 +625,11 @@ while true do
         os.exit()
       end
       term.write(tmpTable["name"] .. ":")
-      if modem.isOpen(modemPort) == false then
-        modem.open(modemPort)
-      end
       tmpTable["type"] = extraConfig.type
       tmpTable["key"] = extraConfig.type == "multi" and keyed or nil
+      tmpTable["sector"] = sector
       data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-      modem.broadcast(modemPort, "checkRules", data, bypassLock)
+      send(modemPort,true, "checkRules", data)
       local e, _, from, port, _, msg = event.pull(1, "modem_message")
       if e then
         data = crypt(msg, extraConfig.cryptKey, true)
@@ -565,14 +648,28 @@ while true do
           end
           computer.beep()
           computer.beep()
-        elseif data == "locked" then
-          term.write("Doors have been locked\n")
-          if osVersion then
-            colorLink(address,{{["color"]=1,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=1,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+        elseif data == "bypass" then
+          if bypassallowed then
+            term.write("Bypass succeeded: lockdown lifted\n")
+            if osVersion then
+              colorLink(address,{{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+            end
+            data = crypt(tmpTable.sector,extraConfig.cryptKey)
+            send(modemPort,true, "doorsecupdate", data)
+            computer.beep()
+            computer.beep()
+            computer.beep()
+          else
+            bypassallowed = true
+            thread.create(function()
+              os.sleep(3)
+              bypassallowed = false
+            end)
+            term.write("Requesting bypass\n")
+            if osVersion then
+              colorLink(address,{{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+            end
           end
-          computer.beep()
-          computer.beep()
-          computer.beep()
         else
           term.write("Unknown command\n")
         end

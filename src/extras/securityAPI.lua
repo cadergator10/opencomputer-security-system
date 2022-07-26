@@ -1,4 +1,4 @@
-local version = "2.3.0"
+local version = "2.4.0"
 --testR = true
 
 local security = {}
@@ -21,7 +21,8 @@ local uuid = require("uuid")
 local computer = component.computer
 
 local magReader = component.os_magreader
-local modem = component.modem 
+local modem = component.modem
+local link
 
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 local varSettings = {}
@@ -81,11 +82,28 @@ local function convert( chars, dist, inv )
           return fields
   end
 
+local function send(label,port,linker,...) --Pingme
+  if linker and link ~= nil then
+    link.send(modem.address,...)
+    return
+  end
+  if label then
+    modem.send(label,port,...)
+  else
+    modem.broadcast(port,...)
+  end
+end
+
   --------Called Functions
 
   function security.setup()
-    modem.open(modemPort)
-    modem.broadcast(modemPort,"autoInstallerQuery")
+    if component.isAvailable("tunnel") then
+      link = component.tunnel
+      modem.close(modemPort)
+    else
+      modem.open(modemPort)
+    end
+    send(nil,modemPort,true,"autoInstallerQuery")
     local e
     e,_,_,_,_,query = event.pull(3,"modem_message")
     if e == nil then
@@ -271,7 +289,7 @@ local function convert( chars, dist, inv )
     fill = {}
     fill["type"] = "custom"
     fill["data"] = settingData
-    modem.broadcast(modemPort,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+    send(nil,modemPort,true,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
     local got, _, _, _, _, fill = event.pull(2, "modem_message")
     if got then
       varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
@@ -288,12 +306,11 @@ local function convert( chars, dist, inv )
     tmpTable["type"] = "single"
     data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
     if loc ~= nil then
-        modem.send(loc,modemPort,"checkRules",data,true)
+        send(loc,modemPort,true,"checkRules",data,true)
     else
-        modem.broadcast(modemPort,"checkRules",data,true)
+        send(nil,modemPort,true,"checkRules",data,true)
     end
-    modem.open(modemPort)
-    local e, _, from, port, _, msg = event.pull(1, "modem_message")
+    local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
         data = crypt(msg, extraConfig.cryptKey, true)
         if data == "true" then
@@ -321,12 +338,11 @@ local function convert( chars, dist, inv )
     data.var = var
     data = crypt(ser.serialize(data),extraConfig.cryptKey)  
     if loc ~= nil then
-      modem.send(loc,modemPort,"getvar",data)
+      send(loc,modemPort,true,"getvar",data)
     else
-      modem.broadcast(modemPort,"getvar",data)
+      send(nil,modemPort,true,"getvar",data)
     end
-    modem.open(modemPort)
-    local e, _, from, port, _, msg = event.pull(1, "modem_message")
+    local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
       data = crypt(msg, extraConfig.cryptKey, true)
       return true, data
@@ -350,18 +366,37 @@ local function convert( chars, dist, inv )
     data.data = it
     data = crypt(ser.serialize(data),extraConfig.cryptKey)
     if loc ~= nil then
-      modem.send(loc,modemPort,"setvar",data)
+      send(loc,modemPort,true,"setvar",data)
     else
-      modem.broadcast(modemPort,"setvar",data)
+      send(nil,modemPort,true,"setvar",data)
     end
-    modem.open(modemPort)
-    local e, _, from, port, _, msg = event.pull(1, "modem_message")
+    local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
       return true, "no error"
     else
       return false, "timed out"
     end
   end
+
+function security.crypt(str,reverse)
+  return true,crypt(str,extraConfig.cryptKey,reverse)
+  return false, "unknown error"
+end
+
+function security.send(wait,...)
+  send(nil,modemPort,true,...)
+  if wait then
+    local e, _, _, _, _, msg,msg2 = event.pull(3, "modem_message")
+    if e then
+      return true,msg,msg2
+    else
+      return false,"timed out"
+    end
+  else
+    return true,"no return requested"
+  end
+  return false, "unknown error"
+end
 
 return security
 
