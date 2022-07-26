@@ -451,8 +451,9 @@ while true do
       end
     elseif command == "loginfo" then
       data = ser.unserialize(data) --Array of arrays. Each array has text and color (color optional)
-      for i=1,#data,1 do
-        historyUpdate(data[i].text,data[i].color or 0xFFFFFF,false,true)
+      historyUpdate(data[1].text,data[1].color or 0xFFFFFF,false,true)
+      for i=2,#data,1 do
+        historyUpdate(data[i].text,data[i].color or 0xFFFFFF,false,false)
       end
     elseif command == "rcdoors" then --Cant send entire doorTable. Too big. Reduce to minimum required.
       local sendTable = {}
@@ -527,19 +528,25 @@ while true do
       local currentDoor = getDoorInfo(data.type,add,data.key)
       local enter = true
       if data.sector ~= false then
-        local a,_,c,d,_,b = msgToModule("doorsector",ser.serialize(data))
+        local a,c,_,_,_,b = msgToModule("doorsector",ser.serialize(data))
         if a then
           if b ~= "true" and b ~= "openbypass" then
             enter = false
             if b == "false" then
               bdcst(from, port, crypt("false", settingTable.cryptKey))
               if c then
-                historyUpdate(c,d or 0xFFFFFF,false,true)
+                historyUpdate(c[1].text,c[1].color or 0xFFFFFF,false,true)
+                for i=2,#c,1 do
+                  historyUpdate(c[i].text,c[i].color or 0xFFFFFF,false,c[i].line or false)
+                end
               end
             elseif b == "lockbypass" then
               bdcst(from, port, crypt("bypass", settingTable.cryptKey))
               if c then
-                historyUpdate(c,d or 0xFFFFFF,false,true)
+                historyUpdate(c[1].text,c[1].color or 0xFFFFFF,false,true)
+                for i=2,#c,1 do
+                  historyUpdate(c[i].text,c[i].color or 0xFFFFFF,false,c[i].line or false)
+                end
               end
             end
           end
@@ -579,19 +586,22 @@ while true do
     else
       local p1,p2,p3,p4,p5,p6,p7 = msgToModule(command,data)
       if p1 then
-        if p5 ~= nil then
-          if p5 == false then
-            bdcst(nil,port,p6,p7)
+        if p4 ~= nil then
+          if p4 == false then
+            bdcst(nil,port,p5,p6)
           else
-            bdcst(from, port, p6,p7)
+            bdcst(from, port, p5,p6)
           end
         end
-        if p2 then
-          historyUpdate(p2,p3 or 0xFFFFFF,false,true)
+        if p2 then --holdup
+          historyUpdate(p2[1].text,p2[1].color or 0xFFFFFF,false,true)
+          for i=2,#p2,1 do
+            historyUpdate(p2[i].text,p2[i].color or 0xFFFFFF,false,p2[i].line or false)
+          end
         end
-        if p4 then
+        if p3 then
           saveTable(userTable,"backupuserlist.txt")
-          userTable = p4
+          userTable = p3
           saveTable(userTable, "userlist.txt")
           for _,value in pairs(modules) do
             value.setup(userTable, doorTable)

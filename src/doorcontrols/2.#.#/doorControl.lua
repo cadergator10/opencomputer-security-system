@@ -117,7 +117,7 @@ end
           else
             if value.new[1].status == nil then
               readerLights[key].new[1].status = true
-              component.proxy[key].setLightState(value.new[1])
+              component.proxy(key).setLightState(value.new[1].color)
               readerLights[key].old = readerLights[key].new[1].color
             else
               readerLights[key].new[1].delay = readerLights[key].new[1].delay - 0.1
@@ -189,7 +189,7 @@ end
       end
       if osVersion then colorLink(key,0) end
     else
-      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}}) end --FIXME: Fix the colorLink when it sends tables. It crashes.
+      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}}) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).toggle()
@@ -268,8 +268,8 @@ end
                   if data[i].status == 1 then
                     if value.doorType == 0 or value.doorType == 3 then
                       component.proxy(value.doorAddress).close()
-                    elseif doorType == 2 then
-                      component.redstone.setBundledOutput(value.redSide, { [value.redColor] = 0 } )
+                    elseif value.doorType == 2 then
+                      component.redstone.setBundledOutput(2, { [value.redColor] = 0 } )
                     end
                     if osVersion then
                       colorLink(value.reader,0)
@@ -282,12 +282,13 @@ end
                     if value.doorType == 0 or value.doorType == 3 then
                       component.proxy(value.doorAddress).open()
                     elseif value.doorType == 2 then
-                      component.redstone.setBundledOutput(value.redSide, { [value.redColor] = 255 } )
+                      component.redstone.setBundledOutput(2, { [value.redColor] = 255 } )
                     end
                     if osVersion then
                       colorLink(value.reader,4)
                     end
                   end
+                  break
                 end
               end
             end
@@ -298,7 +299,7 @@ end
         if data.id == modem.address then
           term.write("RemoteControl request received for ")
           term.write(data.type == "single" and settingData.name or settingData[data.key].name)
-          send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=data.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF},{["text"]="\n"}}))
+          send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=data.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF}}))
           if extraConfig.type == "single" then
             if data.type == "base" then
               openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,toggle,doorType,redSide,magReader.address)

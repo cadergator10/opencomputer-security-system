@@ -27,12 +27,12 @@ function module.message(command,datar) --Called when a command goes past all def
   local data = ser.unserialize(datar)
   if command == "sectorupdate" then
     userTable.settings.sectors = data
-    return true,"Sector data changed",nil,userTable,false,"checkSector",ser.serialize(data)
+    return true,{["text"]="Sector data changed",["color"]=nil,["line"]=false},userTable,false,"checkSector",ser.serialize(data)
   elseif command == "doorsector" then
     for i=1,#userTable.settings.sectors,1 do
       if userTable.settings.sectors[i].uuid == data.sector then
         if userTable.settings.sectors[i].status == 1 then
-          return true,nil,nil,nil, true,"true"
+          return true,nil,nil, true,"true"
         else
           local passed = false
           local user = false
@@ -43,7 +43,7 @@ function module.message(command,datar) --Called when a command goes past all def
             end
           end
           if user == false then
-            return false, "Sector check failed: User Not Found\n"
+            return false, {["text"]="Sector check failed: User Not Found",["color"]=nil,["line"]=false}
           end
           for _,value in pairs(userTable.settings.sectors[i].pass) do
             for j=1,#userTable.settings.calls,1 do
@@ -71,15 +71,15 @@ function module.message(command,datar) --Called when a command goes past all def
           end
           if passed then
             if userTable.settings.sectors[i].status == 3 and userTable.settings.sectors[i].type == 1 then
-              return true, "Cannot bypass open sectors", nil, nil, true,"false"
+              return true, {["text"]="Cannot bypass open sectors",["color"]=nil,["line"]=false}, nil, true,"false"
             end
             if userTable.settings.sectors[i].type == 1 then
-              return true, nil,nil,nil,true,"openbypass"
+              return true,nil,nil,true,"openbypass"
             else
-              return true, nil,nil,nil,true,"lockbypass"
+              return true, {["text"]="User " .. data.name .. " requested a bypass",["color"]=0xFF0000,["line"]=false},nil,true,"lockbypass"
             end
           else
-            return true, "User " .. data.name .. " failed sector check\n",nil,nil,true,"false"
+            return true, {["text"]="User " .. data.name .. " failed sector check",["color"]=nil,["line"]=false},nil,true,"false"
           end
         end
       end
@@ -88,7 +88,7 @@ function module.message(command,datar) --Called when a command goes past all def
     for i=1,#userTable.settings.sectors,1 do
       if userTable.settings.sectors[i].uuid == datar then
         userTable.settings.sectors[i].status = 1
-        return true,"Sector Lockdown lifted",nil,userTable
+        return true,{["text"]="Sector Lockdown lifted",["color"]=nil,["line"]=false},userTable,true,"checkSector",ser.serialize(userTable.settings.sectors)
       end
     end
   else
