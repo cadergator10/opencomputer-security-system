@@ -218,7 +218,7 @@ if userTable == nil then
   --New Sectors system will be linked to the userTable settings arrays. name = display name; uuid = linking id to get this pass; type = lockdown bypass type: 1 = open door anyway, 2 = disable lockdown; pass = pass uuids that link with type to disable lockdown or enter anyways; status = sector status: 1 = normal operations, 2 = lockdown, 3 = lock open
   saveTable(userTable,"userlist.txt")
 end
-if userTable.sectors == nil then
+if userTable.settings.sectors == nil then
   userTable.settings.sectors = {{["name"]="",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}
   saveTable(userTable,"userlist.txt")
 end

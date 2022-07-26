@@ -203,10 +203,11 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
                         if value.uuid == diagInfo2.sector then
                             print("Sector: " .. value.name)
                             it = true
+                            break
                         end
-                        if it == false then
-                            print("Sector: Error: Incorrect sector uuid")
-                        end
+                    end
+                    if it == false then
+                        print("Sector: Error: Incorrect sector uuid")
                     end
                 end
             end
@@ -293,10 +294,11 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
                     if value.uuid == diagInfo2.sector then
                         print("Sector: " .. value.name)
                         it = true
+                        break
                     end
-                    if it == false then
-                        print("Sector: Error: Incorrect sector uuid")
-                    end
+                end
+                if it == false then
+                    print("Sector: Error: Incorrect sector uuid")
                 end
             end
         end
