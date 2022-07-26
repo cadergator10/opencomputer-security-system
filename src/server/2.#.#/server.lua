@@ -173,6 +173,37 @@ if settingTable == nil then
   saveTable(settingTable,"settings.txt")
 end
 
+term.clear()
+local doorTable = loadTable("doorlist.txt")
+if doorTable == nil then
+  doorTable = {}
+end
+print("Checking all doors saved in doorlist...")
+if modem.isOpen(modemPort) == false then
+  modem.open(modemPort)
+end
+local count = 1
+local check = false
+for _,value in pairs(doorTable) do
+  if value["repeat"] ~= false then
+    modem.send(value["repeat"],modemPort,"rebroadcast",ser.serialize({["uuid"]=value.id,["data"]="doorCheck"}))
+  else
+    modem.send(value.id,modemPort,"doorCheck")
+  end
+  local e, _, from, port, _, command, msg = event.pull(1,"modem_message")
+  if e then
+
+  else
+    table.remove(doorTable,count)
+    check = true
+  end
+  count = count + 1
+end
+if check then
+  saveTable(doorTable,"doorlist.txt")
+end
+
+
 advWrite("Security server version: " .. version,0xFFFFFF,false,true,1,true)
 advWrite(#modules .. " modules loaded",nil,false,true,2,true)
 advWrite("---------------------------------------------------------------------------",0xFFFFFF,false,true,3,true)
@@ -181,15 +212,11 @@ advWrite("----------------------------------------------------------------------
 
 settingTable = loadTable("settings.txt")
 local userTable = loadTable("userlist.txt")
-local doorTable = loadTable("doorlist.txt")
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 if userTable == nil then
   userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false},["sectors"]={{["name"]="Placeholder Sector",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}}} --sets up setting var with one setting to start with.
   --New Sectors system will be linked to the userTable settings arrays. name = display name; uuid = linking id to get this pass; type = lockdown bypass type: 1 = open door anyway, 2 = disable lockdown; pass = pass uuids that link with type to disable lockdown or enter anyways; status = sector status: 1 = normal operations, 2 = lockdown, 3 = lock open
   saveTable(userTable,"userlist.txt")
-end
-if doorTable == nil then
-  doorTable = {}
 end
 if userTable.sectors == nil then
   userTable.settings.sectors = {{["name"]="",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}
@@ -435,6 +462,7 @@ while true do
       historyUpdate("Received door parameters from id: " .. add,0xFFFF80,false,true)
       local tmpTable = ser.unserialize(data)
       tmpTable["id"] = add
+      tmpTable["repeat"] = bing == true and from or false
       local isInAlready = false
       for i=1,#doorTable,1 do
         if doorTable[i].id == add then

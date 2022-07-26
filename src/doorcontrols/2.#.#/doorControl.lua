@@ -377,6 +377,8 @@ end
           end
         end
         thread.create(lightShow,ser.unserialize(data))
+      elseif msg == "doorCheck" then
+        send(modemPort,true,"true")
       end
     end
   end
@@ -402,7 +404,7 @@ end
 
 extraConfig = ttf.load("extraConfig.txt")
 settingData = ttf.load("doorSettings.txt")
-extraConfig.version = version
+extraConfig.version = doorVersion
 ttf.save(extraConfig,"extraConfig.txt")
 
 if modem.isOpen(modemPort) == false and link == nil then
