@@ -188,6 +188,7 @@ local function userListCallback()
       GUI.alert("Potential error in line 157 in function userListCallback()")
     end
   end
+  workspace:draw()
 end
  
 local function updateList()
