@@ -120,9 +120,12 @@ end
               component.proxy(key).setLightState(value.new[1].color)
               readerLights[key].old = readerLights[key].new[1].color
             else
-              readerLights[key].new[1].delay = readerLights[key].new[1].delay - 0.1
+              readerLights[key].new[1].delay = readerLights[key].new[1].delay - 0.05
               if readerLights[key].new[1].delay <= 0 then
                 table.remove(readerLights[key].new,1)
+                if #value.new == 0 then
+                  component.proxy(key).setLightState(value.new[1].check)
+                end
               end
             end
           end
@@ -131,18 +134,19 @@ end
           readerLights[key].old = readerLights[key].new
         end
       end
-      os.sleep(0.1)
+      os.sleep(0.05)
     end
   end
 
-  local function colorLink(key, var) --{["color"]=0,["delay"]=1} or just a number
+  local function colorLink(key, var, check) --{["color"]=0,["delay"]=1} or just a number
     local beta = true
     if beta then
       if readerLights[key] == nil then
         component.proxy(key).swipeIndicator(false)
-        readerLights[key] = {["new"]=0,["old"]=-1}
+        readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
       end
       readerLights[key].new = var
+      if check then readerLights[key].check = check end
     else
       if type(var) == "table" then
         thread.create(function(args)
@@ -189,7 +193,7 @@ end
       end
       if osVersion then colorLink(key,0) end
     else
-      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}}) end
+      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2}},0) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).toggle()
@@ -218,87 +222,92 @@ end
     end
   end
 
-  local function update(_, localAddress, remoteAddress, port, distance, msg, data)
-    if (testR == true) then
-      if msg == "checkSector" then --Making forceopen obselete. FIXME: Multiple sectors breaks this.
-        data = ser.unserialize(data)
-        if extraConfig.type == "single" then
-          if sector ~= false then
-            for i=1,#data,1 do
-              if data[i].uuid == sector then
-                if data[i].status == 1 then
-                  if doorType == 0 then
-                    component.os_doorcontroller.close()
-                  elseif doorType == 3 then
-                    component.os_rolldoorcontroller.close()
-                  elseif doorType == 1 then
-                    component.redstone.setOutput(redSide,0)
-                  elseif doorType == 2 then
-                    component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
-                  end
-                  if osVersion then
-                    colorLink(magReader.address,0)
-                  end
-                elseif data[i].status == 2 then
-                  if osVersion then
-                    colorLink(magReader.address,1)
-                  end
-                elseif data[i].status == 3 then
-                  if doorType == 0 then
-                    component.os_doorcontroller.open()
-                  elseif doorType == 3 then
-                    component.os_rolldoorcontroller.open()
-                  elseif doorType == 1 then
-                    component.redstone.setOutput(redSide,15)
-                  elseif doorType == 2 then
-                    component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
-                  end
-                  if osVersion then
-                    colorLink(magReader.address,4)
-                  end
-                end
+  local function sectorfresh(data)
+    if extraConfig.type == "single" then
+      if sector ~= false then
+        for i=1,#data,1 do
+          if data[i].uuid == sector then
+            if data[i].status == 1 then
+              if doorType == 0 then
+                component.os_doorcontroller.close()
+              elseif doorType == 3 then
+                component.os_rolldoorcontroller.close()
+              elseif doorType == 1 then
+                component.redstone.setOutput(redSide,0)
+              elseif doorType == 2 then
+                component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
               end
-            end
-          end
-        else
-          for _,value in pairs(settingData) do
-            if value.sector ~= false then
-              for i=1,#data,1 do
-                if data[i].uuid == value.sector then
-                  if data[i].status == 1 then
-                    if value.doorType == 0 or value.doorType == 3 then
-                      component.proxy(value.doorAddress).close()
-                    elseif value.doorType == 2 then
-                      component.redstone.setBundledOutput(2, { [value.redColor] = 0 } )
-                    end
-                    if osVersion then
-                      colorLink(value.reader,0)
-                    end
-                  elseif data[i].status == 2 then
-                    if osVersion then
-                      colorLink(value.reader,1)
-                    end
-                  elseif data[i].status == 3 then
-                    if value.doorType == 0 or value.doorType == 3 then
-                      component.proxy(value.doorAddress).open()
-                    elseif value.doorType == 2 then
-                      component.redstone.setBundledOutput(2, { [value.redColor] = 255 } )
-                    end
-                    if osVersion then
-                      colorLink(value.reader,4)
-                    end
-                  end
-                  break
-                end
+              if osVersion then
+                colorLink(magReader.address,0,0)
+              end
+            elseif data[i].status == 2 then
+              if osVersion then
+                colorLink(magReader.address,1,1)
+              end
+            elseif data[i].status == 3 then
+              if doorType == 0 then
+                component.os_doorcontroller.open()
+              elseif doorType == 3 then
+                component.os_rolldoorcontroller.open()
+              elseif doorType == 1 then
+                component.redstone.setOutput(redSide,15)
+              elseif doorType == 2 then
+                component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
+              end
+              if osVersion then
+                colorLink(magReader.address,4,4)
               end
             end
           end
         end
+      end
+    else
+      for _,value in pairs(settingData) do
+        if value.sector ~= false then
+          for i=1,#data,1 do
+            if data[i].uuid == value.sector then
+              if data[i].status == 1 then
+                if value.doorType == 0 or value.doorType == 3 then
+                  component.proxy(value.doorAddress).close()
+                elseif value.doorType == 2 then
+                  component.redstone.setBundledOutput(2, { [value.redColor] = 0 } )
+                end
+                if osVersion then
+                  colorLink(value.reader,0,0)
+                end
+              elseif data[i].status == 2 then
+                if osVersion then
+                  colorLink(value.reader,1,1)
+                end
+              elseif data[i].status == 3 then
+                if value.doorType == 0 or value.doorType == 3 then
+                  component.proxy(value.doorAddress).open()
+                elseif value.doorType == 2 then
+                  component.redstone.setBundledOutput(2, { [value.redColor] = 255 } )
+                end
+                if osVersion then
+                  colorLink(value.reader,4,4)
+                end
+              end
+              break
+            end
+          end
+        end
+      end
+    end
+  end
+
+  local function update(_, localAddress, remoteAddress, port, distance, msg, data)
+    if (testR == true) then
+      if msg == "checkSector" then --Making forceopen obselete. FIXME: Multiple sectors breaks this.
+        data = ser.unserialize(data)
+        sectorfresh(data)
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
         data = ser.unserialize(data)
         if data.id == modem.address then
           term.write("RemoteControl request received for ")
           term.write(extraConfig.type == "single" and settingData.name or settingData[data.key].name)
+          term.write("\n")
           send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=extraConfig.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF}}))
           if extraConfig.type == "single" then
             if data.type == "base" then
@@ -310,11 +319,11 @@ end
             end
           else
             if data.type == "base" then
-              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
+              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, 2,settingData[data.key].reader)
             elseif data.type == "toggle" then
-              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
+              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, 2,settingData[data.key].reader)
             elseif data.type == "delay" then
-              thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
+              thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, 2,settingData[data.key].reader)
             end
           end
         end
@@ -498,6 +507,7 @@ end
 for key,_ in pairs(component.list("os_rolldoorcontrol")) do
   component.proxy(key).close()
 end
+sectorfresh(query.data.sectors)
 
 if extraConfig.type == "single" then
   doorType = settingData.doorType
@@ -582,7 +592,7 @@ while true do
     else
       print("MAG READER IS NOT SET UP! PLEASE FIX")
       if crypt(str, extraConfig.cryptKey, true) ~= adminCard then
-        if osVersion then colorLink(address,{{["color"]=3,["delay"]=3},{["color"]=0,["delay"]=1}}) end
+        if osVersion then colorLink(address,{{["color"]=3,["delay"]=3}},0) end
         os.exit()
       end
       end
@@ -667,7 +677,7 @@ while true do
             end)
             term.write("Requesting bypass\n")
             if osVersion then
-              colorLink(address,{{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+              colorLink(address,{{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
             end
           end
         else
