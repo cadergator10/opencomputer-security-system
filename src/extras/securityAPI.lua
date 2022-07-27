@@ -96,6 +96,12 @@ end
 
   --------Called Functions
 
+local function update(_, localAddress, remoteAddress, port, distance, msg, data)
+  if msg == "doorCheck" then
+    send(modemPort,true,"true")
+  end
+end
+
   function security.setup()
     if component.isAvailable("tunnel") then
       link = component.tunnel
@@ -298,6 +304,12 @@ end
       os.exit()
     end
     got = nil
+    event.listen("modem_message", update)
+    process.info().data.signal = function(...)
+      print("caught hard interrupt")
+      event.ignore("modem_message", update)
+      os.exit()
+    end
   end
 
   function security.checkPass(str,loc)
