@@ -92,7 +92,7 @@ Beta Changelog:
 
 Queued updates:
 <ol>
-   <li>None Yet...</li>
+   <li>2.4.1: MineOS Database Modularity update</li>
 </ol>
 
 Future updates:
