@@ -124,7 +124,7 @@ end
               if readerLights[key].new[1].delay <= 0 then
                 table.remove(readerLights[key].new,1)
                 if #value.new == 0 then
-                  component.proxy(key).setLightState(value.new[1].check)
+                  component.proxy(key).setLightState(value.check)
                 end
               end
             end
@@ -193,7 +193,7 @@ end
       end
       if osVersion then colorLink(key,0) end
     else
-      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2}},0) end
+      if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}}) end
       if(doorTypeH == 0 or doorTypeH == 3)then
         if doorAddressH ~= true then
           component.proxy(doorAddressH).toggle()
