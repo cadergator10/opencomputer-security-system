@@ -642,7 +642,11 @@ local function doorediting() --TEST: Can this edit the doors?
                         end
                     end
                 end
-                table.insert(editTable,{["key"]=j,["doorType"]=0,["redColor"]=0,["redSide"]=0,["reader"]="NAN",["doorAddress"]="NAN",["delay"]=5,["cardRead"]={{["uuid"]=uuid.next(),["call"]="checkstaff",["param"]=0,["request"]="supreme",["data"]=false}},["toggle"]=0,["forceOpen"]=1,["bypassLock"]=0,["name"]="new door"})
+                if sec then
+                    table.insert(editTable,{["key"]=j,["doorType"]=0,["redColor"]=0,["redSide"]=0,["reader"]="NAN",["doorAddress"]="NAN",["delay"]=5,["cardRead"]={{["uuid"]=uuid.next(),["call"]="checkstaff",["param"]=0,["request"]="supreme",["data"]=false}},["toggle"]=0,["sector"]=false,["name"]="new door"})
+                else
+                    table.insert(editTable,{["key"]=j,["doorType"]=0,["redColor"]=0,["redSide"]=0,["reader"]="NAN",["doorAddress"]="NAN",["delay"]=5,["cardRead"]={{["uuid"]=uuid.next(),["call"]="checkstaff",["param"]=0,["request"]="supreme",["data"]=false}},["toggle"]=0,["forceOpen"]=1,["bypassLock"]=0,["name"]="new door"})
+                end
                 pageChange(pageNum,#editTable,editChange)
             elseif char == "r" and diagInfo.type == "multi" then
                 pageChangeAllowed = false
