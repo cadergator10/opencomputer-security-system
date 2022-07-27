@@ -392,7 +392,6 @@ end
 
 function security.crypt(str,reverse)
   return true,crypt(str,extraConfig.cryptKey,reverse)
-  return false, "unknown error"
 end
 
 function security.send(wait,...)
