@@ -14,8 +14,9 @@ local fs = require("Filesystem")
 local writer
 
 local aRD = fs.path(system.getCurrentScript())
-local stylePath = aRD.."Styles/"
+local stylePath = aRD .. "Styles/"
 local style = "default.lua"
+local modulesPath = aRD .. "Modules/"
 local loc = system.getLocalization(aRD .. "Localizations/")
 
 ----------
@@ -25,6 +26,7 @@ local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLa
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
 local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, extraVar3, settingsButton
 local sectComboBox, sectLockBox, sectNewButton, sectDelButton, sectUserButton
+local modulesLayout
 
 local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 local guiCalls = {}
@@ -741,6 +743,24 @@ local function sectorPassManager() --Manages passes that bypass sector lockdown 
   refreshInput()
 end
 
+local function passMod()
+
+end
+
+local function devMod()
+
+end
+
+local function modulePress()
+  local selected = modulesLayout.selectedItem
+  local object = modulesLayout:getItem(selected)
+  if object.isDefault then
+
+  else
+
+  end
+end
+
 ----------GUI SETUP
 if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
@@ -775,7 +795,7 @@ end
 
 workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,style.windowFill))
  
-local layout = window:addChild(GUI.layout(1, 1, window.width, window.height, 1, 1))
+window.modLayout = window:addChild(GUI.layout(88, 12, window.width, 36, 1, 1))
  
 local contextMenu = menu:addContextMenuItem("File")
 contextMenu:addItem("Close").onTouch = function()
@@ -794,6 +814,35 @@ if settingTable == nil then
   saveTable(settingTable,aRD .. "dbsettings.txt")
 end
 updateList()
+
+--Experimental modules
+modulesLayout = window:addChild(GUI.list(88,12,1,1,3,0,style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+local modules = fs.list(modulesPath)
+table.insert(modules,"dev",1)
+table.insert(modules,"passes",1)
+for i = 1, #modules do
+  if i <= 2 then
+    local object = modulesLayout:addItem(modules[i])
+    object.module = i == 2 and devMod or passMod
+    object.isDefault = true
+    object.onTouch = modulePress
+  else
+    local result, reason = loadfile(modulesPath .. modules[i] .. "Main.lua")
+    if result then
+      local success, result = pcall(result, workspace, window, loc)
+      if success then
+        local object = modulesLayout:addItem(result.name)
+        object.module = result
+        object.isDefault = false
+        object.onTouch = modulePress
+      else
+        error("Failed to execute module " .. modules[i] .. ": " .. tostring(result))
+      end
+    else
+      error("Failed to load module " .. modules[i] .. ": " .. tostring(reason))
+    end
+  end
+end
  
 --user infos
 local labelSpot = 12
