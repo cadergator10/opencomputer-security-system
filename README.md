@@ -92,7 +92,7 @@ Beta Changelog:
 
 Queued updates:
 <ol>
-   <li>2.4.1: MineOS Database Modularity update</li>
+   <li>2.5.0: MineOS Database Modularity update: Going to rework the entire MineOS database to the best of my ability, using layouts as much as I can around it. Also will do minor things here and there, like server guis and such.</li>
 </ol>
 
 Future updates:
