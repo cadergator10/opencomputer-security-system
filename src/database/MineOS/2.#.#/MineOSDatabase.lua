@@ -138,3 +138,48 @@ local function callModem(callPort,...) --Does it work?
 end
 
 ----------Callbacks
+
+
+
+----------Setup GUI
+if modem.isOpen(modemPort) == false then
+  modem.open(modemPort)
+end
+settingTable = loadTable(aRD .. "dbsettings.txt")
+if settingTable == nil then
+  GUI.alert(loc.cryptalert)
+  settingTable = {["cryptKey"]={1,2,3,4,5},["style"]="default.lua",["autoupdate"]=false}
+  saveTable(settingTable,aRD .. "dbsettings.txt")
+end
+if settingTable.style == nil then
+  settingTable.style = "default.lua"
+  saveTable(settingTable,aRD .. "dbsettings.txt")
+end
+if settingTable.autoupdate == nil then
+  settingTable.autoupdate = false
+  saveTable(settingTable,aRD .. "dbsettings.txt")
+end
+style = fs.readTable(stylePath .. settingTable.style)
+local check,_,_,_,_,work = callModem(modemPort,"getuserlist")
+if check then
+  work = ser.unserialize(crypt(work,settingTable.cryptKey,true))
+  saveTable(work,aRD .. "userlist.txt")
+  userTable = work
+else
+  GUI.alert(loc.userlistfailgrab)
+  userTable = loadTable(aRD .. "userlist.txt")
+  if userTable == nil then
+    userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false},["sectors"]={{["name"]="",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}}}
+  end
+end
+
+workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,style.windowFill))
+
+window.modLayout = window:addChild(GUI.layout(2, 12, window.width, 36, 1, 1))
+
+local contextMenu = menu:addContextMenuItem("File")
+contextMenu:addItem("Close").onTouch = function()
+  window:remove()
+  --os.exit()
+end
+

@@ -18,7 +18,7 @@ local uuid = require("uuid")
 local version = "2.4.0"
 
 local redstone = {}
-local commands = {"updateuserlist","autoInstallerQuery","setDoor","loginfo","rcdoors","redstoneUpdated","checkLinked","getuserlist","getvar","setvar","checkRules"}
+local commands = {"signIn","updateuserlist","autoInstallerQuery","setDoor","loginfo","rcdoors","redstoneUpdated","checkLinked","getuserlist","getvar","setvar","checkRules"}
 local skipcrypt = {"autoInstallerQuery","rcdoors","getuserlist","loginfo"}
 
 local modules = {}
@@ -167,6 +167,11 @@ for file in fs.list(modulepath .. "/") do
   end
 end
 
+local logUsers = loadTable("users.txt")
+if logUsers == nil then
+  logUsers = {}
+  saveTable(logUsers,"users.txt")
+end
 local settingTable = loadTable("settings.txt")
 if settingTable == nil then
   settingTable = {["cryptKey"]={1,2,3,4,5},["pass"]=false}
@@ -451,6 +456,32 @@ while true do
       saveTable(userTable, "userlist.txt")
       for _,value in pairs(modules) do
         value.setup(userTable, doorTable)
+      end
+    elseif command == "signIn" then
+      data = ser.unserialize(data)
+      if data.command == "signIn" then --TODO: Finish sign in stuff
+        if crypt(logUsers[data.user].pass,settingTable.cryptKey,true) == data.pass then
+          bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers[data.user].perm),settingTable.cryptKey))
+        else
+          bdcst(from,port,crypt("false",settingTable.cryptKey))
+        end
+      elseif data.command == "add" then
+        logUsers[data.user] = data.data
+      elseif data.command == "del" then
+        logUsers[data.user] = nil
+      elseif data.command == "grab" then
+        local check = false
+        for _,value in pairs(logUsers[data.user].perm) do
+          if value == "all" or value == "dev.usermanagement" then
+            check = true
+            break
+          end
+        end
+        if check then
+          bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers),settingTable.cryptKey))
+        else
+          bdcst(from,port,crypt("false",settingTable.cryptKey))
+        end
       end
     elseif command == "autoInstallerQuery" then
       data = {}
