@@ -1,24 +1,29 @@
 local userTable = {}
 local doorTable = {}
+local server = {}
 local modemPort = 199
 
 local component = require("component")
 local modem = component.modem
 local ser = require("serialization")
+local uuid = require("uuid")
 
 module = {}
 module.name = "sectors"
 module.commands = {"sectorupdate","doorsector","doorsecupdate"}
 module.skipcrypt = {"sectorupdate"}
+module.table = {["sectors"] = {{["name"]="Placeholder Sector",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}}
 module.debug = false
 
-function module.init() --Called when server is first started
-
-end
-
-function module.setup(setit ,doors) --Called when userlist is updated or server is first started
+function module.init(setit ,doors, serverCommands) --Called when server is first started. Passes userTable and doorTable.
   userTable = setit
   doorTable = doors
+  server = serverCommands
+  if module.debug then print("Received " .. #userTable.settings.sectors .. " Sectors\n") end
+  return "getSectorList",ser.serialize(userTable.settings.sectors)
+end
+
+function module.setup() --Called when userlist is updated or server is first started
   if module.debug then print("Received " .. #userTable.settings.sectors .. " Sectors\n") end
   return "getSectorList",ser.serialize(userTable.settings.sectors)
 end
@@ -27,12 +32,12 @@ function module.message(command,datar) --Called when a command goes past all def
   local data = ser.unserialize(datar)
   if command == "sectorupdate" then
     userTable.settings.sectors = data
-    return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector data changed",["color"]=nil,["line"]=false}},userTable,false,"checkSector",ser.serialize(data)
+    return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector data changed",["color"]=nil,["line"]=false}},true,false,"checkSector",ser.serialize(data)
   elseif command == "doorsector" then
     for i=1,#userTable.settings.sectors,1 do
       if userTable.settings.sectors[i].uuid == data.sector then
         if userTable.settings.sectors[i].status == 1 then
-          return true,nil,nil, true,"true"
+          return true,nil,false,true,"true"
         else
           local passed = false
           local user = false
@@ -71,15 +76,15 @@ function module.message(command,datar) --Called when a command goes past all def
           end
           if passed then
             if userTable.settings.sectors[i].status == 3 and userTable.settings.sectors[i].type == 1 then
-              return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Cannot bypass open sector " .. userTable.settings.sectors[i].name,["color"]=nil,["line"]=false}}, nil, true,"false"
+              return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Cannot bypass open sector " .. userTable.settings.sectors[i].name,["color"]=nil,["line"]=false}},false, true,"false"
             end
             if userTable.settings.sectors[i].type == 1 then
               return true,nil,nil,true,"openbypass"
             else
-              return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " requested a bypass of " .. userTable.settings.sectors[i].name,["color"]=0xFF0000,["line"]=false}},nil,true,"lockbypass"
+              return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " requested a bypass of " .. userTable.settings.sectors[i].name,["color"]=0xFF0000,["line"]=false}},false,true,"lockbypass"
             end
           else
-            return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " failed sector check of " .. userTable.settings.sectors[i].name,["color"]=nil,["line"]=false}},nil,true,"false"
+            return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " failed sector check of " .. userTable.settings.sectors[i].name,["color"]=nil,["line"]=false}},false,true,"false"
           end
         end
       end
@@ -88,13 +93,17 @@ function module.message(command,datar) --Called when a command goes past all def
     for i=1,#userTable.settings.sectors,1 do
       if userTable.settings.sectors[i].uuid == datar then
         userTable.settings.sectors[i].status = 1
-        return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector Lockdown lifted of " .. userTable.settings.sectors[i].name,["color"]=nil,["line"]=false}},userTable,true,"checkSector",ser.serialize(userTable.settings.sectors)
+        return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector Lockdown lifted of " .. userTable.settings.sectors[i].name,["color"]=nil,["line"]=false}},true,"checkSector",ser.serialize(userTable.settings.sectors)
       end
     end
   else
 
   end
   return false
+end
+
+function module.piggyback(command,data) --Called after a command is passed. Passed to all modules which return nothing.
+
 end
 
 return module
