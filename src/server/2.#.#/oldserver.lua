@@ -555,7 +555,7 @@ while true do
                     dis["status"] = false
                     dis["reason"] = 1
                     data = crypt(ser.serialize(dis), settingTable.cryptKey)
-                    historyUpdate(" tablet not linked\n",0x990000,false,true)
+                    historyUpdate(" tablet not linked",0x990000,false,true)
                     bdcst(from, port, data)
                 end--IMPORTANT: Hello
             end

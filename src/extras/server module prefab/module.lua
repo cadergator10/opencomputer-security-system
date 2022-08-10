@@ -12,7 +12,7 @@ module.debug = false
 function module.init(settings, doors, serverCommands) --Called when server is first started
   settingstable = settings
   doortable = doors
-  server = serverCommands --Sends certain functions for module to use. crypt lets you crypt/decrypt files with the saved cryptKey on the server, send lets you send the message to the device (only available in message and piggyback functions), and copy is a simple deepcopy function for tables to use if needed.
+  server = serverCommands --Sends certain functions for module to use. crypt lets you crypt/decrypt files with the saved cryptKey on the server, send lets you send the message to the device (only available in message and piggyback functions), modulemsg lets you send a command and message through all the modules, and copy is a simple deepcopy function for tables to use if needed.
 end
 
 function module.setup() --Called when userlist is updated or server is first started

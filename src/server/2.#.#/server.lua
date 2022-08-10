@@ -1,8 +1,5 @@
 local modemPort = 199
 
-local lockDoors = false
-local forceOpen = false
-
 local component = require("component")
 local event = require("event")
 local modem = component.modem
@@ -15,7 +12,7 @@ local shell = require("shell")
 local process = require("process")
 local uuid = require("uuid")
 
-local version = "2.4.0"
+local version = "2.5.0"
 
 local commands = {"setdevice","signIn","updateuserlist","loginfo","getuserlist"}
 local skipcrypt = {"getuserlist","loginfo"}
@@ -173,9 +170,6 @@ local function bdcst(address,port,data,data2)
     end
   end
 end
-local function modulebdcst(direct,data,data2)
-  bdcst(direct and from or nil,modemPort,data,data2)
-end
 
 --------Getting tables and setting up terminal
 term.clear()
@@ -225,9 +219,9 @@ local count = 1
 local check = false
 for _,value in pairs(doorTable) do
   if value["repeat"] ~= false then
-    modem.send(value["repeat"],modemPort,"rebroadcast",ser.serialize({["uuid"]=value.id,["data"]="doorCheck"}))
+    modem.send(value["repeat"],modemPort,"rebroadcast",ser.serialize({["uuid"]=value.id,["data"]="deviceCheck"}))
   else
-    modem.send(value.id,modemPort,"doorCheck")
+    modem.send(value.id,modemPort,"deviceCheck")
   end
   local e, _, from, port, _, command, msg = event.pull(1,"modem_message")
   if e then
@@ -239,7 +233,7 @@ for _,value in pairs(doorTable) do
   count = count + 1
 end
 if check then
-  saveTable(doorTable,"doorlist.txt")
+  saveTable(doorTable,"devicelist.txt")
 end
 
 advWrite("Servertine version: " .. version,0xFFFFFF,false,true,1,true)
@@ -251,8 +245,8 @@ settingTable = loadTable("settings.txt")
 local userTable = loadTable("userlist.txt")
 
 if userTable == nil then
-  userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false},["sectors"]={{["name"]="Placeholder Sector",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}}} --sets up setting var with one setting to start with.
-  --New Sectors system will be linked to the userTable settings arrays. name = display name; uuid = linking id to get this pass; type = lockdown bypass type: 1 = open door anyway, 2 = disable lockdown; pass = pass uuids that link with type to disable lockdown or enter anyways; status = sector status: 1 = normal operations, 2 = lockdown, 3 = lock open
+  userTable = {} --sets up setting var without any settings in it.
+  --All setup for security alone has been removed from here due to it being seperated into a module entirely.
   saveTable(userTable,"userlist.txt")
 else
   if userTable.refactored ~= true then
@@ -279,7 +273,13 @@ if settingTable.pass == nil then
   saveTable(settingTable,"settings.txt")
 end
 
-local server = {["crypt"] = function(str,reverse) return crypt(str,settingTable.cryptKey,reverse) end,["copy"] = deepcopy,["send"]=modulebdcst}
+local server = {["crypt"] = function(str,reverse)
+  return crypt(str,settingTable.cryptKey,reverse)
+end,["copy"] = deepcopy,["send"]=function(direct,data,data2)
+  bdcst(direct and from or nil,modemPort,data,data2)
+end,["modulemsg"]=function(command,data)
+  return msgToModule("message",command,data,add)
+end}
 
 for _,value in pairs(modules) do
   addcommands(value.commands,value.skipcrypt,value.table)
@@ -334,7 +334,7 @@ while true do
 
     if go then data = crypt(msg, settingTable.cryptKey, true) end
 
-    if command == "updateuserlist" then
+    if command == "updateuserlist" then --Receives a table of the parts of the table that need to be changed. Because it will do this instead of resetting the entire table, different devices won't mess with other device configurations.
       for key,value in pairs(ser.unserialize(data)) do
         userTable[key] = value
       end
@@ -416,7 +416,7 @@ while true do
       data = docrypt and crypt(data,settingTable.cryptKey) or data
       bdcst(from, port, data)
     else
-      local p1,p2,p3,p4,p5,p6,p7 = msgToModule("message",command,data)
+      local p1,p2,p3,p4,p5,p6,p7 = msgToModule("message",command,data,add)
       if p1 then
         if p4 ~= nil then
           if p4 == false then
