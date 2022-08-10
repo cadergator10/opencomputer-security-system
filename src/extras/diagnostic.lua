@@ -101,8 +101,8 @@ local function getPassID(command,rules)
         end
       end
     end
-    for i=1,#settings.data.calls,1 do
-      if command == settings.data.calls[i] then
+    for i=1,#settings.data.passSettings.calls,1 do
+      if command == settings.data.passSettings.calls[i] then
         return true, i, bill
       end
     end
@@ -436,21 +436,21 @@ local function diagThr(num,diagInfo)
             setGui(4,"")
             local a, t = getPassID(diagInfo.cardRead[pageNum].call)
             if a then
-                setGui(5,t ~= 0 and "Pass name: " .. settings.data.label[t] or "Pass name: Staff")
-                setGui(6,t ~= 0 and "Pass type: " .. passTypes[settings.data.type[t]] or "Pass type: Bool")
-                if (settings.data.type[t] == "string" or settings.data.type[t] == "-string") and t ~= 0 then
+                setGui(5,t ~= 0 and "Pass name: " .. settings.data.passSettings.label[t] or "Pass name: Staff")
+                setGui(6,t ~= 0 and "Pass type: " .. passTypes[settings.data.passSettings.type[t]] or "Pass type: Bool")
+                if (settings.data.passSettings.type[t] == "string" or settings.data.passSettings.type[t] == "-string") and t ~= 0 then
                     setGui(6,"Requires exact string: " .. diagInfo.cardRead[pageNum].param)
-                elseif (settings.data.type[t] == "int" or settings.data.type[t] == "-int") and t ~= 0 then
-                    if settings.data.above[t] == true and settings.data.type[t] == "int" then
+                elseif (settings.data.passSettings.type[t] == "int" or settings.data.passSettings.type[t] == "-int") and t ~= 0 then
+                    if settings.data.passSettings.above[t] == true and settings.data.passSettings.type[t] == "int" then
                         setGui(6,"Requires level above: " .. diagInfo.cardRead[pageNum].param)
                     else
-                        if settings.data.type[t] == "-int" then
-                            setGui(6,"Requires group: " .. settings.data.data[t][diagInfo.cardRead[pageNum].param])
+                        if settings.data.passSettings.type[t] == "-int" then
+                            setGui(6,"Requires group: " .. settings.data.passSettings.data[t][diagInfo.cardRead[pageNum].param])
                         else
                             setGui(6,"Requires exact level: " .. diagInfo.cardRead[pageNum].param)
                         end
                     end
-                elseif settings.data.type[t] == "bool" or t == 0 then
+                elseif settings.data.passSettings.type[t] == "bool" or t == 0 then
                     setGui(6,"No extra parameters")
                 end
                 setGui(7,"Rule Type: " .. diagInfo.cardRead[pageNum].request)
@@ -460,7 +460,7 @@ local function diagThr(num,diagInfo)
                     for i=1,#diagInfo.cardRead[pageNum].data,1 do
                         local q,p,r = getPassID(diagInfo.cardRead[pageNum].data[i],diagInfo.cardRead)
                         if q then
-                            setGui(i + 9,p ~= 0 and settings.data.label[p] .. " | " .. passTypes[settings.data.type[p]] .. " | " .. diagInfo.cardRead[r].param or "Staff | Bool | " .. diagInfo.cardRead[r].param)
+                            setGui(i + 9,p ~= 0 and settings.data.passSettings.label[p] .. " | " .. passTypes[settings.data.passSettings.type[p]] .. " | " .. diagInfo.cardRead[r].param or "Staff | Bool | " .. diagInfo.cardRead[r].param)
                         else
                             setGui(i + 9,"Error (pass might be missing)")
                         end
@@ -798,8 +798,8 @@ local function doorediting() --TEST: Can this edit the doors?
                     readLoad.supreme = tonumber(readCursor())
                     local nextmsg = {}
                     nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
-                    for i=1,#settings.data.var,1 do
-                        nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. settings.data.label[i]
+                    for i=1,#settings.data.passSettings.var,1 do
+                        nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. settings.data.passSettings.label[i]
                     end
                     local passFunc = function(type,num)
                         local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
@@ -811,27 +811,27 @@ local function doorediting() --TEST: Can this edit the doors?
                             newRules.param = 0
                         else
                             newRules["tempint"] = tonumber(text)
-                            newRules["call"] = settings.data.calls[tonumber(text)]
-                            if settings.data.type[tonumber(text)] == "string" or settings.data.type == "-string" then
+                            newRules["call"] = settings.data.passSettings.calls[tonumber(text)]
+                            if settings.data.passSettings.type[tonumber(text)] == "string" or settings.data.passSettings.type == "-string" then
                                 flush()
                                 setGui(22,"What is the string you would like to read? Enter text.")
                                 text = readCursor()
                                 newRules["param"] = text
-                            elseif settings.data.type[tonumber(text)] == "bool" then
+                            elseif settings.data.passSettings.type[tonumber(text)] == "bool" then
                                 newRules["param"] = 0
-                            elseif settings.data.type[tonumber(text)] == "int" then
+                            elseif settings.data.passSettings.type[tonumber(text)] == "int" then
                                 flush()
-                                if settings.data.above[tonumber(text)] == true then
+                                if settings.data.passSettings.above[tonumber(text)] == true then
                                     setGui(22,"What level and above should be required?")
                                 else
                                     setGui(22,"what level exactly should be required?")
                                 end
                                 text = readCursor()
                                 newRules["param"] = tonumber(text)
-                            elseif settings.data.type[tonumber(text)] == "-int" then
+                            elseif settings.data.passSettings.type[tonumber(text)] == "-int" then
                                 local nextmsg = "What group are you wanting to set?"
-                                for i=1,#settings.data.data[tonumber(text)],1 do
-                                    nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.data[tonumber(text)][i]
+                                for i=1,#settings.data.passSettings.data[tonumber(text)],1 do
+                                    nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.passSettings.data[tonumber(text)][i]
                                 end
                                 flush()
                                 setGui(22,nextmsg)
@@ -859,7 +859,7 @@ local function doorediting() --TEST: Can this edit the doors?
                         if text ~= 0 then
                             local nextAdd = "Which pass do you want to add? "
                             for j=1,addNum,1 do
-                                nextAdd = nextAdd .. ", " .. j .. " = " .. settings.data.label[savedRead[j].tempint]
+                                nextAdd = nextAdd .. ", " .. j .. " = " .. settings.data.passSettings.label[savedRead[j].tempint]
                             end
                             for j=1,text,1 do
                                 flush()
@@ -880,8 +880,8 @@ local function doorediting() --TEST: Can this edit the doors?
                     end
                 else
                     local nextmsg = "What should be read? 0 = staff"
-                    for i=1,#settings.data.var,1 do
-                        nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.label[i]
+                    for i=1,#settings.data.passSettings.var,1 do
+                        nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.passSettings.label[i]
                     end
                     flush()
                     setGui(22,nextmsg, true)
@@ -891,27 +891,27 @@ local function doorediting() --TEST: Can this edit the doors?
                         savedRead[1].call = "checkstaff"
                         savedRead[1].param = 0
                     else
-                        savedRead[1].call = settings.data.calls[tonumber(text)]
-                        if settings.data.type[tonumber(text)] == "string" or settings.data.type[tonumber(text)] == "-string" then
+                        savedRead[1].call = settings.data.passSettings.calls[tonumber(text)]
+                        if settings.data.passSettings.type[tonumber(text)] == "string" or settings.data.passSettings.type[tonumber(text)] == "-string" then
                             flush()
                             setGui(22,"What is the string you would like to read? Enter text.")
                             text = readCursor()
                             savedRead[1].param = text:sub(1,-2)
-                        elseif settings.data.type[tonumber(text)] == "bool" then
+                        elseif settings.data.passSettings.type[tonumber(text)] == "bool" then
                             savedRead[1].param = 0
-                        elseif settings.data.type[tonumber(text)] == "int" then
+                        elseif settings.data.passSettings.type[tonumber(text)] == "int" then
                             flush()
-                            if settings.data.above[tonumber(text)] == true then
+                            if settings.data.passSettings.above[tonumber(text)] == true then
                                 setGui(22,"What level and above should be required?")
                             else
                                 setGui(22,"what level exactly should be required?")
                             end
                             text = readCursor()
                             savedRead[1].param = tonumber(text)
-                        elseif settings.data.type[tonumber(text)] == "-int" then
+                        elseif settings.data.passSettings.type[tonumber(text)] == "-int" then
                             local nextmsg = "What group are you wanting to set?"
-                            for i=1,#settings.data.data[tonumber(text)],1 do
-                                nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.data[tonumber(text)][i]
+                            for i=1,#settings.data.passSettings.data[tonumber(text)],1 do
+                                nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.passSettings.data[tonumber(text)][i]
                             end
                             flush()
                             setGui(22,nextmsg)
@@ -1092,7 +1092,7 @@ if link == nil then
 else
     modem.close(modemPort)
 end
-sendit(nil,modemPort,true,"autoInstallerQuery")
+sendit(nil,modemPort,true,"getquery",ser.serialize({"passSettings","sectors"}))
 local e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then
