@@ -5,17 +5,19 @@ local event = require("event")
 local modem = component.modem
 local ser = require ("serialization")
 local term = require("term")
-local ios = require("io")
 local gpu = component.gpu
 local fs = require("filesystem")
 local shell = require("shell")
 local process = require("process")
-local uuid = require("uuid")
+local thread = require("thread")
+local keyboard = require("keyboard")
 
 local version = "2.5.0"
 
-local commands = {"setdevice","signIn","updateuserlist","loginfo","getuserlist"}
-local skipcrypt = {"getuserlist","loginfo"}
+local serverModules = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/modules/modules.txt"
+
+local commands = {"setdevice","signIn","updateuserlist","loginfo","getquery"}
+local skipcrypt = {"loginfo","getquery"}
 
 local modules = {}
 local modulepath = "/modules"
@@ -23,6 +25,8 @@ local modulepath = "/modules"
 local viewport = 0
 local viewhistory = {}
 local dohistory = true
+local eventcheckpull = true
+local evthread
 
 local debug = false
 
@@ -296,15 +300,104 @@ end
 server = nil
 
 --------Main Loop & Program
+local function serversettings()
+  local selected = 1
+  local set = {"add/update modules","delete all modules","update server","close menu"}
+  local fresh = function()
+    local nextmsg = "Select one:"
+    for i=1,#set,1 do
+      if selected == i then
+        nextmsg = nextmsg .. " [" .. set[i] .. "] :"
+      else
+        nextmsg = nextmsg .. "  " .. set[i] .. "  :"
+      end
+    end
+    advWrite(nextmsg,0xFFFFFF,true,true,#viewhistory + 6,true)
+  end
+  fresh()
+  os.sleep(0.5)
+  while true do
+    local _,_,_,p = event.pull("key_down")
+    local char = keyboard.keys[p]
+    if char == "left" then
+      if selected > 1 then
+        selected = selected - 1
+        fresh()
+        os.sleep(0.5)
+      end
+    elseif char == "right" then
+      if selected < #set then
+        selected = selected + 1
+        fresh()
+        os.sleep(0.5)
+      end
+    elseif char == "enter" then
+      if selected == 1 then
+        dohistory = false
+        os.execute("wget -f " .. serverModules .. " temp.txt")
+        local mlist = loadTable("temp.txt")
+        local skip = true
+        while skip do
+          term.clear()
+          local counter = 0
+          for i=1,#mlist,1 do
+            advWrite(i .. ". " .. mlist[i].name,0xFFFFFF,true,true,i + 4,true)
+            counter = counter + 1
+          end
+          advWrite("Enter the number of the module you want to install",0xFFFFFF,true,true,counter + 5,true)
+          advWrite("If you dont want to install any more modules, enter 0",0xFFFFFF,true,true,counter + 6,true)
+          local text = tonumber(term.read())
+          if text ~= 0 and text <= #mlist then
+            advWrite("Downloading " .. mlist[text].name .. ": as " .. mlist[text].filename,0xFFFFFF,true,true,#viewhistory + 6,true)
+            os.execute("wget -f " .. mlist[text].url .. " modules/" .. mlist[text].filename)
+          else
+            skip = false
+          end
+        end
+        print("finished")
+        os.execute("del temp.txt")
+      elseif selected == 2 then
+        local path = shell.getWorkingDirectory()
+        fs.remove(path .. "/modules")
+        os.execute("mkdir modules")
+        term.clear()
+        print("Wiped modules. Restart server")
+        os.exit()
+      elseif selected == 3 then
+        evthread:kill()
+        term.clear()
+        print("Downloading server...")
+        os.execute("wget -f https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/server.lua server.lua")
+        print("Restart server")
+        os.exit()
+      elseif selected == 4 then
+        advWrite("Press enter to bring up menu",0xFFFFFF,false,true,#viewhistory + 6,true)
+        eventcheckpull = true
+        thread.current():kill()
+      end
+    end
+  end
+end
 
+local function eventCheck()
+  local e, p1, from, port, p2, command, msg = event.pullMultiple("modem_message")
+  if e == "modem_message" then
+    event.push("itzamsg", p1, from, port, p2, command, msg)
+  elseif e == "key_down" and keyboard.keys[port] == "enter" and eventcheckpull then
+    thread.create(serversettings)
+    eventcheckpull = false
+  end
+end
+
+advWrite("Press enter to bring up menu",0xFFFFFF,false,true,#viewhistory + 6,true)
+evthread = thread.create(eventCheck)
 while true do
   if modem.isOpen(modemPort) == false then
     modem.open(modemPort)
   end
-
   bing,add = false, false
-  local command, msg
-  _, _, from, port, _, command, msg = event.pull("modem_message")
+  local command, msg,e
+  e, _, from, port, _, command, msg = event.pull("itzamsg")
   add = from
   if command == "rebroadcast" then --Checking if message is from range extender
     bing = true

@@ -2,7 +2,7 @@
 
 --Library for saving/loading table for all this code. all the settings below are saved in it.
 local ttf=require("tableToFile")
-local doorVersion = "2.4.0"
+local doorVersion = "2.5.0"
 local testR = true
 local saveRefresh = true
 
@@ -33,13 +33,11 @@ local modemPort = 199
 local diagPort = 180
 
 local component = require("component")
-local gpu = component.gpu
 local event = require("event")
 local ser = require("serialization")
 local term = require("term")
 local thread = require("thread")
 local process = require("process")
-local uuid = require("uuid")
 local computer = component.computer
 
 local magReader = component.os_magreader
@@ -225,9 +223,9 @@ end
   local function sectorfresh(data)
     if extraConfig.type == "single" then
       if sector ~= false then
-        for i=1,#data,1 do
-          if data[i].uuid == sector then
-            if data[i].status == 1 then
+        for key,value in pairs(data) do
+          if key == sector then
+            if value == 1 then
               if doorType == 0 then
                 component.os_doorcontroller.close()
               elseif doorType == 3 then
@@ -240,11 +238,11 @@ end
               if osVersion then
                 colorLink(magReader.address,0,0)
               end
-            elseif data[i].status == 2 then
+            elseif value == 2 then
               if osVersion then
                 colorLink(magReader.address,1,1)
               end
-            elseif data[i].status == 3 then
+            elseif value == 3 then
               if doorType == 0 then
                 component.os_doorcontroller.open()
               elseif doorType == 3 then
@@ -264,9 +262,9 @@ end
     else
       for _,value in pairs(settingData) do
         if value.sector ~= false then
-          for i=1,#data,1 do
-            if data[i].uuid == value.sector then
-              if data[i].status == 1 then
+          for key,value in pairs(data) do
+            if key == value.sector then
+              if value == 1 then
                 if value.doorType == 0 or value.doorType == 3 then
                   component.proxy(value.doorAddress).close()
                 elseif value.doorType == 2 then
@@ -275,11 +273,11 @@ end
                 if osVersion then
                   colorLink(value.reader,0,0)
                 end
-              elseif data[i].status == 2 then
+              elseif value == 2 then
                 if osVersion then
                   colorLink(value.reader,1,1)
                 end
-              elseif data[i].status == 3 then
+              elseif value == 3 then
                 if value.doorType == 0 or value.doorType == 3 then
                   component.proxy(value.doorAddress).open()
                 elseif value.doorType == 2 then
@@ -299,7 +297,7 @@ end
 
   local function update(_, localAddress, remoteAddress, port, distance, msg, data)
     if (testR == true) then
-      if msg == "checkSector" then --Making forceopen obselete. FIXME: Multiple sectors breaks this.
+      if msg == "checkSector" then --Making forceopen obselete.
         data = ser.unserialize(data)
         sectorfresh(data)
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
@@ -426,22 +424,11 @@ if magReader.swipeIndicator ~= nil then
 end
 
 local checkBool = false
-send(modemPort,true,"autoInstallerQuery")
+send(modemPort,true,"getquery",ser.serialize({"passSettings","sectorStatus"}))
 local e,_,_,_,_,query = event.pull(3,"modem_message")
 query = ser.unserialize(query)
 if e ~= nil then
   if extraConfig.type == "single" then
-    if type(settingData.cardRead) == "number" then
-      settingData.cardRead = settingData.cardRead == 6 and "checkstaff" or query.data.calls[settingData.cardRead - #baseVariables]
-      ttf.save(settingData,"doorSettings.txt")
-    end
-    if type(settingData.cardRead) ~= "table" then
-        local t1, t2 = settingData.cardRead, settingData.accessLevel
-        settingData.accessLevel = nil
-        settingData.cardRead = {}
-        settingData.cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
-        ttf.save(settingData,"doorSettings.txt")
-    end
     if settingData.forceOpen ~= nil then
       settingData.forceOpen = nil
       settingData.bypassLock = nil
@@ -450,21 +437,6 @@ if e ~= nil then
     end
   else
     for key, value in pairs(settingData) do
-      if type(value.cardRead) == "number" then
-        checkBool = true
-        if value.cardRead ~= 6 then
-          settingData[key].cardRead = query.data.calls[settingData[key].cardRead - #baseVariables]
-        else
-          settingData[key].cardRead = "checkstaff"
-        end
-      end
-      if type(value.cardRead) ~= "table" then
-        checkBool = true
-        local t1, t2 = settingData[key].cardRead, settingData[key].accessLevel
-          settingData[key].accessLevel = nil
-          settingData[key].cardRead = {}
-          settingData[key].cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
-      end
       if value.forceOpen ~= nil then
         checkBool = true
         settingData[key].forceOpen = nil
@@ -507,7 +479,7 @@ end
 for key,_ in pairs(component.list("os_rolldoorcontrol")) do
   component.proxy(key).close()
 end
-sectorfresh(query.data.sectors)
+sectorfresh(query.data.sectorStatus)
 
 if extraConfig.type == "single" then
   doorType = settingData.doorType

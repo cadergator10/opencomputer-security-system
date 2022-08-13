@@ -326,15 +326,19 @@ local function runInstall()
                     end
                 end
             end --Sectors beginning
-            local nextmsg = "What sector would you like this door to be part of? 0 = no sector"
-            for i=1,#editorSettings.settings.sectors,1 do
-                nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.sectors[i].name
-            end
-            text = tonumber(sendMsg(nextmsg,1))
-            if text == 0 then
-                loopArray["sector"]=false
+            if editorSettings.hassector then
+                local nextmsg = "What sector would you like this door to be part of? 0 = no sector"
+                for i=1,#editorSettings.settings.sectors,1 do
+                    nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.sectors[i].name
+                end
+                text = tonumber(sendMsg(nextmsg,1))
+                if text == 0 then
+                    loopArray["sector"]=false
+                else
+                    loopArray["sector"]=editorSettings.settings.sectors[text].uuid
+                end
             else
-                loopArray["sector"]=editorSettings.settings.sectors[text].uuid
+                loopArray["sector"] = false
             end
         end --END OF 2.0.0 & sectors -----------------------------------------------------
         if editorSettings.type == "multi" then tmpTable[j] = loopArray else tmpTable = loopArray end
@@ -496,84 +500,18 @@ print("Sending query to server...") --Pingme
 if link == nil then
     modem.open(modemPort)
 end
-send(nil,modemPort,true,"autoInstallerQuery")
+send(nil,modemPort,true,"getquery",ser.serialize("passSettings","sectors"))
 local e,_,from,port,_,msg = event.pull(3,"modem_message")
 if e == nil then
-    local text
-    local fill = io.open("server.lua","r")
-    local modulePrg = function()
-        os.execute("wget -f " .. serverModules .. " temp.txt")
-        local mlist = loadTable("temp.txt")
-        local skip = true
-        while skip do
-            term.clear()
-            for i=1,#mlist,1 do
-                print(i .. ". " .. mlist[i].name)
-            end
-            text = tonumber(sendMsg("Enter the number of the module you want to install","If you dont want to install any more modules, enter 0",1))
-            if text ~= 0 and text <= #mlist then
-                print("Downloading " .. mlist[text].name .. ": as " .. mlist[text].filename)
-                os.execute("wget -f " .. mlist[text].url .. " modules/" .. mlist[text].filename)
-            else
-                skip = false
-            end
-        end
-        print("finished")
-        os.execute("del temp.txt")
-    end
-    if fill~=nil then
-        fill:close()
-        local path = shell.getWorkingDirectory()
-        print("Server Files detected. Please select an option")
-        print("What would you like to do?")
-        print("1 = Wipe All Files")
-        print("2 = Wipe Modules Only")
-        print("3 = Install Modules")
-        print("4 = Update Server")
-        text = tonumber(term.read())
-        if text == 1 then
-            print("Removing all files...")
-            fs.remove(path .. "/server.lua")
-            fs.remove(path .. "/modules")
-            if fs.exists(path .. "/userlist.txt") then fs.remove(path .. "/userlist.txt") end
-            if fs.exists(path .. "/doorlist.txt") then fs.remove(path .. "/doorlist.txt") end
-            if fs.exists(path .. "/settings.txt") then fs.remove(path .. "/settings.txt") end
-        elseif text == 2 then
-            print("Clearing module folder...")
-            fs.remove(path .. "/modules")
-            os.execute("mkdir modules")
-        elseif text == 3 then
-            modulePrg()
-        elseif text == 4 then
-            print("Downloading server...")
-            os.execute("wget -f " .. serverCode .. " server.lua")
-        end
-        os.exit()
-    else
-        print("Failed to connect to server. Either there is no server running or one needs to be installed")
-        print("Would you like to download the server? 1 = yes, 2 = no")
-        text = tonumber(term.read())
-        if text == 1 then
-            print("Downloading server...")
-            os.execute("wget -f " .. serverCode .. " server.lua")
-            os.execute("mkdir modules")
-            editorSettings.num = 2
-            editorSettings.scanner = false
-            editorSettings.accelerate = false
-            text = tonumber(sendMsg("Would you like to install some modules? 1 = yes, 2 = no",1))
-            if text == 1 then
-                modulePrg()
-            end
-            print("done")
-        end
-        os.exit()
-    end
+    print("No query received. Assuming old server system is in place and will not work.")
+    os.exit()
 end
 print("Query received")
 query = ser.unserialize(msg)
 editorSettings.x = 2
 editorSettings.num = query.num
 editorSettings.version = query.version
+editorSettings.hassector = query.data.sectors ~= nil
 if editorSettings.num == 2 then editorSettings.settings = query.data end
 editorSettings.scanner = false
 editorSettings.accelerate = false

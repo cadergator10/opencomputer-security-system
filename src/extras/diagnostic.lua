@@ -37,6 +37,7 @@ local lengthNum = 0
 local pageNum = 1
 
 local diagt = nil
+local hassector = false
 
 local experimental = false
 --------Base Functions
@@ -194,7 +195,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
             if works == false then
                 print("ForceOpen: " .. forceOpenTypes[diagInfo2.forceOpen + 1])
                 print("BypassLock: " .. forceOpenTypes[diagInfo2.bypassLock + 1])
-            else
+            elseif hassector == true then
                 if diagInfo2.sector == false then
                     print("No Sector")
                 else
@@ -285,7 +286,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
         if works == false then
             print("ForceOpen: " .. forceOpenTypes[diagInfo2.forceOpen + 1])
             print("BypassLock: " .. forceOpenTypes[diagInfo2.bypassLock + 1])
-        else
+        elseif hassector then
             if diagInfo2.sector == false then
                 print("No Sector")
             else
@@ -584,14 +585,14 @@ local function doorediting() --TEST: Can this edit the doors?
         setGui(8,"1. Change Door Name: " .. editTable[pageNum].name)
         setGui(9,diagInfo.type == "multi" and "2. Change Door type/color/uuid" or "2. Change Door type/color/side")
         setGui(10,"3. Change toggle and delay")
-        setGui(11,sec == true and "4. Change Sector" or "4. Change force open and bypass lock")
+        setGui(11,sec and hassector and "4. Unavailable: Sectors disabled" or sec == true and "4. Change Sector" or "4. Change force open and bypass lock")
         setGui(12,"5. Change passes")
         setGui(13,diagInfo.type == "multi" and "6. Change card reader uuid" or "")
         setGui(14,"")
         setGui(15,"Door type: " .. doorTypeTypes[editTable[pageNum].doorType + 1])
         setGui(18,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
         local pee = "Error: incorrect uuid"
-        if sec then
+        if sec and hassector then
             if editTable[pageNum].sector ~= 0 then
                 for _,value in pairs(settings.data.sectors) do
                     if value.uuid == editTable[pageNum].sector then
@@ -600,7 +601,7 @@ local function doorediting() --TEST: Can this edit the doors?
                 end
             end
         end
-        setGui(19,sec == true and editTable[pageNum].sector == false and "No Sector Assigned " or sec == true and "Sector: " .. pee or "Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
+        setGui(19,hassector and sec and "Sectors Disabled" or sec == true and editTable[pageNum].sector == false and "No Sector Assigned " or sec == true and "Sector: " .. pee or "Force open: " .. forceOpenTypes[editTable[pageNum].forceOpen + 1] .. " | bypass lock: " .. forceOpenTypes[editTable[pageNum].bypassLock + 1])
         setGui(20,"Amount of passes: " .. #editTable[pageNum].cardRead)
         setGui(21,"----------------------")
         setGui(22,"Press a number to edit those parameters")
@@ -740,18 +741,25 @@ local function doorediting() --TEST: Can this edit the doors?
             elseif p1 == 4 then
                 flush()
                 if sec then
-                    local nextmsg = "What sector would you like this door to be part of? 0 = no sector"
-                    for i=1,#settings.data.sectors,1 do
-                        nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.sectors[i].name
-                    end
-                    setGui(22,nextmsg,true)
-                    term.setCursor(1,25)
-                    term.clearLine()
-                    text = tonumber(term.read())
-                    if text == 0 then
-                        editTable[pageNum].sector=false
+                    if hassector then
+                        local nextmsg = "What sector would you like this door to be part of? 0 = no sector"
+                        for i=1,#settings.data.sectors,1 do
+                            nextmsg = nextmsg .. ", " .. i .. " = " .. settings.data.sectors[i].name
+                        end
+                        setGui(22,nextmsg,true)
+                        term.setCursor(1,25)
+                        term.clearLine()
+                        text = tonumber(term.read())
+                        if text == 0 then
+                            editTable[pageNum].sector=false
+                        else
+                            editTable[pageNum].sector= settings.data.sectors[text].uuid
+                        end
                     else
-                        editTable[pageNum].sector= settings.data.sectors[text].uuid
+                        setGui(22,"Sectors has been disabled (no module on server)")
+                        term.setCursor(1,25)
+                        term.clearLine()
+                        term.read()
                     end
                 else
                     setGui(22,"Is this door opened whenever all doors are asked to open?")
@@ -1101,6 +1109,9 @@ if e == nil then
 else
   print("Query received")
   settings = ser.unserialize(msg)
+    if settings.data.sectors ~= nil then
+        hassector = true
+    end
 end
 
 thread.create(function()
