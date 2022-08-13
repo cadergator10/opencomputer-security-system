@@ -16,11 +16,12 @@ local writer
 local aRD = fs.path(system.getCurrentScript())
 local stylePath = aRD.."Styles/"
 local style = "default.lua"
+local modulesPath = aRD .. "Modules/"
 local loc = system.getLocalization(aRD .. "Localizations/")
 
 --------
 
-local workspace, window, menu, userTable, settingTable
+local workspace, window, menu, userTable, settingTable, modulesLayout, modules
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
 local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, extraVar3, settingsButton
@@ -45,6 +46,9 @@ local modem
 local pageMult = 10
 local listPageNumber = 0
 local previousPage = 0
+
+local tableRay = {}
+local prevmod
 
 ----------- Site 91 specific configuration (to avoid breaking commercial systems, don't enable)
 local enableLinking = false
@@ -140,6 +144,58 @@ end
 ----------Callbacks
 --TODO: Finish the dang thing CJ! Modules and SUCCH
 
+local function updateServer(table)
+  local data
+  if table then
+    for _,value in pairs(table) do
+      data[value] = userTable[value]
+    end
+  else
+    data = userTable
+  end
+  data = ser.serialize(data)
+  local crypted = crypt(data, settingTable.cryptKey)
+  if modem.isOpen(modemPort) == false then
+    modem.open(modemPort)
+  end
+  modem.broadcast(modemPort, "updateuserlist", crypted)
+end
+
+local function devMod()
+
+end
+
+local function modulePress()
+  local selected = modulesLayout.selectedItem
+  if prevmod ~= nil then updateServer(prevmod.close()) end
+end
+
+local function changeSettings()
+  addVarArray = {["cryptKey"]=settingTable.cryptKey,["style"]=settingTable.style,["autoupdate"]=settingTable.autoupdate}
+  varContainer = GUI.addBackgroundContainer(workspace, true, true)
+  local styleEdit = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.style))
+  styleEdit.text = settingTable.style
+  styleEdit.onInputFinished = function()
+    addVarArray.style = styleEdit.text
+  end
+  local autoupdatebutton = varContainer.layout:addChild(GUI.button(1,6,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.autoupdate))
+  autoupdatebutton.switchMode = true
+  autoupdatebutton.pressed = settingTable.autoupdate
+  autoupdatebutton.onTouch = function()
+    addVarArray.autoupdate = autoupdatebutton.pressed
+  end
+  local acceptButton = varContainer.layout:addChild(GUI.button(1,11,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.submit))
+  acceptButton.onTouch = function()
+    settingTable = addVarArray
+    saveTable(settingTable,aRD .. "dbsettings.txt")
+    varContainer:removeChildren()
+    varContainer:remove()
+    varContainer = nil
+    GUI.alert(loc.settingchangecompleted)
+    updateServer(tableRay)
+    window:remove()
+  end
+end
 
 ----------Setup GUI
 if modem.isOpen(modemPort) == false then
@@ -160,7 +216,46 @@ if settingTable.autoupdate == nil then
   saveTable(settingTable,aRD .. "dbsettings.txt")
 end
 style = fs.readTable(stylePath .. settingTable.style)
-local check,_,_,_,_,work = callModem(modemPort,"getuserlist")
+
+local dbstuff = {["update"] = updateServer}
+
+modulesLayout = window:addChild(GUI.list(2,12,10,1,3,0,style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+modules = fs.list(modulesPath)
+table.insert(modules,"dev",1)
+for i = 1, #modules do
+  if i == 1 then
+    local object = modulesLayout:addItem(modules[i])
+    local success, result = pcall(devMod, window.modLayout, loc, dbstuff)
+    if success then
+      local object = modulesLayout:addItem(result.name)
+      object.module = result
+      object.isDefault = true
+      object.onTouch = modulePress
+      for i=1,#result.table,1 do
+        table.insert(tableRay,result.table[i])
+      end
+    else
+      error("Failed to execute module " .. modules[i] .. ": " .. tostring(result))
+    end
+  else
+    local result, reason = loadfile(modulesPath .. modules[i] .. "Main.lua")
+    if result then
+      local success, result = pcall(result, window.modLayout, loc, dbstuff)
+      if success then
+        local object = modulesLayout:addItem(result.name)
+        object.module = result
+        object.isDefault = false
+        object.onTouch = modulePress
+      else
+        error("Failed to execute module " .. modules[i] .. ": " .. tostring(result))
+      end
+    else
+      error("Failed to load module " .. modules[i] .. ": " .. tostring(reason))
+    end
+  end
+end
+
+local check,_,_,_,_,work = callModem(modemPort,"getquery",ser.serialize(tableRay))
 if check then
   work = ser.unserialize(crypt(work,settingTable.cryptKey,true))
   saveTable(work,aRD .. "userlist.txt")
@@ -169,17 +264,32 @@ else
   GUI.alert(loc.userlistfailgrab)
   userTable = loadTable(aRD .. "userlist.txt")
   if userTable == nil then
-    userTable = {["settings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false},["sectors"]={{["name"]="",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}}}}
+    GUI.alert("No userlist found")
+    window:remove()
   end
 end
 
 workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,style.windowFill))
 
-window.modLayout = window:addChild(GUI.layout(2, 12, window.width, 36, 1, 1))
+window.modLayout = window:addChild(GUI.layout(14, 12, window.width - 14, window.height - 12, 1, 1))
 
 local contextMenu = menu:addContextMenuItem("File")
 contextMenu:addItem("Close").onTouch = function()
   window:remove()
   --os.exit()
 end
+
+--Settings Stuff
+settingsButton = window:addChild(GUI.button(40,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.settingsvar))
+settingsButton.onTouch = changeSettings
+
+--Database name and stuff and CardWriter
+window:addChild(GUI.panel(64,2,88,5,style.cardStatusPanel))
+window:addChild(GUI.label(66,4,3,3,style.cardStatusLabel,prgName .. " | " .. version))
+cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,loc.cardabsent))
+
+--[[if settingTable.autoupdate == false then
+  updateButton = window:addChild(GUI.button(128,8,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.updateserver))
+  updateButton.onTouch = updateServer
+end]]
 

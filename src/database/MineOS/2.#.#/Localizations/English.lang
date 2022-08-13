@@ -6,7 +6,7 @@
     buttoncallbackalert = "error in button callback with button id: ",
     addvaralert = "Error occured in addVarYesCall function. Please report this to author.",
     cryptalert = "It is recommended you check your cryptKey settings in dbsettings.txt file in the app's directory. Currently at default {1,2,3,4,5}. If the server is set to a different cryptKey than this, it will not function and crash the server.",
-    userlistfailgrab = "Failed to get userlist. Is server online? rollback to saved userlist",
+    userlistfailgrab = "Failed to get userlist. Is server online? rollback to saved userlist if any",
 
     cardpresent = "Card present",
     cardabsent = "No card",
