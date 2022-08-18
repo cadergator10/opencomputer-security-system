@@ -1,8 +1,10 @@
 local module = {}
+local GUI = require("GUI")
+local uuid = require("uuid")
 
 local userTable
 
-local layout, localization, database = table.unpack({...})
+local workspace, window, loc, database, style = table.unpack({...})
 
 module.name = "Sectors"
 module.table = {"sectors"}

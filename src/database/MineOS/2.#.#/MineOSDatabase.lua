@@ -43,10 +43,6 @@ local version = "v2.4.0"
 
 local modem
 
-local pageMult = 10
-local listPageNumber = 0
-local previousPage = 0
-
 local tableRay = {}
 local prevmod
 
@@ -217,28 +213,38 @@ if settingTable.autoupdate == nil then
 end
 style = fs.readTable(stylePath .. settingTable.style)
 
-local dbstuff = {["update"] = updateServer}
+workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,style.windowFill))
+
+--window.modLayout = window:addChild(GUI.layout(14, 12, window.width - 14, window.height - 12, 1, 1))
+window.modLayout = window:addChild(GUI.container(14, 12, window.width - 14, window.height - 12))
+
+local dbstuff = {["update"] = function(table,its)
+  if its and settingTable.autoupdate then
+    updateServer(table)
+  end
+end, ["save"] = function()
+  saveTable(userTable,"userlist.txt")
+end, ["crypt"]=function(str,reverse)
+  return crypt(str,settingTable.cryptKey,reverse)
+end}
 
 modulesLayout = window:addChild(GUI.list(2,12,10,1,3,0,style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
-modules = fs.list(modulesPath)
-table.insert(modules,"dev",1)
-for i = 1, #modules do
+local modulors = fs.list(modulesPath)
+table.insert(modulors,"dev",1)
+for i = 1, #modulors do
   if i == 1 then
-    local object = modulesLayout:addItem(modules[i])
-    local success, result = pcall(devMod, window.modLayout, loc, dbstuff)
+    local object = modulesLayout:addItem(modulors[i])
+    local success, result = pcall(devMod, workspace, window.modLayout, loc, dbstuff, style)
     if success then
-      local object = modulesLayout:addItem(result.name)
       object.module = result
       object.isDefault = true
       object.onTouch = modulePress
-      for i=1,#result.table,1 do
-        table.insert(tableRay,result.table[i])
-      end
+      table.insert(modules,result)
     else
-      error("Failed to execute module " .. modules[i] .. ": " .. tostring(result))
+      error("Failed to execute module " .. modulors[i] .. ": " .. tostring(result))
     end
   else
-    local result, reason = loadfile(modulesPath .. modules[i] .. "Main.lua")
+    local result, reason = loadfile(modulesPath .. modulors[i] .. "Main.lua")
     if result then
       local success, result = pcall(result, window.modLayout, loc, dbstuff)
       if success then
@@ -246,11 +252,15 @@ for i = 1, #modules do
         object.module = result
         object.isDefault = false
         object.onTouch = modulePress
+        table.insert(modules,result)
+        for i=1,#result.table,1 do
+          table.insert(tableRay,result.table[i])
+        end
       else
-        error("Failed to execute module " .. modules[i] .. ": " .. tostring(result))
+        error("Failed to execute module " .. modulors[i] .. ": " .. tostring(result))
       end
     else
-      error("Failed to load module " .. modules[i] .. ": " .. tostring(reason))
+      error("Failed to load module " .. modulors[i] .. ": " .. tostring(reason))
     end
   end
 end
@@ -269,9 +279,9 @@ else
   end
 end
 
-workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,style.windowFill))
-
-window.modLayout = window:addChild(GUI.layout(14, 12, window.width - 14, window.height - 12, 1, 1))
+for i=1,#modules,1 do
+  modules[i].init(userTable)
+end
 
 local contextMenu = menu:addContextMenuItem("File")
 contextMenu:addItem("Close").onTouch = function()
