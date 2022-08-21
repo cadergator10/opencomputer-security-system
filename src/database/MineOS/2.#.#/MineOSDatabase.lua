@@ -69,14 +69,6 @@ local function convert( chars, dist, inv )
   return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
 end
 
-local function split(s, delimiter)
-  local result = {};
-  for match in (s..delimiter):gmatch("(.-)"..delimiter) do
-    table.insert(result, match);
-  end
-  return result;
-end
-
 local function crypt(str,k,inv)
   local enc= "";
   for i=1,#str do
@@ -216,7 +208,7 @@ style = fs.readTable(stylePath .. settingTable.style)
 workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,style.windowFill))
 
 --window.modLayout = window:addChild(GUI.layout(14, 12, window.width - 14, window.height - 12, 1, 1))
-window.modLayout = window:addChild(GUI.container(14, 12, window.width - 14, window.height - 12))
+window.modLayout = window:addChild(GUI.container(14, 12, window.width - 14, window.height - 12)) --136 width, 33 height
 
 local dbstuff = {["update"] = function(table,its)
   if its and settingTable.autoupdate then
