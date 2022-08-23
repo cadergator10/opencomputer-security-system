@@ -153,17 +153,35 @@ local function devMod()
   local module = {}
   local component = require("component")
 
+  module.init = function()
+
+  end
   module.onTouch = function()
     GUI.alert("It worked!")
   end
   module.close = function()
 
   end
+  return module
+end
+
+local function runModule(module)
+  window.modLayout:removeChildren()
+  module.onTouch()
+  workspace:draw()
 end
 
 local function modulePress()
   local selected = modulesLayout.selectedItem
-  if prevmod ~= nil then updateServer(prevmod.close()) end
+  if prevmod ~= nil then
+    local p = prevmod.close()
+    if p then
+      updateServer(p)
+    end
+  end
+  selected = modulesLayout:getItem(selected)
+  prevmod = selected.module
+  runModule(selected.module)
 end
 
 local function changeSettings()
@@ -248,7 +266,7 @@ for i = 1, #modulors do
   else
     local result, reason = loadfile(modulesPath .. modulors[i] .. "Main.lua")
     if result then
-      local success, result = pcall(result, window.modLayout, loc, dbstuff)
+      local success, result = pcall(result, workspace, window.modLayout, loc, dbstuff, style)
       if success then
         local object = modulesLayout:addItem(result.name)
         object.module = result
@@ -305,3 +323,5 @@ cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,lo
   updateButton.onTouch = updateServer
 end]]
 
+workspace:draw()
+workspace:start()
