@@ -150,7 +150,15 @@ local function updateServer(table)
 end
 
 local function devMod()
+  local module = {}
+  local component = require("component")
 
+  module.onTouch = function()
+    GUI.alert("It worked!")
+  end
+  module.close = function()
+
+  end
 end
 
 local function modulePress()
@@ -220,9 +228,11 @@ end, ["crypt"]=function(str,reverse)
   return crypt(str,settingTable.cryptKey,reverse)
 end}
 
-modulesLayout = window:addChild(GUI.list(2,12,10,1,3,0,style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+window:addChild(GUI.panel(1,11,12,12,style.listPanel))
+modulesLayout = window:addChild(GUI.list(2,12,10,10,3,0,style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
 local modulors = fs.list(modulesPath)
-table.insert(modulors,"dev",1)
+modules = {}
+table.insert(modulors,1,"dev")
 for i = 1, #modulors do
   if i == 1 then
     local object = modulesLayout:addItem(modulors[i])
