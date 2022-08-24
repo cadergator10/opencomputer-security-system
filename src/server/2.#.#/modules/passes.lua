@@ -173,7 +173,10 @@ function module.setup() --Called when userlist is updated or server is first sta
 end
 
 function module.message(command,datar,from) --Called when a command goes past all default commands and into modules.
-    local data = ser.unserialize(datar)
+    local data
+    if datar ~= nil then
+        data = ser.unserialize(datar)
+    end
     local thisUserName = false
     if command == "setvar" or command == "getvar" or command == "checkRules" then
         thisUserName = getVar("name",data.uuid)

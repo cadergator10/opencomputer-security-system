@@ -146,10 +146,10 @@ end
 
 --------Server Functions
 
-local function msgToModule(type,command, data) --Sends message to modules and returns the data.
+local function msgToModule(type,command, data, more) --Sends message to modules and returns the data.
   if type == "message" then
     for _,value in pairs(modules) do --p1 is true/false if program received command, p2 is data to send back to other device (nil if nothing is sent back), p3 is what to log on server (nil if nothing to log), p4 is color of logged text (nil if staying white or nothing to log), p5 is a change to userTable that must be saved & updated.
-      local p1, p2, p3, p4, p5, p6, p7 = value.message(command,data)
+      local p1, p2, p3, p4, p5, p6, p7 = value.message(command,data,more)
       if p1 then
         return p1, p2, p3, p4, p5, p6, p7
       end

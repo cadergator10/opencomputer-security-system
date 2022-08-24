@@ -343,7 +343,7 @@ end
           local fill = {}
           fill["type"] = extraConfig.type
           fill["data"] = settingData
-          send(modemPort,true,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+          send(modemPort,true,"setdevice",crypt(ser.serialize(fill),extraConfig.cryptKey))
           local got, _, _, _, _, fill = event.pull(2, "modem_message")
           if got then
             varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
@@ -387,7 +387,7 @@ end
           end
         end
         thread.create(lightShow,ser.unserialize(data))
-      elseif msg == "doorCheck" then
+      elseif msg == "deviceCheck" then
         send(modemPort,true,"true")
       end
     end
@@ -427,7 +427,7 @@ if magReader.swipeIndicator ~= nil then
 end
 
 local checkBool = false
-send(modemPort,true,"getquery",ser.serialize({"passSettings","sectorStatus"}))
+send(modemPort,true,"getquery",ser.serialize({"passSettings","sectorStatus","&&&crypt"}))
 local e,_,_,_,_,query = event.pull(3,"modem_message")
 query = ser.unserialize(query)
 if e ~= nil then
@@ -472,7 +472,7 @@ if osVersion then
   for key,_ in pairs(component.list("os_magreader")) do
     component.proxy(key).swipeIndicator(false)
     colorLink(key,0)
-    readerLights[key] = {["new"]=0,["old"]=-1}
+    readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
   end
   thread.create(colorupdate)
 end

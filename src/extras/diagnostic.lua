@@ -26,7 +26,7 @@ local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","
 local forceOpenTypes = {"False","True"}
 local passTypes = {["string"]="Inputtable String",["-string"]="Hidden String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"2.2.0","2.2.1","2.2.2","2.3.0","2.3.1","2.4.0"}
+local supportedVersions = {"2.2.0","2.2.1","2.2.2","2.3.0","2.3.1","2.4.0","2.5.0"}
 
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
 
@@ -1100,7 +1100,7 @@ if link == nil then
 else
     modem.close(modemPort)
 end
-sendit(nil,modemPort,true,"getquery",ser.serialize({"passSettings","sectors"}))
+sendit(nil,modemPort,true,"getquery",ser.serialize({"passSettings","sectors","&&&crypt"}))
 local e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then
