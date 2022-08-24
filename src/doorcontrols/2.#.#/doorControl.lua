@@ -46,6 +46,7 @@ local link
 
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 local varSettings = {}
+local enableSectors = true
  
 local settingData = {}
 local extraConfig = {}
@@ -221,73 +222,75 @@ end
   end
 
   local function sectorfresh(data)
-    if extraConfig.type == "single" then
-      if sector ~= false then
-        for key,value in pairs(data) do
-          if key == sector then
-            if value == 1 then
-              if doorType == 0 then
-                component.os_doorcontroller.close()
-              elseif doorType == 3 then
-                component.os_rolldoorcontroller.close()
-              elseif doorType == 1 then
-                component.redstone.setOutput(redSide,0)
-              elseif doorType == 2 then
-                component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
-              end
-              if osVersion then
-                colorLink(magReader.address,0,0)
-              end
-            elseif value == 2 then
-              if osVersion then
-                colorLink(magReader.address,1,1)
-              end
-            elseif value == 3 then
-              if doorType == 0 then
-                component.os_doorcontroller.open()
-              elseif doorType == 3 then
-                component.os_rolldoorcontroller.open()
-              elseif doorType == 1 then
-                component.redstone.setOutput(redSide,15)
-              elseif doorType == 2 then
-                component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
-              end
-              if osVersion then
-                colorLink(magReader.address,4,4)
+    if enableSectors then
+      if extraConfig.type == "single" then
+        if sector ~= false then
+          for key,value in pairs(data) do
+            if key == sector then
+              if value == 1 then
+                if doorType == 0 then
+                  component.os_doorcontroller.close()
+                elseif doorType == 3 then
+                  component.os_rolldoorcontroller.close()
+                elseif doorType == 1 then
+                  component.redstone.setOutput(redSide,0)
+                elseif doorType == 2 then
+                  component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
+                end
+                if osVersion then
+                  colorLink(magReader.address,0,0)
+                end
+              elseif value == 2 then
+                if osVersion then
+                  colorLink(magReader.address,1,1)
+                end
+              elseif value == 3 then
+                if doorType == 0 then
+                  component.os_doorcontroller.open()
+                elseif doorType == 3 then
+                  component.os_rolldoorcontroller.open()
+                elseif doorType == 1 then
+                  component.redstone.setOutput(redSide,15)
+                elseif doorType == 2 then
+                  component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
+                end
+                if osVersion then
+                  colorLink(magReader.address,4,4)
+                end
               end
             end
           end
         end
-      end
-    else
-      for _,value in pairs(settingData) do
-        if value.sector ~= false then
-          for key,value in pairs(data) do
-            if key == value.sector then
-              if value == 1 then
-                if value.doorType == 0 or value.doorType == 3 then
-                  component.proxy(value.doorAddress).close()
-                elseif value.doorType == 2 then
-                  component.redstone.setBundledOutput(2, { [value.redColor] = 0 } )
+      else
+        for _,value in pairs(settingData) do
+          if value.sector ~= false then
+            for key,value in pairs(data) do
+              if key == value.sector then
+                if value == 1 then
+                  if value.doorType == 0 or value.doorType == 3 then
+                    component.proxy(value.doorAddress).close()
+                  elseif value.doorType == 2 then
+                    component.redstone.setBundledOutput(2, { [value.redColor] = 0 } )
+                  end
+                  if osVersion then
+                    colorLink(value.reader,0,0)
+                  end
+                elseif value == 2 then
+                  if osVersion then
+                    colorLink(value.reader,1,1)
+                  end
+                elseif value == 3 then
+                  if value.doorType == 0 or value.doorType == 3 then
+                    component.proxy(value.doorAddress).open()
+                  elseif value.doorType == 2 then
+                    component.redstone.setBundledOutput(2, { [value.redColor] = 255 } )
+                  end
+                  if osVersion then
+                    colorLink(value.reader,4,4)
+                  end
                 end
-                if osVersion then
-                  colorLink(value.reader,0,0)
-                end
-              elseif value == 2 then
-                if osVersion then
-                  colorLink(value.reader,1,1)
-                end
-              elseif value == 3 then
-                if value.doorType == 0 or value.doorType == 3 then
-                  component.proxy(value.doorAddress).open()
-                elseif value.doorType == 2 then
-                  component.redstone.setBundledOutput(2, { [value.redColor] = 255 } )
-                end
-                if osVersion then
-                  colorLink(value.reader,4,4)
-                end
+                break
               end
-              break
             end
           end
         end
@@ -454,7 +457,7 @@ checkBool = nil
 fill = {}
 fill["type"] = extraConfig.type
 fill["data"] = settingData
-send(modemPort,true,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+send(modemPort,true,"setdevice",crypt(ser.serialize(fill),extraConfig.cryptKey))
 local got, _, _, _, _, fill = event.pull(2, "modem_message")
 if got then
   varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
@@ -478,6 +481,9 @@ for key,_ in pairs(component.list("os_doorcontrol")) do
 end
 for key,_ in pairs(component.list("os_rolldoorcontrol")) do
   component.proxy(key).close()
+end
+if query.data.sectorStatus == nil then
+  enableSectors = false
 end
 sectorfresh(query.data.sectorStatus)
 

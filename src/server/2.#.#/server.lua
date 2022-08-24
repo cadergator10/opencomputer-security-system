@@ -381,12 +381,14 @@ local function serversettings()
 end
 
 local function eventCheck()
-  local e, p1, from, port, p2, command, msg = event.pullMultiple("modem_message")
-  if e == "modem_message" then
-    event.push("itzamsg", p1, from, port, p2, command, msg)
-  elseif e == "key_down" and keyboard.keys[port] == "enter" and eventcheckpull then
-    thread.create(serversettings)
-    eventcheckpull = false
+  while true do
+    local e, p1, from, port, p2, command, msg = event.pullMultiple("modem_message")
+    if e == "modem_message" then
+      event.push("itzamsg", p1, from, port, p2, command, msg)
+    elseif e == "key_down" and keyboard.keys[port] == "enter" and eventcheckpull then
+      thread.create(serversettings)
+      eventcheckpull = false
+    end
   end
 end
 
