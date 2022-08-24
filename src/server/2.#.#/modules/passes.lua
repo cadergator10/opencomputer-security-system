@@ -286,6 +286,7 @@ function module.piggyback(command,data) --Called after a command is passed. Pass
     if command == "setdevice" then
         server.send(true,server.crypt(ser.serialize({["settings"]=userTable.passSettings,["sectors"]=userTable.sectors})))
     end
+    return
 end
 
 return module

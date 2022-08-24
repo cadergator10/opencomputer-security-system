@@ -270,6 +270,7 @@ else
       userTable.passSettings.sectors = nil
     end
     userTable.refactored = true
+    saveTable(userTable,"userlist.txt")
   end
 end
 if settingTable.pass == nil then
@@ -494,10 +495,11 @@ while true do
       local wait = ser.unserialize(data)
       local docrypt = true
       data = {}
-      if data ~= nil then
+      data.data = {}
+      if wait ~= nil then
         for i=1,#wait,1 do
           if wait[i] ~= "&&&crypt" then
-            data.data[wait[i]] = userTable[i]
+            data.data[wait[i]] = userTable[wait[i]]
           else
             docrypt = false
           end

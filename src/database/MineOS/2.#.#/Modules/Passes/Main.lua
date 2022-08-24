@@ -113,10 +113,10 @@ module.onTouch = function()
   local function updateList()
     local selectedId = userList.selectedItem
     userList:remove()
-    userList = window:addChild(GUI.list(4, 4, 58, 34, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+    userList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
     local temp = pageMult * listPageNumber
     for i = temp + 1, temp + pageMult, 1 do
-      if (userTable.passes[i] == nil) then
+      if (userTable.passes[i] == nil) then --issue
 
       else
         userList:addItem(userTable.passes[i].name).onTouch = userListCallback
@@ -624,7 +624,7 @@ module.onTouch = function()
 
   --Database name and stuff and CardWriter
   window:addChild(GUI.panel(123,2,12,3,style.cardStatusPanel))
-  cardStatusLabel = window:addChild(GUI.label(124, 4, 10,3,style.cardStatusLabel,loc.cardabsent))
+  cardStatusLabel = window:addChild(GUI.label(124, 3, 10,3,style.cardStatusLabel,loc.cardabsent))
 
   --write card button
   cardWriteButton = window:addChild(GUI.button(118,32,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.writebutton))

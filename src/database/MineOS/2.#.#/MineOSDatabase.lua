@@ -133,7 +133,7 @@ end
 --TODO: Finish the dang thing CJ! Modules and SUCCH
 
 local function updateServer(table)
-  local data
+  local data = {}
   if table then
     for _,value in pairs(table) do
       data[value] = userTable[value]
@@ -288,8 +288,8 @@ end
 local check,_,_,_,_,work = callModem(modemPort,"getquery",ser.serialize(tableRay))
 if check then
   work = ser.unserialize(crypt(work,settingTable.cryptKey,true))
-  saveTable(work,aRD .. "userlist.txt")
-  userTable = work
+  saveTable(work.data,aRD .. "userlist.txt")
+  userTable = work.data
 else
   GUI.alert(loc.userlistfailgrab)
   userTable = loadTable(aRD .. "userlist.txt")
