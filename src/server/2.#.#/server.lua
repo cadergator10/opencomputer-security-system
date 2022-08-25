@@ -290,12 +290,14 @@ for _,value in pairs(modules) do
   addcommands(value.commands,value.skipcrypt,value.table)
   value.debug = debug
   value.init(userTable, doorTable, server)
-  value.setup()
   for keyed,valued in pairs(value.table) do
     if userTable[keyed] == nil then
       userTable[keyed] = deepcopy(valued)
     end
   end
+end
+for _,value in pairs(modules) do
+  value.setup()
 end
 
 server = nil
@@ -303,7 +305,7 @@ server = nil
 --------Main Loop & Program
 local function serversettings()
   local selected = 1
-  local set = {"add/update modules","delete all modules","update server","close menu"}
+  local set = {"add modules","delete all modules","update server","close menu"}
   local fresh = function()
     local nextmsg = "Select one:"
     for i=1,#set,1 do
@@ -313,7 +315,7 @@ local function serversettings()
         nextmsg = nextmsg .. "  " .. set[i] .. "  :"
       end
     end
-    advWrite(nextmsg,0xFFFFFF,true,true,#viewhistory + 6,true)
+    advWrite(nextmsg,0xFFFFFF,true,true,#viewhistory + 5,true)
   end
   fresh()
   os.sleep(0.5)
@@ -342,14 +344,14 @@ local function serversettings()
           term.clear()
           local counter = 0
           for i=1,#mlist,1 do
-            advWrite(i .. ". " .. mlist[i].name,0xFFFFFF,true,true,i + 4,true)
+            advWrite(i .. ". " .. mlist[i].name,0xFFFFFF,true,true,i,true)
             counter = counter + 1
           end
-          advWrite("Enter the number of the module you want to install",0xFFFFFF,true,true,counter + 5,true)
-          advWrite("If you dont want to install any more modules, enter 0",0xFFFFFF,true,true,counter + 6,true)
+          advWrite("Enter the number of the module you want to install",0xFFFFFF,true,true,counter + 1,true)
+          advWrite("If you dont want to install any more modules, enter 0",0xFFFFFF,true,true,counter + 2,true)
           local text = tonumber(term.read())
           if text ~= 0 and text <= #mlist then
-            advWrite("Downloading " .. mlist[text].name .. ": as " .. mlist[text].filename,0xFFFFFF,true,true,#viewhistory + 6,true)
+            advWrite("Downloading " .. mlist[text].name .. ": as " .. mlist[text].filename,0xFFFFFF,true,true,#viewhistory + 5,true)
             os.execute("wget -f " .. mlist[text].url .. " modules/" .. mlist[text].filename)
           else
             skip = false
@@ -382,7 +384,7 @@ end
 
 local function eventCheck()
   while true do
-    local e, p1, from, port, p2, command, msg = event.pullMultiple("modem_message")
+    local e, p1, from, port, p2, command, msg = event.pullMultiple("modem_message","key_down")
     if e == "modem_message" then
       event.push("itzamsg", p1, from, port, p2, command, msg)
     elseif e == "key_down" and keyboard.keys[port] == "enter" and eventcheckpull then
@@ -392,7 +394,7 @@ local function eventCheck()
   end
 end
 
-advWrite("Press enter to bring up menu",0xFFFFFF,false,true,#viewhistory + 6,true)
+advWrite("Press enter to bring up menu",0xFFFFFF,false,true,#viewhistory + 5,true)
 evthread = thread.create(eventCheck)
 while true do
   if modem.isOpen(modemPort) == false then

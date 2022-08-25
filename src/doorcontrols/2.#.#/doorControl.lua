@@ -264,9 +264,9 @@ end
       else
         for _,value in pairs(settingData) do
           if value.sector ~= false then
-            for key,value in pairs(data) do
+            for key,value2 in pairs(data) do
               if key == value.sector then
-                if value == 1 then
+                if value2 == 1 then
                   if value.doorType == 0 or value.doorType == 3 then
                     component.proxy(value.doorAddress).close()
                   elseif value.doorType == 2 then
@@ -275,11 +275,11 @@ end
                   if osVersion then
                     colorLink(value.reader,0,0)
                   end
-                elseif value == 2 then
+                elseif value2 == 2 then
                   if osVersion then
                     colorLink(value.reader,1,1)
                   end
-                elseif value == 3 then
+                elseif value2 == 3 then
                   if value.doorType == 0 or value.doorType == 3 then
                     component.proxy(value.doorAddress).open()
                   elseif value.doorType == 2 then

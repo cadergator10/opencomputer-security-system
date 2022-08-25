@@ -277,7 +277,7 @@ end
 sectorSettings = loadTable("redstonelinks.txt")
 print("Sending query to server...")
 modem.open(modemPort)
-modem.broadcast(modemPort,"getquery",ser.serialize({"sectors","sectorStatus"}))
+modem.broadcast(modemPort,"getquery",ser.serialize({"sectors","sectorStatus","&&&crypt"}))
 local e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then
@@ -316,8 +316,8 @@ while true do
     if #sector ~= 0 then
         if ev == "modem_message" then
             if command == "getSectorList" then
-                query = ser.unserialize(msg).data.sectors
-                sectorStatus = ser.unserialize(msg).data.sectorStatus
+                query = ser.unserialize(msg).sectors
+                sectorStatus = ser.unserialize(msg).sectorStatus
                 arrangeSectors(query)
                 pageChange("both",1,#sector, sectorGui, editmode)
             end
