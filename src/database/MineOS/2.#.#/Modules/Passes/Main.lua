@@ -112,11 +112,10 @@ module.onTouch = function()
 
   local function updateList()
     local selectedId = userList.selectedItem
-    userList:remove()
-    userList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+    userList:removeChildren()
     local temp = pageMult * listPageNumber
     for i = temp + 1, temp + pageMult, 1 do
-      if (userTable.passes[i] == nil) then --issue
+      if (userTable.passes[i] == nil) then
 
       else
         userList:addItem(userTable.passes[i].name).onTouch = userListCallback
