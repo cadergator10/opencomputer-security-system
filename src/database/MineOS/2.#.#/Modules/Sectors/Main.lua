@@ -16,6 +16,7 @@ end
 
 module.onTouch = function()
   local sectorList, sectorNameInput, newSectorButton, delSectorButton, sectorPassNew, sectorPassRemove, sectorPassList, userPassSelfSelector, userPassDataSelector, userPassTypeSelector
+  local sectorListNum, sectorListUp, sectorListDown, sectorPassListNum, sectorPassListUp, sectorPassListDown
 
   local pageMult = 10
   local listPageNumber = 0
@@ -24,10 +25,14 @@ module.onTouch = function()
   local pageMultPass = 10
   local listPageNumberPass = 0
   local previousPagePass = 0
+  local prevPass = "string"
 
   --Sector functions
 
   local function uuidtopass(uuid)
+    if uuid == "checkstaff" then
+      return true, 0
+    end
     for i=1,#userTable.passSettings.calls,1 do
       if userTable.passSettings.calls[i] == uuid then
         return true, i
@@ -35,6 +40,58 @@ module.onTouch = function()
     end
     return false
   end
+
+  local function refreshInput(uuid)
+    if uuid == nil then
+      uuid = userPassSelfSelector.selectedItem - 1
+    end
+    if uuid ~= 0 then
+      if userTable.passSettings.type[uuid] == "string" or userTable.passSettings.type[uuid] == "-string" or userTable.passSettings.type[uuid] == "int" then
+        if prevPass == "-int" then
+          userPassDataSelector:remove() --TODO: Fix all numbers to go to the correct location on screen
+          userPassDataSelector = window:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
+        end
+        userPassDataSelector.text = ""
+        userPassDataSelector.disabled = false
+      elseif userTable.passSettings.type[uuid] == "-int" then
+        if prevPass ~= "-int" then
+          userPassDataSelector:remove()
+          userPassDataSelector = window:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+        else
+          userPassDataSelector:clear()
+        end
+        for _,value in pairs(userTable.passSettings.data[uuid]) do
+          userPassDataSelector:addItem(value)
+        end
+        userPassDataSelector.selectedItem = 1
+      else
+        if prevPass == "-int" then
+          userPassDataSelector:remove()
+          userPassDataSelector = window:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
+        end
+        userPassDataSelector.text = ""
+        userPassDataSelector.disabled = true
+      end
+    else
+      if prevPass == "-int" then
+        userPassDataSelector:remove()
+        userPassDataSelector = window:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
+      end
+      userPassDataSelector.text = ""
+      userPassDataSelector.disabled = true
+    end
+    prevPass = uuid ~= 0 and userTable.passSettings.type[uuid] or "bool"
+  end
+
+  --[[local function sectorPassCallback() Commented out because not planning on making it possible to add sectors for simplicity for meeeee
+    local selectedId = pageMultPass * listPageNumberPass + sectorPassList.selectedItem
+    local secSelect = pageMult * listPageNumber + sectorList.selectedItem
+    local sectorpass = userTable.sectors[secSelect].pass[selectedId]
+    local uuid = uuidtopass(sectorpass.uuid)
+    userPassSelfSelector.selectedItem = uuid + 1
+    userPassTypeSelector.selectedItem = sectorpass.lock
+    refreshInput(uuid)
+  end]]
 
   local function sectorListCallback()
     local selectedId = pageMult * listPageNumber + sectorList.selectedItem
@@ -47,7 +104,11 @@ module.onTouch = function()
       else
         local pass = uuidtopass(userTable.sectors[selectedId].pass[i].uuid)
         local lockType = {loc.sectoropen,loc.sectordislock}
-        sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. userTable.sectors[selectedId].pass[i].data .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock])
+        if pass ~= 0 then
+          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. userTable.sectors[selectedId].pass[i].data .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock]).onTouch = sectorPassCallback()
+        else
+          sectorPassList:addItem("Staff : 0 : " .. lockType[userTable.sectors[selectedId].pass[i].lock])
+        end
       end
     end
 
@@ -194,13 +255,30 @@ module.onTouch = function()
   end
 
   --GUI Setup
+  window:addChild(GUI.panel(1,1,37,33,style.listPanel))
   sectorList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
   sectorList:addItem("HELLO")
   listPageNumber = 0
   updateSecList()
 
-  --Sector infos
 
+  --Sector infos local sectorList, sectorNameInput, newSectorButton, delSectorButton, sectorPassNew, sectorPassRemove, sectorPassList, userPassSelfSelector, userPassDataSelector, userPassTypeSelector
+  window:addChild(GUI.label(40,12,1,1,style.passNameLabel,"Sector name: "))
+  sectorNameInput = window:addChild(GUI.input(64,12,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
+  window:addChild(GUI.panel(40,14,96,1,style.bottomDivider))
+  window:addChild(GUI.panel(40,15,1,18,style.bottomDivider))
+
+  window:addChild(GUI.panel(42,17,37,33,style.listPanel))
+  sectorPassList = window:addChild(GUI.list(43, 18, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+
+  window:addChild(GUI.label(85,17,1,1,style.passNameLabel,"Select Pass : "))
+  userPassSelfSelector = window:addChild(GUI.comboBox(100,17,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+  userPassSelfSelector:addItem("staff")
+  for i=1,#userTable.passSettings.var,1 do
+    userPassSelfSelector:addItem(userTable.settings.label[i]).onTouch = refreshInput
+  end
+  refreshInput(0)
+  window:addChild(GUI.label(85,19,1,1,style.passNameLabel,"Change Input: "))
 end
 
 module.close = function()
