@@ -25,6 +25,18 @@ end
 
 function module.setup() --Called when userlist is updated or server is first started
   if module.debug then print("Received " .. #userTable.sectors .. " Sectors\n") end
+  for key,_ in pairs(userTable.sectorStatus) do
+    local good = false
+    for i=1,#userTable.sectors,1 do
+      if userTable.sectors[i].uuid == key then
+        good = true
+        break
+      end
+    end
+    if good == false then
+      userTable.sectorStatus[key] = nil
+    end
+  end
   for i=1,#userTable.sectors,1 do
     if userTable.sectorStatus[userTable.sectors[i].uuid] == nil then
       userTable.sectorStatus[userTable.sectors[i].uuid] = 1
@@ -55,42 +67,49 @@ function module.message(command,datar) --Called when a command goes past all def
           if user == false then
             return false, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector check failed: User Not Found",["color"]=nil,["line"]=false}}
           end
-          for _,value in pairs(userTable.sectors[i].pass) do
-            for j=1,#userTable.passSettings.calls,1 do
-              if userTable.passSettings.calls[j] == value.uuid then
-                local check = function(rule)
-                  if userTable.passSettings.type[j] == "string" or userTable.passSettings.type[j] == "-string" then
-                    return userTable.passes[user][userTable.passSettings.var[j]] == rule
-                  elseif userTable.passSettings.type[j] == "int" or userTable.passSettings.type[j] == "-int" then
-                    if userTable.passSettings.above[j] == false or userTable.passSettings.type[j] == "-int" then
-                      return userTable.passes[user][userTable.passSettings.var[j]] == tonumber(rule)
-                    else
-                      return userTable.passes[user][userTable.passSettings.var[j]] >= tonumber(rule)
+          local printText = "User " .. data.name .. " failed sector check of " .. userTable.sectors[i].name
+          for p=1,3,1 do
+            for _,value in pairs(userTable.sectors[i].pass) do
+              if value.priority == p then
+                if value.uuid ~= "checkstaff" then
+                  for j=1,#userTable.passSettings.calls,1 do
+                    if userTable.passSettings.calls[j] == value.uuid then
+                      local check = function(rule)
+                        if userTable.passSettings.type[j] == "string" or userTable.passSettings.type[j] == "-string" then
+                          return userTable.passes[user][userTable.passSettings.var[j]] == rule
+                        elseif userTable.passSettings.type[j] == "int" or userTable.passSettings.type[j] == "-int" then
+                          if userTable.passSettings.above[j] == false or userTable.passSettings.type[j] == "-int" then
+                            return userTable.passes[user][userTable.passSettings.var[j]] == tonumber(rule)
+                          else
+                            return userTable.passes[user][userTable.passSettings.var[j]] >= tonumber(rule)
+                          end
+                        elseif userTable.passSettings.type[j] == "bool" then
+                          return userTable.passes[user][userTable.passSettings.var[j]]
+                        end
+                      end
+                      passed = check(value.data)
+                      break
                     end
-                  elseif userTable.passSettings.type[j] == "bool" then
-                    return userTable.passes[user][userTable.passSettings.var[j]]
+                  end
+                else
+                  if userTable.passes[user].staff then
+                    passed = true
                   end
                 end
-                passed = check(value.data)
-                break
+                if passed then
+                  if userTable.sectorStatus[userTable.sectors[i].uuid] == 3 and value.lock == 1 then
+                    printText = "Cannot bypass open sector " .. userTable.sectors[i].name
+                  end
+                  if value.lock == 1 then
+                    return true,nil,nil,true,"openbypass"
+                  else
+                    return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " requested a bypass of " .. userTable.sectors[i].name,["color"]=0xFF0000,["line"]=false}},false,true,"lockbypass"
+                  end
+                end
               end
             end
-            if passed then
-              break
-            end
           end
-          if passed then
-            if userTable.sectorStatus[userTable.sectors[i].uuid] == 3 and userTable.sectors[i].type == 1 then
-              return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Cannot bypass open sector " .. userTable.sectors[i].name,["color"]=nil,["line"]=false}},false, true,"false"
-            end
-            if userTable.sectors[i].type == 1 then
-              return true,nil,nil,true,"openbypass"
-            else
-              return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " requested a bypass of " .. userTable.sectors[i].name,["color"]=0xFF0000,["line"]=false}},false,true,"lockbypass"
-            end
-          else
-            return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " failed sector check of " .. userTable.sectors[i].name,["color"]=nil,["line"]=false}},false,true,"false"
-          end
+          return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]=printText,["color"]=nil,["line"]=false}},false,true,"false"
         end
       end
     end

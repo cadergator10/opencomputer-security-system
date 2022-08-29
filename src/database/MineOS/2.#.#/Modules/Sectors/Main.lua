@@ -15,7 +15,7 @@ module.init = function(usTable)
 end
 
 module.onTouch = function()
-  local sectorList, sectorNameInput, newSectorButton, delSectorButton, sectorPassNew, sectorPassRemove, sectorPassList, userPassSelfSelector, userPassDataSelector, userPassTypeSelector
+  local sectorList, sectorNameInput, newSectorButton, delSectorButton, sectorPassNew, sectorPassRemove, sectorPassList, userPassSelfSelector, userPassDataSelector, userPassTypeSelector, userPassPrioritySelector
   local sectorListNum, sectorListUp, sectorListDown, sectorPassListNum, sectorPassListUp, sectorPassListDown
 
   local pageMult = 10
@@ -105,9 +105,9 @@ module.onTouch = function()
         local pass = uuidtopass(userTable.sectors[selectedId].pass[i].uuid)
         local lockType = {loc.sectoropen,loc.sectordislock}
         if pass ~= 0 then
-          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. userTable.sectors[selectedId].pass[i].data .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock]).onTouch = sectorPassCallback()
+          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. userTable.sectors[selectedId].pass[i].data .. " : p" .. userTable.sectors[selectedId].pass[i].priority .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock]).onTouch
         else
-          sectorPassList:addItem("Staff : 0 : " .. lockType[userTable.sectors[selectedId].pass[i].lock])
+          sectorPassList:addItem("Staff : 0 : p" .. userTable.sectors[selectedId].pass[i].priority .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock])
         end
       end
     end
@@ -135,123 +135,32 @@ module.onTouch = function()
   end
 
   local function createSector()
-    addVarArray = {["name"]="temp",["uuid"]=uuid.next(),["type"]=1,["pass"]={},["status"]=1}
-    varContainer = GUI.addBackgroundContainer(workspace, true, true)
-    varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.sectornewname))
-    varInput.onInputFinished = function()
-      addVarArray.name = varInput.text
-    end
-    varYesButton = varContainer.layout:addChild(GUI.button(1,6,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.sectornewadd))
-    varYesButton.onTouch = function()
-      table.insert(userTable.settings.sectors,addVarArray)
-      addVarArray = nil
-      varContainer:removeChildren()
-      varContainer:remove()
-      varContainer = nil
-      saveTable(userTable,aRD .. "userlist.txt")
-      GUI.alert(loc.sectadded)
-      updateServer()
-      window:remove()
-    end
+    addVarArray = {["name"]=sectorNameInput.text,["uuid"]=uuid.next(),["pass"]={}}
+    table.insert(userTable.sectors,addVarArray)
+    addVarArray = nil
+    database.save()
+    database.update()
+    updateSecList()
   end
   local function deleteSector()
-    varContainer = GUI.addBackgroundContainer(workspace, true, true)
-    typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
-    for i=1,#userTable.settings.sectors,1 do
-      typeSelect:addItem(userTable.settings.sectors[i].name)
-    end
-    varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvarcompletedbutton))
-    varYesButton.onTouch = function()
-      local selected = typeSelect.selectedItem
-      table.remove(userTable.settings.sectors,selected)
-      varContainer:removeChildren()
-      varContainer:remove()
-      varContainer = nil
-      saveTable(userTable,aRD .. "userlist.txt")
-      GUI.alert(loc.sectremoved)
-      updateServer()
-      window:remove()
-    end
+    local selected = pageMult * listPageNumber + sectorList.selectedItem
+    table.remove(userTable.sectors,selected)
+    database.save()
+    database.update()
+    updateSecList()
   end
 
-  local function sectorPassManager() --Manages passes that bypass sector lockdown events. Was very difficult to think of & implement; Untested
-    local selected = 1
-    varContainer = GUI.addBackgroundContainer(workspace, true, true)
-    varContainer.layout:addChild(GUI.label(1,1,3,1,style.sectorText, loc.sectorpasslabel))
-    typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
-    local freshType = function()
-      selected = typeSelect.selectedItem
-      typeSelect:clear()
-      addVarArray = {} --Every spot: {["uuid"]="uuid for thing",["data"]="what it checks for"}
-      for i=1,#userTable.settings.sectors[sectComboBox.selectedItem].pass, 1 do
-        local e,it = uuidtopass(userTable.settings.sectors[sectComboBox.selectedItem].pass[i].uuid)
-        table.insert(addVarArray, e == true and it or 0)
-        typeSelect:addItem(e == true and userTable.settings.label[addVarArray[i]] .. " : " .. userTable.settings.sectors[sectComboBox.selectedItem].pass[i].data)
-      end
-      if typeSelect:count() > selected then
-        selected = typeSelect:count()
-      end
-      typeSelect.selectedItem = selected
-    end
-    freshType()
-    varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
-    varYesButton.onTouch = function()
-      local selected = extraVar2.selectedItem
-      local data = userTable.settings.type[selected] == "-int" and varInput.selectedItem or userTable.settings.type[selected] == "bool" and nil or varInput.text
-      table.insert(userTable.settings.sectors[sectComboBox.selectedItem].pass,{["uuid"]=userTable.settings.calls[selected],["data"]=data})
-      freshType()
-    end
-    extraVar = varContainer.layout:addChild(GUI.button(1,21,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
-    extraVar.onTouch = function()
-      local selected = typeSelect.selectedItem
-      table.remove(userTable.settings.sectors[sectComboBox.selectedItem].pass,selected)
-      freshType()
-    end
-    local prev = "string"
-    local refreshInput = function()
-      local selected = extraVar2.selectedItem
-      if userTable.settings.type[selected] == "string" or userTable.settings.type[selected] == "-string" then
-        if prev == "-int" then
-          varInput:remove()
-          varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
-        end
-        varInput.text = ""
-        varInput.disabled = false
-      elseif userTable.settings.type[selected] == "int" then
-        if prev == "-int" then
-          varInput:remove()
-          varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
-        end
-        varInput.text = ""
-        varInput.disabled = false
-      elseif userTable.settings.type[selected] == "-int" then
-        if prev ~= "-int" then
-          varInput:remove()
-          varInput = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
-        else
-          varInput:clear()
-        end
-        for _,value in pairs(userTable.settings.data[selected]) do
-          varInput:addItem(value)
-        end
-        varInput.selectedItem = 1
-      else
-        if prev == "-int" then
-          varInput:remove()
-          varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
-        end
-        varInput.text = ""
-        varInput.disabled = true
-      end
-      prev = userTable.settings.type[selected]
-    end
-    varContainer.layout:addChild(GUI.label(1,1,3,1,style.sectorText, loc.allpasseslabel))
-    extraVar2 = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
-    for i=1,#userTable.settings.var,1 do
-      extraVar2:addItem(userTable.settings.label[i]).onTouch = refreshInput
-    end
-    varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
-    refreshInput()
+  local function createSectorPass()
+    local selected = userPassSelfSelector.selectedItem - 1
+    local data = selected == 0 and nil or userTable.passSettings.type[selected] == "-int" and varInput.selectedItem or userTable.passSettings.type[selected] == "bool" and nil or varInput.text
+    local uuid = selected == 0 and "checkstaff" or userTable.passSettings.calls[selected]
+    table.insert(userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass,{["uuid"]=uuid,["data"]=data,["lock"]=userPassTypeSelector.selectedItem,["priority"]=userPassPrioritySelector.selectedItem})
+    sectorListCallback()
+  end
+  local function deleteSectorPass()
+    local selected = pageMultPass * listPageNumberPass + sectorPassList.selectedItem
+    table.remove(userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass,selected)
+    sectorListCallback()
   end
 
   --GUI Setup
@@ -262,9 +171,13 @@ module.onTouch = function()
   updateSecList()
 
 
-  --Sector infos local sectorList, sectorNameInput, newSectorButton, delSectorButton, sectorPassNew, sectorPassRemove, sectorPassList, userPassSelfSelector, userPassDataSelector, userPassTypeSelector
+  --Sector infos newSectorButton, delSectorButton
   window:addChild(GUI.label(40,12,1,1,style.passNameLabel,"Sector name: "))
   sectorNameInput = window:addChild(GUI.input(64,12,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
+
+  newSectorButton = window:addChild(GUI.button(85,12,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar)).onTouch = createSector
+  delSectorButton = window:addChild(GUI.button(100,12,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar)).onTouch = deleteSector
+
   window:addChild(GUI.panel(40,14,96,1,style.bottomDivider))
   window:addChild(GUI.panel(40,15,1,18,style.bottomDivider))
 
@@ -275,10 +188,22 @@ module.onTouch = function()
   userPassSelfSelector = window:addChild(GUI.comboBox(100,17,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
   userPassSelfSelector:addItem("staff")
   for i=1,#userTable.passSettings.var,1 do
-    userPassSelfSelector:addItem(userTable.settings.label[i]).onTouch = refreshInput
+    userPassSelfSelector:addItem(userTable.passSettings.label[i]).onTouch = refreshInput
   end
   refreshInput(0)
   window:addChild(GUI.label(85,19,1,1,style.passNameLabel,"Change Input: "))
+  userPassDataSelector = window:addChild(GUI.input(100,12,30,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
+  window:addChild(GUI.label(85,21,1,1,style.passNameLabel,"Bypass Type : "))
+  userPassTypeSelector = window:addChild(GUI.comboBox(100,21,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+  userPassTypeSelector:addItem(loc.sectoropen)
+  userPassTypeSelector:addItem(loc.sectordislock)
+  window:addChild(GUI.label(85,23,1,1,style.passNameLabel,"Priority    : "))
+  userPassPrioritySelector = window:addChild(GUI.comboBox(100,23,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+  for i=1,3,1 do
+    userPassPrioritySelector:addItem(tostring(i))
+  end
+  sectorPassNew = window:addChild(GUI.button(85,25,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar)).onTouch = createSectorPass
+  sectorPassRemove = window:addChild(GUI.button(100,25,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar)).onTouch = deleteSectorPass
 end
 
 module.close = function()
