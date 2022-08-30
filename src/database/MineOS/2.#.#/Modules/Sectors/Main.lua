@@ -41,7 +41,7 @@ module.onTouch = function()
     return false
   end
 
-  local function refreshInput(uuid) --Does not change field back to string if switched to staff
+  local function refreshInput(uuid)
     if uuid == nil then
       uuid = userPassSelfSelector.selectedItem - 1
     end
@@ -105,7 +105,8 @@ module.onTouch = function()
         local pass = uuidtopass(userTable.sectors[selectedId].pass[i].uuid)
         local lockType = {loc.sectoropen,loc.sectordislock}
         if pass ~= 0 then
-          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. userTable.sectors[selectedId].pass[i].data .. " : p" .. userTable.sectors[selectedId].pass[i].priority .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock]) --Cannot cocatenate a nil value: unknown field
+          local disdata = userTable.sectors[selectedId].pass[i].data ~= nil and userTable.sectors[selectedId].pass[i].data or "0"
+          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. disdata .. " : p" .. userTable.sectors[selectedId].pass[i].priority .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock]) --TODO: Test if this is fixed
         else
           sectorPassList:addItem("Staff : 0 : p" .. userTable.sectors[selectedId].pass[i].priority .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock])
         end
@@ -195,7 +196,7 @@ module.onTouch = function()
 
   window:addChild(GUI.label(85,18,1,1,style.passNameLabel,"Select Pass : "))
   userPassSelfSelector = window:addChild(GUI.comboBox(100,17,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
-  userPassSelfSelector:addItem("staff")
+  userPassSelfSelector:addItem("staff").onTouch = refreshInput
   for i=1,#userTable.passSettings.var,1 do
     userPassSelfSelector:addItem(userTable.passSettings.label[i]).onTouch = refreshInput
   end

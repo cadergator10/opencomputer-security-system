@@ -130,7 +130,6 @@ local function callModem(callPort,...) --Does it work?
 end
 
 ----------Callbacks
---TODO: Finish the dang thing CJ! Modules and SUCCH
 
 local function updateServer(table)
   local data = {}

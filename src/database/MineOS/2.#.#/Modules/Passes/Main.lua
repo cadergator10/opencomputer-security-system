@@ -138,7 +138,7 @@ module.onTouch = function()
     end
   end
 
-  local function buttonCallback(workspace, button) --FIXME: Set all userTable stuff to new system (passes and passSettings)
+  local function buttonCallback(workspace, button)
     local buttonInt = button.buttonInt
     local callbackInt = button.callbackInt
     local isPos = button.isPos
@@ -312,7 +312,7 @@ module.onTouch = function()
     userListCallback()
   end
 
-  local function checkTypeCallback() --TODO: Left Off
+  local function checkTypeCallback()
     local typeArray = {"string","-string","int","-int","bool"}
     local selected
     if typeSelect.izit == "add" then
