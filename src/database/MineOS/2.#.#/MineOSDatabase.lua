@@ -310,7 +310,7 @@ contextMenu:addItem("Close").onTouch = function()
 end
 
 --Settings Stuff
-settingsButton = window:addChild(GUI.button(40,42,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.settingsvar))
+settingsButton = window:addChild(GUI.button(40,3,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.settingsvar))
 settingsButton.onTouch = changeSettings
 
 --Database name and stuff and CardWriter

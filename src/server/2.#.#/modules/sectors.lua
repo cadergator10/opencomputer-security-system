@@ -68,7 +68,7 @@ function module.message(command,datar) --Called when a command goes past all def
             return false, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector check failed: User Not Found",["color"]=nil,["line"]=false}}
           end
           local printText = "User " .. data.name .. " failed sector check of " .. userTable.sectors[i].name
-          for p=1,3,1 do
+          for p=1,5,1 do
             for _,value in pairs(userTable.sectors[i].pass) do
               if value.priority == p then
                 if value.uuid ~= "checkstaff" then
