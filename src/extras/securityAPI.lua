@@ -7,7 +7,8 @@ local cardRead = {};
 
 local adminCard = "admincard"
 
-local modemPort = 199
+local modemPort = 1000
+local syncPort = 199
 local diagPort = 180
 
 local component = require("component")
@@ -109,18 +110,7 @@ end
     else
       modem.open(modemPort)
     end
-    send(nil,modemPort,true,"autoInstallerQuery")
     local e
-    e,_,_,_,_,query = event.pull(3,"modem_message")
-    if e == nil then
-      print("Failed query. Is the server on?")
-      os.exit()
-    end
-    query = ser.unserialize(query)
-    if query.num == 1 then
-      print("Server is a 1.#.# version, which isn't supported!")
-      os.exit()
-    end
     local fill = io.open("extraConfig.txt", "r")
     if fill ~= nil then
       io.close(fill)
@@ -143,7 +133,32 @@ end
       config.type = "single"
       config.num = 2
       config.version = version
+      modem.open(syncPort)
+      modem.broadcast(syncPort,"syncport")
+      local e,_,_,_,_,msg = event.pull(1,"modem_message")
+      modem.close(syncPort)
+      if e then
+        config.port = tonumber(msg)
+      else
+        print("What port is the server running off of?")
+        local text = term.read()
+        config.port = tonumber(text:sub(1,-2))
+        term.clear()
+      end
       saveTable(config,"extraConfig.txt")
+    end
+    extraConfig = loadTable("extraConfig.txt")
+    modemPort = extraConfig.port
+    send(nil,modemPort,true,"getquery",ser.serialize({"passSettings","&&&crypt"}))
+    e,_,_,_,_,query = event.pull(3,"modem_message")
+    if e == nil then
+      print("Failed query. Is the server on?")
+      os.exit()
+    end
+    query = ser.unserialize(query)
+    if query.num ~= 3 then
+      print("Server is not 3.0.0 and up")
+      os.exit()
     end
     fill = io.open("securitySettings.txt")
     if fill ~= nil then
@@ -296,7 +311,6 @@ end
 
     term.clear()
     settingData = loadTable("securitySettings.txt")
-    extraConfig = loadTable("extraConfig.txt")
     fill = {}
     fill["type"] = "custom"
     fill["data"] = settingData

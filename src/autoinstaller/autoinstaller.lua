@@ -8,7 +8,8 @@ local event = require("event")
 local uuid = require("uuid")
 local modem = component.modem
 local link
-local modemPort = 199
+local modemPort = 1000
+local syncPort = 199
 
 local program = "ctrl.lua"
 local tableToFileName = "tableToFile.lua"
@@ -493,6 +494,19 @@ if component.isAvailable("tunnel") then
     link = component.tunnel
 end
 
+modem.open(syncPort)
+modem.broadcast(syncPort,"syncport")
+local e,_,_,_,_,msg = event.pull(1,"modem_message")
+modem.close(syncPort)
+if e then
+    modemPort = tonumber(msg)
+else
+    print("What port is the server running off of?")
+    local text = term.read()
+    modemPort = tonumber(text:sub(1,-2))
+    term.clear()
+end
+
 print("Sending query to server...")
 if link == nil then
     modem.open(modemPort)
@@ -517,7 +531,7 @@ editorSettings.settings = query.data.passSettings
 editorSettings.scanner = false
 editorSettings.accelerate = false
 term.clear()
-local text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires a diagnostic tablet (found on github)","1 for yes, 2 for no",1)
+local text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires a diagnostic tablet (found on github)","1 for yes, 2 for no",1) --TODO: Set accelerated setup to only use diagPort, cause remembering numbers is STUPID + updates for version 3.0.0 including port config.
 if tonumber(text) == 1 then
     local code = math.floor(math.random(1000,9999))
     modem.open(code)

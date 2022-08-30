@@ -13,7 +13,7 @@ local process = require("process")
 local thread = require("thread")
 local keyboard = require("keyboard")
 
-local version = "2.5.0"
+local version = "3.0.0"
 
 local serverModules = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/modules/modules.txt"
 

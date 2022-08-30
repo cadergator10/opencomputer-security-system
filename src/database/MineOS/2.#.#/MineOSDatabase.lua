@@ -1,6 +1,7 @@
 local GUI = require("GUI")
 local system = require("System")
-local modemPort = 199
+local modemPort = 1000
+local syncPort = 199
 local dbPort = 180
 
 local adminCard = "admincard"
@@ -39,7 +40,7 @@ If type is -int, [1] = minus button, [2] = plus button, [3] = value label, [4] =
 ----------
 
 local prgName = loc.name
-local version = "v2.4.0"
+local version = "v3.0.0"
 
 local modem
 
@@ -197,7 +198,12 @@ local function changeSettings()
   autoupdatebutton.onTouch = function()
     addVarArray.autoupdate = autoupdatebutton.pressed
   end
-  local acceptButton = varContainer.layout:addChild(GUI.button(1,11,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.submit))
+  local portInput = varContainer.layout:addChild(GUI.input(1,11,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.style))
+  portInput.text = settingTable.port
+  portInput.onInputFinished = function()
+    addVarArray.port = portInput.text
+  end
+  local acceptButton = varContainer.layout:addChild(GUI.button(1,16,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.submit))
   acceptButton.onTouch = function()
     settingTable = addVarArray
     saveTable(settingTable,aRD .. "dbsettings.txt")
@@ -207,18 +213,23 @@ local function changeSettings()
     GUI.alert(loc.settingchangecompleted)
     updateServer(tableRay)
     window:remove()
+    event.push("gonow")
   end
 end
 
 ----------Setup GUI
-if modem.isOpen(modemPort) == false then
-  modem.open(modemPort)
-end
 settingTable = loadTable(aRD .. "dbsettings.txt")
 if settingTable == nil then
   GUI.alert(loc.cryptalert)
-  settingTable = {["cryptKey"]={1,2,3,4,5},["style"]="default.lua",["autoupdate"]=false}
+  settingTable = {["cryptKey"]={1,2,3,4,5},["style"]="default.lua",["autoupdate"]=false,["port"]=1000}
+  modem.open(syncPort)
+  local e, f = callModem(syncPort,"syncport")
+  if e then
+    settingTable.port = tonumber(f)
+  end
+  modem.close(syncPort)
   saveTable(settingTable,aRD .. "dbsettings.txt")
+  os.exit()
 end
 if settingTable.style == nil then
   settingTable.style = "default.lua"
@@ -228,6 +239,12 @@ if settingTable.autoupdate == nil then
   settingTable.autoupdate = false
   saveTable(settingTable,aRD .. "dbsettings.txt")
 end
+
+modemPort = settingTable.port
+if modem.isOpen(modemPort) == false then
+  modem.open(modemPort)
+end
+
 style = fs.readTable(stylePath .. settingTable.style)
 
 workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,style.windowFill))

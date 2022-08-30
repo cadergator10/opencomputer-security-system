@@ -1,6 +1,7 @@
 --------Base APIS and variables
 local diagPort = 180
-local modemPort = 199
+local modemPort = 1000
+local syncPort = 199
 
 local component = require("component")
 local gpu = component.gpu
@@ -31,6 +32,7 @@ local supportedVersions = {"2.2.0","2.2.1","2.2.2","2.3.0","2.3.1","2.4.0","2.5.
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
 
 local settings
+local config
 
 local lengthNum = 0
 
@@ -41,6 +43,18 @@ local hassector = false
 
 local experimental = false
 --------Base Functions
+
+local function saveTable(table, location)
+    --saves a table to a file
+    local tableFile = assert(io.open(location, "w"))
+    tableFile:write(ser.serialize(table))
+    tableFile:close()
+end
+local function loadTable(location)
+    --returns a table stored in a file.
+    local tableFile = assert(io.open(location))
+    return ser.unserialize(tableFile:read("*all"))
+end
 
 local function convert( chars, dist, inv )
     return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
@@ -1089,6 +1103,25 @@ end
 --------Startup Code
 
 term.clear()
+
+config = loadTable("extraConfig.txt")
+if config == nil then
+    config = {}
+    modem.open(syncPort)
+    modem.broadcast(syncPort,"syncport")
+    local e,_,_,_,_,msg = event.pull(1,"modem_message")
+    modem.close(syncPort)
+    if e then
+        config.port = tonumber(msg)
+    else
+        print("What port is the server running off of?")
+        local text = term.read()
+        config.port = tonumber(text:sub(1,-2))
+        term.clear()
+    end
+    saveTable(config,"extraConfig.txt")
+end
+modemPort = config.ports --TODO: Update diag tablet for 3.0.0 version.
 
 if component.isAvailable("tunnel") then
     link = component.tunnel

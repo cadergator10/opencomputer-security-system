@@ -284,7 +284,6 @@ function module.message(command,datar,from) --Called when a command goes past al
     end
     return false
 end
---TODO: Change all programs here to new system of userTable and such.
 function module.piggyback(command,data) --Called after a command is passed. Passed to all modules which return nothing.
     if command == "setdevice" then
         server.send(true,server.crypt(ser.serialize({["settings"]=userTable.passSettings,["sectors"]=userTable.sectors})))

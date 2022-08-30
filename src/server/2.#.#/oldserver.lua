@@ -459,7 +459,7 @@ while true do
             end
         elseif command == "signIn" then
             data = ser.unserialize(data)
-            if data.command == "signIn" then --TODO: Finish sign in stuff
+            if data.command == "signIn" then
                 if crypt(logUsers[data.user].pass,settingTable.cryptKey,true) == data.pass then
                     bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers[data.user].perm),settingTable.cryptKey))
                 else

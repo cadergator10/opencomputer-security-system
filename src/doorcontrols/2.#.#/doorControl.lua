@@ -377,7 +377,7 @@ if e ~= nil then
       settingData.sector = false
     end
     local temp = {}
-    local temp["aaaa"] = deepcopy(settingData)
+    temp["aaaa"] = deepcopy(settingData)
     if temp.aaaa.doorType == 0 then
       temp.aaaa.doorAddress = component.os_doorcontrol.address
     elseif temp.aaaa.doorType == 3 then

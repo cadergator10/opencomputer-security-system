@@ -4,7 +4,8 @@ local sector = {}
 local sectorStatus = {}
 local sectorSettings = {}
 
-local modemPort = 199
+local modemPort = 1000
+local syncPort = 199
 
 local component = require("component")
 local gpu = component.gpu
@@ -275,10 +276,24 @@ else
 end
 
 sectorSettings = loadTable("redstonelinks.txt")
+
+modem.open(syncPort)
+modem.broadcast(syncPort,"syncport")
+local e,_,_,_,_,msg = event.pull(1,"modem_message")
+modem.close(syncPort)
+if e then
+    modemPort = tonumber(msg)
+else
+    print("What port is the server running off of?")
+    local text = term.read()
+    modemPort = tonumber(text:sub(1,-2))
+    term.clear()
+end
+
 print("Sending query to server...")
 modem.open(modemPort)
 modem.broadcast(modemPort,"getquery",ser.serialize({"sectors","sectorStatus","&&&crypt"}))
-local e,_,_,_,_,msg = event.pull(3,"modem_message")
+e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then
     print("No query received. Assuming old server system is in place and will not work")

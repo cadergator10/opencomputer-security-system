@@ -396,7 +396,7 @@ local function linkUserCallback()
   userListCallback()
 end
 
-local function checkTypeCallback() --TODO: Left Off
+local function checkTypeCallback()
   local typeArray = {"string","-string","int","-int","bool"}
   local selected
   if typeSelect.izit == "add" then

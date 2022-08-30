@@ -14,10 +14,24 @@ local computer = component.computer
 local modem = component.modem
 local links = {}
 
-local modemPort = 199
+local modemPort = 1000
+local syncPort = 199
 
 for key,_ in pairs(component.list("tunnel")) do
     table.insert(links,{["dev"]=component.proxy(key),["uuid"]="none"})
+end
+
+modem.open(syncPort)
+modem.broadcast(syncPort,"syncport")
+local e,_,_,_,_,msg = event.pull(1,"modem_message")
+modem.close(syncPort)
+if e then
+    modemPort = tonumber(msg)
+else
+    print("What port is the server running off of?")
+    local text = term.read()
+    modemPort = tonumber(text:sub(1,-2))
+    term.clear()
 end
 
 modem.open(modemPort)
