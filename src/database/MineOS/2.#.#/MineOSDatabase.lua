@@ -1,7 +1,7 @@
 local GUI = require("GUI")
 local system = require("System")
 local modemPort = 199
-local dbPort = 144
+local dbPort = 180
 
 local adminCard = "admincard"
 

@@ -15,11 +15,8 @@ local tableToFileName = "tableToFile.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
 local tableToFileCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/libraries/tableToFile.lua"
-local singleCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/singleDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/doorControl.lua"}
-local multiCode = {"https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/1.%23.%23/multiDoor.lua","https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/doorControl.lua"}
-local serverCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/server.lua"
+local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/doorControl.lua"
 local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
-local serverModules = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/modules/modules.txt"
 
 local settingData = {}
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
@@ -40,7 +37,7 @@ local function loadTable(location)
     return ser.unserialize(tableFile:read("*all"))
 end
 
-local function send(label,port,linker,...) --Pingme
+local function send(label,port,linker,...)
     if linker and link ~= nil then
         link.send(modem.address,...)
         return
@@ -496,7 +493,7 @@ if component.isAvailable("tunnel") then
     link = component.tunnel
 end
 
-print("Sending query to server...") --Pingme
+print("Sending query to server...")
 if link == nil then
     modem.open(modemPort)
 end
@@ -508,15 +505,19 @@ if e == nil then
 end
 print("Query received")
 query = ser.unserialize(msg)
+if query.num ~= 3 then
+    print("Security server is not valid. Must be 3.0.0 and up")
+    os.exit()
+end
 editorSettings.x = 2
 editorSettings.num = query.num
 editorSettings.version = query.version
 editorSettings.hassector = query.data.sectors ~= nil
-if editorSettings.num == 2 then editorSettings.settings = query.data end
+editorSettings.settings = query.data.passSettings
 editorSettings.scanner = false
 editorSettings.accelerate = false
 term.clear()
-local text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires the program here to be set up on a tablet with a modem: https://github.com/cadergator10/opensecurity-scp-security-system/blob/main/src/extras/acceleratedDoorSetup.lua","1 for yes, 2 for no",1)
+local text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires a diagnostic tablet (found on github)","1 for yes, 2 for no",1)
 if tonumber(text) == 1 then
     local code = math.floor(math.random(1000,9999))
     modem.open(code)

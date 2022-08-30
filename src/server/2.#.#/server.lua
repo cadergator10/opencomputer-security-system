@@ -1,4 +1,5 @@
-local modemPort = 199
+local modemPort = 1000 --1000 is new default. Port is chosen on device setups.
+local syncPort = 199 --TODO: Port all devices and systems EVERYWHERE to the new syncPort to check port or manual entry, and using special port selected for all messages.
 
 local component = require("component")
 local event = require("event")
@@ -16,8 +17,8 @@ local version = "2.5.0"
 
 local serverModules = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/modules/modules.txt"
 
-local commands = {"setdevice","signIn","updateuserlist","loginfo","getquery"}
-local skipcrypt = {"loginfo","getquery"}
+local commands = {"setdevice","signIn","updateuserlist","loginfo","getquery","syncport"}
+local skipcrypt = {"loginfo","getquery","syncport"}
 
 local modules = {}
 local modulepath = "/modules"
@@ -27,6 +28,8 @@ local viewhistory = {}
 local dohistory = true
 local eventcheckpull = true
 local evthread
+
+local revealPort = false
 
 local debug = false
 
@@ -184,9 +187,6 @@ end
 modulepath = fs.path(shell.resolve(process.info().path)).. "/modules"
 if fs.exists(modulepath) == false then
   os.execute("mkdir modules")
-  print("Downloading default modules...")
-  os.execute("wget -f https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/modules/sectors.lua modules/sectors.lua")
-  term.clear()
 end
 
 for file in fs.list(modulepath .. "/") do
@@ -206,9 +206,20 @@ if logUsers == nil then
 end
 local settingTable = loadTable("settings.txt")
 if settingTable == nil then
-  settingTable = {["cryptKey"]={1,2,3,4,5},["pass"]=false}
+  settingTable = {["cryptKey"]={1,2,3,4,5},["pass"]=false,["port"]=1000}
   saveTable(settingTable,"settings.txt")
 end
+settingTable = loadTable("settings.txt")
+
+if settingTable.pass == nil then
+  settingTable.pass = false
+  saveTable(settingTable,"settings.txt")
+end
+if settingTable.port == nil then
+  settingTable.port = 1000
+  saveTable(settingTable,"settings.txt")
+end
+modemPort = settingTable.port
 
 term.clear()
 local doorTable = loadTable("devicelist.txt")
@@ -216,6 +227,7 @@ if doorTable == nil then
   doorTable = {}
 end
 print("Checking all devices saved in devicelist...")
+modem.close()
 if modem.isOpen(modemPort) == false then
   modem.open(modemPort)
 end
@@ -241,11 +253,10 @@ if check then
 end
 
 advWrite("Servertine version: " .. version,0xFFFFFF,false,true,1,true)
-advWrite(#modules .. " modules loaded",nil,false,true,2,true)
+advWrite(#modules .. " modules loaded / port hidden",nil,false,true,2,true)
 advWrite("---------------------------------------------------------------------------",0xFFFFFF,false,true,3,true)
 advWrite("---------------------------------------------------------------------------",0xFFFFFF,false,true,#viewhistory + 4,true)
 
-settingTable = loadTable("settings.txt")
 local userTable = loadTable("userlist.txt")
 
 if userTable == nil then
@@ -272,10 +283,6 @@ else
     userTable.refactored = true
     saveTable(userTable,"userlist.txt")
   end
-end
-if settingTable.pass == nil then
-  settingTable.pass = false
-  saveTable(settingTable,"settings.txt")
 end
 
 local server = {["crypt"] = function(str,reverse)
@@ -305,7 +312,8 @@ server = nil
 --------Main Loop & Program
 local function serversettings()
   local selected = 1
-  local set = {"add modules","delete all modules","update server","close menu"}
+  local pr = revealPort and "hide port" or "reveal port"
+  local set = {"add modules","delete all modules",pr,"close menu"}
   local fresh = function()
     local nextmsg = "Select one:"
     for i=1,#set,1 do
@@ -367,12 +375,14 @@ local function serversettings()
         print("Wiped modules. Restart server")
         os.exit()
       elseif selected == 3 then
-        evthread:kill()
-        term.clear()
-        print("Downloading server...")
-        os.execute("wget -f https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/server.lua server.lua")
-        print("Restart server")
-        os.exit()
+        revealPort = revealPort and false or true
+        if revealPort then
+          advWrite(#modules .. " modules loaded / port shown: " .. modemPort,nil,false,true,2,true)
+          modem.open(syncPort)
+        else
+          advWrite(#modules .. " modules loaded / port hidden",nil,false,true,2,true)
+          modem.close(syncPort)
+        end
       elseif selected == 4 then
         advWrite("Press enter to bring up menu",0xFFFFFF,false,true,#viewhistory + 6,true)
         eventcheckpull = true
@@ -432,113 +442,121 @@ while true do
 
     if go then data = crypt(msg, settingTable.cryptKey, true) end
 
-    if command == "updateuserlist" then --Receives a table of the parts of the table that need to be changed. Because it will do this instead of resetting the entire table, different devices won't mess with other device configurations.
-      for key,value in pairs(ser.unserialize(data)) do
-        userTable[key] = value
-      end
-      local goboi = false
-      if settingTable.pass == false then
-        goboi = true
-      end
-      historyUpdate("Updated userlist received",0x0000C0,false,true)
-      saveTable(userTable, "userlist.txt")
-      for _,value in pairs(modules) do
-        value.setup()
-      end
-    elseif command == "signIn" then
-      data = ser.unserialize(data)
-      if data.command == "signIn" then --TODO: Finish sign in stuff
-        if crypt(logUsers[data.user].pass,settingTable.cryptKey,true) == data.pass then
-          bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers[data.user].perm),settingTable.cryptKey))
-        else
-          bdcst(from,port,crypt("false",settingTable.cryptKey))
+    if port == modemPort then
+      if command == "updateuserlist" then --Receives a table of the parts of the table that need to be changed. Because it will do this instead of resetting the entire table, different devices won't mess with other device configurations.
+        for key,value in pairs(ser.unserialize(data)) do
+          userTable[key] = value
         end
-      elseif data.command == "add" then
-        logUsers[data.user] = data.data
-      elseif data.command == "del" then
-        logUsers[data.user] = nil
-      elseif data.command == "grab" then
-        local check = false
-        for _,value in pairs(logUsers[data.user].perm) do
-          if value == "all" or value == "dev.usermanagement" then
-            check = true
+        local goboi = false
+        if settingTable.pass == false then
+          goboi = true
+        end
+        historyUpdate("Updated userlist received",0x0000C0,false,true)
+        saveTable(userTable, "userlist.txt")
+        for _,value in pairs(modules) do
+          value.setup()
+        end
+      elseif command == "signIn" then
+        data = ser.unserialize(data)
+        if data.command == "signIn" then --TODO: Finish sign in stuff
+          if crypt(logUsers[data.user].pass,settingTable.cryptKey,true) == data.pass then
+            bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers[data.user].perm),settingTable.cryptKey))
+          else
+            bdcst(from,port,crypt("false",settingTable.cryptKey))
+          end
+        elseif data.command == "add" then
+          logUsers[data.user] = data.data
+        elseif data.command == "del" then
+          logUsers[data.user] = nil
+        elseif data.command == "grab" then
+          local check = false
+          for _,value in pairs(logUsers[data.user].perm) do
+            if value == "all" or value == "dev.usermanagement" then
+              check = true
+              break
+            end
+          end
+          if check then
+            bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers),settingTable.cryptKey))
+          else
+            bdcst(from,port,crypt("false",settingTable.cryptKey))
+          end
+        end
+      elseif command == "setdevice" then
+        historyUpdate("Received device parameters from id: " .. add,0xFFFF80,false,true)
+        local tmpTable = ser.unserialize(data)
+        tmpTable["id"] = add
+        tmpTable["repeat"] = bing == true and from or false
+        local isInAlready = false
+        for i=1,#doorTable,1 do
+          if doorTable[i].id == add then
+            isInAlready = true
+            doorTable[i] = tmpTable
             break
           end
         end
-        if check then
-          bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers),settingTable.cryptKey))
-        else
-          bdcst(from,port,crypt("false",settingTable.cryptKey))
+        if isInAlready == false then table.insert(doorTable,tmpTable) end
+        saveTable(doorTable, "devicelist.txt")
+        for _,value in pairs(modules) do
+          value.setup()
         end
-      end
-    elseif command == "setdevice" then
-      historyUpdate("Received device parameters from id: " .. add,0xFFFF80,false,true)
-      local tmpTable = ser.unserialize(data)
-      tmpTable["id"] = add
-      tmpTable["repeat"] = bing == true and from or false
-      local isInAlready = false
-      for i=1,#doorTable,1 do
-        if doorTable[i].id == add then
-          isInAlready = true
-          doorTable[i] = tmpTable
-          break
+      elseif command == "loginfo" then
+        data = ser.unserialize(data) --Array of arrays. Each array has text and color (color optional)
+        historyUpdate(data[1].text,data[1].color or 0xFFFFFF,false,true)
+        for i=2,#data,1 do
+          historyUpdate(data[i].text,data[i].color or 0xFFFFFF,false,false)
         end
-      end
-      if isInAlready == false then table.insert(doorTable,tmpTable) end
-      saveTable(doorTable, "devicelist.txt")
-      for _,value in pairs(modules) do
-        value.setup()
-      end
-    elseif command == "loginfo" then
-      data = ser.unserialize(data) --Array of arrays. Each array has text and color (color optional)
-      historyUpdate(data[1].text,data[1].color or 0xFFFFFF,false,true)
-      for i=2,#data,1 do
-        historyUpdate(data[i].text,data[i].color or 0xFFFFFF,false,false)
-      end
-    elseif command == "getquery" then
-      local wait = ser.unserialize(data)
-      local docrypt = true
-      data = {}
-      data.data = {}
-      if wait ~= nil then
-        for i=1,#wait,1 do
-          if wait[i] ~= "&&&crypt" then
-            data.data[wait[i]] = userTable[wait[i]]
-          else
-            docrypt = false
+      elseif command == "getquery" then
+        local wait = ser.unserialize(data)
+        local docrypt = true
+        data = {}
+        data.data = {}
+        if wait ~= nil then
+          for i=1,#wait,1 do
+            if wait[i] ~= "&&&crypt" then
+              data.data[wait[i]] = userTable[wait[i]]
+            else
+              docrypt = false
+            end
+          end
+        end
+        data.num = 2
+        data.version = version
+        data = ser.serialize(data)
+        data = docrypt and crypt(data,settingTable.cryptKey) or data
+        bdcst(from, port, data)
+      else
+        local p1,p2,p3,p4,p5,p6,p7 = msgToModule("message",command,data,add)
+        if p1 then
+          if p4 ~= nil then
+            if p4 == false then
+              bdcst(nil,port,p5,p6)
+            else
+              bdcst(from, port, p5,p6)
+            end
+          end
+          if p2 then --holdup
+            historyUpdate(p2[1].text,p2[1].color or 0xFFFFFF,false,true)
+            for i=2,#p2,1 do
+              historyUpdate(p2[i].text,p2[i].color or 0xFFFFFF,false,p2[i].line or false)
+            end
+          end
+          if p3 then
+            saveTable(userTable, "userlist.txt")
+            for _,value in pairs(modules) do
+              value.setup()
+            end
           end
         end
       end
-      data.num = 2
-      data.version = version
-      data = ser.serialize(data)
-      data = docrypt and crypt(data,settingTable.cryptKey) or data
-      bdcst(from, port, data)
+      msgToModule("piggyback",command,data)
     else
-      local p1,p2,p3,p4,p5,p6,p7 = msgToModule("message",command,data,add)
-      if p1 then
-        if p4 ~= nil then
-          if p4 == false then
-            bdcst(nil,port,p5,p6)
-          else
-            bdcst(from, port, p5,p6)
-          end
-        end
-        if p2 then --holdup
-          historyUpdate(p2[1].text,p2[1].color or 0xFFFFFF,false,true)
-          for i=2,#p2,1 do
-            historyUpdate(p2[i].text,p2[i].color or 0xFFFFFF,false,p2[i].line or false)
-          end
-        end
-        if p3 then
-          saveTable(userTable, "userlist.txt")
-          for _,value in pairs(modules) do
-            value.setup()
-          end
+      if command == "syncport" then
+        if port == syncPort and revealPort then
+          bdcst(from,port,tostring(modemPort))
         end
       end
     end
-    msgToModule("piggyback",command,data)
   end
    gpu.setForeground(0xFFFFFF)
 end
