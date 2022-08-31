@@ -323,6 +323,7 @@ local function serversettings()
         nextmsg = nextmsg .. "  " .. set[i] .. "  :"
       end
     end
+    nextmsg = nextmsg:sub(1,-2)
     advWrite(nextmsg,0xFFFFFF,true,true,#viewhistory + 5,true)
   end
   fresh()
@@ -375,7 +376,7 @@ local function serversettings()
         print("Wiped modules. Restart server")
         os.exit()
       elseif selected == 3 then
-        revealPort = revealPort and false or true
+        if revealPort == false then revealPort = true else revealPort = false end
         if revealPort then
           advWrite(#modules .. " modules loaded / port shown: " .. modemPort,nil,false,true,2,true)
           modem.open(syncPort)
@@ -383,8 +384,13 @@ local function serversettings()
           advWrite(#modules .. " modules loaded / port hidden",nil,false,true,2,true)
           modem.close(syncPort)
         end
+        advWrite("Press enter to bring up menu",0xFFFFFF,false,true,#viewhistory + 5,true)
+        os.sleep(1)
+        eventcheckpull = true
+        thread.current():kill()
       elseif selected == 4 then
-        advWrite("Press enter to bring up menu",0xFFFFFF,false,true,#viewhistory + 6,true)
+        advWrite("Press enter to bring up menu",0xFFFFFF,false,true,#viewhistory + 5,true)
+        os.sleep(1)
         eventcheckpull = true
         thread.current():kill()
       end

@@ -118,7 +118,7 @@ local function loadTable( sfile )
 end
 
 local function callModem(callPort,...) --Does it work?
-  modem.broadcast(modemPort,...)
+  modem.broadcast(callPort,...)
   local e, _, from, port, _, msg,a,b,c,d,f,g,h
   repeat
     e, a,b,c,d,f,g,h = event.pull(1)
@@ -201,7 +201,7 @@ local function changeSettings()
   local portInput = varContainer.layout:addChild(GUI.input(1,11,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.style))
   portInput.text = settingTable.port
   portInput.onInputFinished = function()
-    addVarArray.port = portInput.text
+    addVarArray.port = tonumber(portInput.text)
   end
   local acceptButton = varContainer.layout:addChild(GUI.button(1,16,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.submit))
   acceptButton.onTouch = function()
@@ -223,7 +223,7 @@ if settingTable == nil then
   GUI.alert(loc.cryptalert)
   settingTable = {["cryptKey"]={1,2,3,4,5},["style"]="default.lua",["autoupdate"]=false,["port"]=1000}
   modem.open(syncPort)
-  local e, f = callModem(syncPort,"syncport")
+  local e,_,_,_,_, f = callModem(syncPort,"syncport")
   if e then
     settingTable.port = tonumber(f)
   end

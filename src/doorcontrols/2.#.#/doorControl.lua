@@ -464,11 +464,14 @@ while true do
   local keyed = nil
   for key, valuedd in pairs(settingData) do
     for i=1,#valuedd.reader,1 do
-      if(valuedd.reader == address) then
+      if(valuedd.reader[i] == address) then
         keyed = key
         break
       end
-    end 
+    end
+    if keyed ~= nil then
+      break
+    end
   end
   isOk = "incorrect magreader"
   if(keyed ~= nil)then
@@ -523,6 +526,7 @@ while true do
         os.exit()
       end
       term.write(tmpTable["name"] .. ":")
+      tmpTable["type"] = extraConfig.type
       tmpTable["key"] = keyed
       tmpTable["sector"] = sector
       data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)

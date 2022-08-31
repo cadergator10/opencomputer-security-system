@@ -134,7 +134,8 @@ local function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["para
 end
 
 local function getDoorInfo(type,id,key)
-    if type == "multi" then
+    local arrange
+    if type == "doorsystem" then
         for i=1,#doorTable,1 do --doorTable[i] = {type="single or multi",id="computer's modem uuid",data={door's setting table}}
             if doorTable[i].id == id then
                 if doorTable[i].data[key]~=nil then
@@ -142,14 +143,8 @@ local function getDoorInfo(type,id,key)
                 end
             end
         end
-    elseif type == "single" or type == "custom" then
-        for i=1,#doorTable,1 do --doorTable[i] = {type="single or multi",id="computer's modem uuid",data={door's setting table}}
-            if doorTable[i].id == id then
-                return {["read"]=doorTable[i].data.cardRead,["name"]=doorTable[i].data.name}
-            end
-        end
     end
-    return nil
+    return nil, arrange
 end
 
 local function checkLink(user)

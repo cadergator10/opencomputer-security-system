@@ -535,21 +535,20 @@ local function doorediting()
         setGui(2,"Use left and right to change doors, n to add a door, and r to delete a door")
         setGui(3,"Click the screen to save and submit to door control")
         setGui(4,"")
-            setGui(5,"Door Key: " .. editTable[pageNum].key)
-            if diagInfo.status == "incorrect magreader" then
-                setGui(6,"Notice: magreader swiped isn't linked to any door. If it's supposed to be linked you will have to fix it.")
-            end
-            setGui(7,"")
-            if editTable[pageNum].doorType == 0 or editTable[pageNum].doorType == 3 then
-                setGui(16,"Door Address: " .. editTable[pageNum].doorAddress)
-                setGui(17,"Reader Address: " .. editTable[pageNum].reader)
-            elseif editTable[pageNum].doorType == 2 then
-                setGui(16,"Bundled redstone color: " .. redColorTypes[editTable[pageNum].redColor + 1] .. " / Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
-                setGui(17,"Reader Address: " .. editTable[pageNum].reader)
-            else
-                setGui(16,"Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
-                setGui(17,"Reader Address: " .. editTable[pageNum].reader)
-            end
+        setGui(5,"Door Key: " .. editTable[pageNum].key)
+        if diagInfo.status == "incorrect magreader" then
+            setGui(6,"Notice: magreader swiped isn't linked to any door. If it's supposed to be linked you will have to fix it.")
+        end
+        setGui(7,"")
+        if editTable[pageNum].doorType == 0 or editTable[pageNum].doorType == 3 then
+            setGui(16,"Door Address: " .. editTable[pageNum].doorAddress)
+            setGui(17,"Reader Address: " .. editTable[pageNum].reader)
+        elseif editTable[pageNum].doorType == 2 then
+            setGui(16,"Bundled redstone color: " .. redColorTypes[editTable[pageNum].redColor + 1] .. " / Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
+            setGui(17,"Reader Address: " .. editTable[pageNum].reader)
+        else
+            setGui(16,"Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
+            setGui(17,"Reader Address: " .. editTable[pageNum].reader)
         end
         setGui(8,"1. Change Door Name: " .. editTable[pageNum].name)
         setGui(9,"2. Change Door type/color/uuid/side")
