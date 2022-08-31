@@ -10,6 +10,7 @@ local modem = component.modem
 local link
 local modemPort = 1000
 local syncPort = 199
+local diagPort = 180
 
 local program = "ctrl.lua"
 local tableToFileName = "tableToFile.lua"
@@ -21,7 +22,7 @@ local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/openco
 
 local settingData = {}
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
-local commandArray = {"getInput","analyzer","clearTerm","terminate"}
+local commandArray = {"getInput","analyzer","clearTerm","terminate","advanalyzer"}
 
 local query = {["num"]=0}
 local editorSettings = {} --Types of variables used in runInstall: type = door type (single or multi) required, num = old or new type (1 or 2) required, times = times to loop through (only edited before entering runInstall if adding more doors to multi) conditional, version = server version "not used yet", accelerate = if using seperate door setup tablet required, scanner = only used if accelerate true and if tablet has analyzer required, key = key of multidoor if editing door depends, edit = if editing. false if new door. required
@@ -66,6 +67,18 @@ local function sendMsg(...)
                 if arg[i] == 4 then
                     print("terminated connection")
                 end
+                if arg[i] == 5 then
+                    local wait = true
+                    local distable = {}
+                    while wait do
+                        local e, _, _, _, _, text = event.pull("modem_message")
+                        if text == "finish" then
+                            return distable
+                        else
+                            table.insert(distable,text)
+                        end
+                    end
+                end
             else
                 send(editorSettings.from,editorSettings.port,false,"print","potential error in code for sendMsg")
             end
@@ -82,6 +95,18 @@ local function sendMsg(...)
                     term.clear()
                 elseif arg[i] == 4 then
                     print("Finished editing.")
+                elseif arg[i] == 5 then
+                    local wait = true
+                    local distable = {}
+                    while wait do
+                        local text = term.read()
+                        text = text:sub(1,-2)
+                        if text == "" then
+                            return distable
+                        else
+                            table.insert(distable,text)
+                        end
+                    end
                 else
                     print("potential error in code for sendMsg")
                 end
@@ -95,9 +120,9 @@ local function runInstall()
     local tmpTable = {}
     local times = 1
     local text = ""
-    if editorSettings.num == 2 then editorSettings.x = tonumber(sendMsg("NOTICE! Pass overhaul for 2.#.# systems. Please refer to wiki on github","as I should have put a how to there.","Would you like to use the simple pass setup or new advanced one?","1 for simple, 2 for advanced",1)) end
+    editorSettings.x = tonumber(sendMsg("Would you like to use the simple pass setup or new advanced one?","1 for simple, 2 for advanced",1))
     sendMsg(3)
-    if editorSettings.type == "multi" then
+    if editorSettings.single == false then
         if editorSettings.times ~= nil then
             tmpTable = editorSettings.data
             times = editorSettings.times
@@ -108,6 +133,8 @@ local function runInstall()
             text = sendMsg("Read the text carefully. Some of the inputs REQUIRE NUMBERS ONLY! Some require text.","The redSide is always 2, or back of the computer.","How many different doors are there?",1)
             times = tonumber(text)
         end
+    else
+        times = 1
     end
     os.execute("wget -f " .. tableToFileCode .. " " .. tableToFileName)
 
@@ -130,6 +157,7 @@ local function runInstall()
         else
             config.cryptKey = {1,2,3,4,5}
         end
+        config.port = modemPort
     end
     saveTable(config,configFileName)
 
@@ -137,7 +165,7 @@ local function runInstall()
         local loopArray = {}
         sendMsg(3)
         local j
-        if editorSettings.type == "multi" then
+        if editorSettings.single == false then
             sendMsg("Door # " .. i .. " is being edited:")
             if editorSettings.key == nil then
                 local keepLoop = true
@@ -153,34 +181,49 @@ local function runInstall()
             else
                 j = editorSettings.key
             end
-            text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet" or "Enter the uuid of the device in TEXT",editorSettings.scanner and 2 or 1)
+            j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
+            text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet." or "Enter the uuid of the device in TEXT. When finished, don't type anything and just press enter",5) --TODO: Change the reader to multi-reader mode, as well as if single, then put every magreader in table.
             loopArray["reader"] = text
+        else
+            local distable = {}
+            for key,_ in pairs(component.list("os_magreader")) do
+                table.insert(distable,key)
+            end
+            loopArray["reader"] = distable
         end
-        text = sendMsg("What do you want to nickname this door? This will show up on the server (if it's the 2.#.# version)",1)
+        text = sendMsg("What do you want to nickname this door?",1)
         loopArray["name"] = text
-        text = sendMsg(editorSettings.type == "multi" and "Door Type? 0= doorcontrol. 2=bundled. 3=rolldoor. NEVER USE 1! NUMBER ONLY" or "Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY",1)
+        text = sendMsg("Door Type? 0= doorcontrol. 1=redstone 2=bundled. 3=rolldoor. NUMBER ONLY",1)
         loopArray["doorType"] = tonumber(text)
         if loopArray.doorType == 2 then
             text = sendMsg("What color. Use the Color API wiki on the opencomputers wiki, and enter the NUMBER",1)
             loopArray["redColor"] = tonumber(text)
-            if editorSettings.type == "multi" then
+            loopArray["doorAddress"] = ""
+            text = sendMsg("What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY",1)
+            loopArray["redSide"] = tonumber(text)
+            if editorSettings.single == false then
                 sendMsg("No need to input anything for door address. The setting doesn't require it :)")
-                loopArray["doorAddress"] = ""
-            else
-                text = sendMsg("What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY",1)
-                loopArray["redSide"] = tonumber(text)
             end
         elseif loopArray.doorType == 1 then
             loopArray["redColor"] = 0
+            loopArray["doorAddress"] = ""
             text = sendMsg("No need for redColor! The settings you inputted before don't require it :)","What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY",1)
             loopArray["redSide"] = tonumber(text)
+            if editorSettings.single == false then
+                sendMsg("No need to input anything for door address. The setting doesn't require it :)")
+            end
         else
             loopArray["redColor"] = 0
-            if editorSettings.type == "single" then loopArray["redSide"] = 0 end
-            sendMsg("no need to input anything for redColor. The setting doesn't require it :)",editorSettings.type == "single" and "no need to input anything for redSide. The setting doesn't require it :)" or nil)
-            if editorSettings.type == "multi" then
+            loopArray["redSide"] = 0
+            sendMsg("no need to input anything for redColor. The setting doesn't require it :)","no need to input anything for redSide. The setting doesn't require it :)")
+            if editorSettings.single == false then
                 text = sendMsg("What is the address for the doorcontrol/rolldoor block?", editorSettings.scanner and "Scan the block with tablet" or "Enter uuid as text",editorSettings.scanner and 2 or 1)
                 loopArray["doorAddress"] = text
+            else
+                for key,_ in pairs(component.list(loopArray.doorType == 3 and "os_rolldoorcontrol" or "os_doorcontrol")) do
+                    loopArray["doorAddress"] = key
+                    break
+                end
             end
         end
         text = sendMsg("Should the door be toggleable, or not? 0 for autoclose and 1 for toggleable",1)
@@ -192,155 +235,139 @@ local function runInstall()
             sendMsg("No need to change delay! Previous setting doesn't require it :)")
             loopArray["delay"] = 0
         end
-        if editorSettings.num == 1 then
-            text = sendMsg("What should be read? 0 = level; 1 = armory level; 2 = MTF;","3 = GOI; 4 = Security; 5 = Department; 6 = Intercom; 7 = Staff",1)
-            loopArray["cardRead"] = tonumber(text)
-            if loopArray.cardRead <= 1 or loopArray.cardRead == 5 then
-                text = sendMsg("Access Level of what should be read? NUMBER ONLY",loopArray.cardRead ~= 5 and "level or armory level: enter the level that it should be." or "Department: 1=SD, 2=ScD, 3=MD, 4=E&T, 5=O5",1)
-                loopArray["accessLevel"] = tonumber(text)
-            else
-                loopArray["accessLevel"] = 0
-                sendMsg("No need to set access level. This mode doesn't require it :)")
+        if editorSettings.x == 2 then
+            local readLoad = {}
+            sendMsg("Remember how many of each pass you want before you start.","type something and enter to continue",1)
+            readLoad.add = tonumber(sendMsg("How many add passes do you want to add?","remember multiple base passes can use the same add pass",1))
+            readLoad.base = tonumber(sendMsg("How many base passes do you want to add?",1))
+            readLoad.reject = tonumber(sendMsg("How many reject passes do you want to add?","These don't affect supreme passes",1))
+            readLoad.supreme = tonumber(sendMsg("How many supreme passes do you want to add?",1))
+            loopArray.cardRead = {}
+            local nextmsg = {}
+            nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
+            for i=1,#editorSettings.settings.var,1 do
+                nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. editorSettings.settings.label[i]
             end
-            text = sendMsg("Is this door opened whenever all doors are asked to open? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is yes",1)
-            loopArray["forceOpen"] = tonumber(text)
-            text = sendMsg("Is this door immune to lock door? Not necessary if this is not Site 91","0 if no, 1 if yes. Default is no",1)
-            loopArray["bypassLock"] = tonumber(text)
-        else --BEGINNING OF 2.0.0 -----------------------------------------------------
-            if editorSettings.x == 2 then
-                local readLoad = {}
-                sendMsg("Remember how many of each pass you want before you start.","type something and enter to continue",1)
-                readLoad.add = tonumber(sendMsg("How many add passes do you want to add?","remember multiple base passes can use the same add pass",1))
-                readLoad.base = tonumber(sendMsg("How many base passes do you want to add?",1))
-                readLoad.reject = tonumber(sendMsg("How many reject passes do you want to add?","These don't affect supreme passes",1))
-                readLoad.supreme = tonumber(sendMsg("How many supreme passes do you want to add?",1))
-                loopArray.cardRead = {}
-                local nextmsg = {}
-                nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
-                for i=1,#editorSettings.settings.var,1 do
-                    nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. editorSettings.settings.label[i]
-                end
-                local passFunc = function(type,num)
-                    local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
-                    local text = sendMsg(nextmsg.beg..type..nextmsg.mid..num..nextmsg.back,1)
-                    if tonumber(text) == 0 then
-                        newRules.call = "checkstaff"
-                        newRules.param = 0
-                        sendMsg("No need for extra parameter. This mode doesn't require it :)")
+            local passFunc = function(type,num)
+            local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
+            local text = sendMsg(nextmsg.beg..type..nextmsg.mid..num..nextmsg.back,1)
+            if tonumber(text) == 0 then
+                newRules.call = "checkstaff"
+                newRules.param = 0
+                sendMsg("No need for extra parameter. This mode doesn't require it :)")
+            else
+                newRules["tempint"] = tonumber(text)
+                newRules["call"] = editorSettings.settings.calls[tonumber(text)]
+                if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type == "-string" then
+                    text = sendMsg("What is the string you would like to read? Enter text.",1)
+                    newRules["param"] = text
+                elseif editorSettings.settings.type[tonumber(text)] == "bool" then
+                    newRules["param"] = 0
+                    sendMsg("No need for extra parameter. This mode doesn't require it :)")
+                elseif editorSettings.settings.type[tonumber(text)] == "int" then
+                    if editorSettings.settings.above[tonumber(text)] == true then
+                        text = sendMsg("What level and above should be required?",1)
                     else
-                        newRules["tempint"] = tonumber(text)
-                        newRules["call"] = editorSettings.settings.calls[tonumber(text)]
-                        if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type == "-string" then
-                            text = sendMsg("What is the string you would like to read? Enter text.",1)
-                            newRules["param"] = text
-                        elseif editorSettings.settings.type[tonumber(text)] == "bool" then
-                            newRules["param"] = 0
-                            sendMsg("No need for extra parameter. This mode doesn't require it :)")
-                        elseif editorSettings.settings.type[tonumber(text)] == "int" then
-                            if editorSettings.settings.above[tonumber(text)] == true then
-                                text = sendMsg("What level and above should be required?",1)
-                            else
-                                text = sendMsg("what level exactly should be required?",1)
-                            end
-                            newRules["param"] = tonumber(text)
-                        elseif editorSettings.settings.type[tonumber(text)] == "-int" then
-                            local nextmsg = "What group are you wanting to set?"
-                            for i=1,#editorSettings.settings.data[tonumber(text)],1 do
-                                nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[tonumber(text)][i]
-                            end
-                            text = sendMsg(nextmsg,1)
-                            newRules["param"] = tonumber(text)
-                        else
-                            sendMsg("error in cardRead area for num 2")
-                            newRules["param"] = 0
-                        end
+                        text = sendMsg("what level exactly should be required?",1)
                     end
-                    return newRules
-                end
-                for i=1,readLoad.add,1 do
-                    local rule = passFunc("add",i)
-                    table.insert(loopArray.cardRead,rule)
-                end
-                local addNum = #loopArray.cardRead
-                for i=1,readLoad.base,1 do
-                    local rule = passFunc("base",i)
-                    text = tonumber(sendMsg("How many add passes do you want to link?",1))
-                    if text ~= 0 then
-                        local nextAdd = "Which pass do you want to add? "
-                        for j=1,addNum,1 do
-                            nextAdd = nextAdd .. ", " .. j .. " = " .. editorSettings.settings.label[loopArray.cardRead[j].tempint]
-                        end
-                        for j=1,text,1 do
-                            text = tonumber(sendMsg(nextAdd,1))
-                            table.insert(rule.data,loopArray.cardRead[text].uuid)
-                        end
+                    newRules["param"] = tonumber(text)
+                elseif editorSettings.settings.type[tonumber(text)] == "-int" then
+                    local nextmsg = "What group are you wanting to set?"
+                    for i=1,#editorSettings.settings.data[tonumber(text)],1 do
+                        nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[tonumber(text)][i]
                     end
-                    table.insert(loopArray.cardRead,rule)
+                    text = sendMsg(nextmsg,1)
+                    newRules["param"] = tonumber(text)
+                else
+                    sendMsg("error in cardRead area for num 2")
+                    newRules["param"] = 0
                 end
-                for i=1,readLoad.reject,1 do
-                    local rule = passFunc("reject",i)
-                    table.insert(loopArray.cardRead,rule)
+            end
+            return newRules
+        end
+        for i=1,readLoad.add,1 do
+            local rule = passFunc("add",i)
+            table.insert(loopArray.cardRead,rule)
+        end
+        local addNum = #loopArray.cardRead
+        for i=1,readLoad.base,1 do
+            local rule = passFunc("base",i)
+            text = tonumber(sendMsg("How many add passes do you want to link?",1))
+            if text ~= 0 then
+                local nextAdd = "Which pass do you want to add? "
+                for j=1,addNum,1 do
+                    nextAdd = nextAdd .. ", " .. j .. " = " .. editorSettings.settings.label[loopArray.cardRead[j].tempint]
                 end
-                for i=1,readLoad.supreme,1 do
-                    local rule = passFunc("supreme",i)
-                    table.insert(loopArray.cardRead,rule)
+                for j=1,text,1 do
+                    text = tonumber(sendMsg(nextAdd,1))
+                    table.insert(rule.data,loopArray.cardRead[text].uuid)
                 end
-            else --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
-                local nextmsg = "What should be read? 0 = staff,"
-                for i=1,#editorSettings.settings.var,1 do
-                    nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.label[i]
+            end
+            table.insert(loopArray.cardRead,rule)
+        end
+        for i=1,readLoad.reject,1 do
+            local rule = passFunc("reject",i)
+            table.insert(loopArray.cardRead,rule)
+        end
+        for i=1,readLoad.supreme,1 do
+            local rule = passFunc("supreme",i)
+            table.insert(loopArray.cardRead,rule)
+        end
+    else --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
+        local nextmsg = "What should be read? 0 = staff,"
+        for i=1,#editorSettings.settings.var,1 do
+            nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.label[i]
+        end
+        text = sendMsg(nextmsg,1)
+        loopArray["cardRead"] = {{["uuid"]=uuid.next(),["call"]="",["param"]=0,["request"]="supreme",["data"]=false}}
+        if tonumber(text) == 0 then
+            loopArray["cardRead"][1].call = "checkstaff"
+            loopArray["cardRead"][1].param = 0
+            sendMsg("No need to set access level. This mode doesn't require it :)")
+        else
+            loopArray["cardRead"][1].call = editorSettings.settings.calls[tonumber(text)]
+            if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type[tonumber(text)] == "-string" then
+                text = sendMsg("What is the string you would like to read? Enter text.",1)
+                loopArray["cardRead"][1].param = text
+            elseif editorSettings.settings.type[tonumber(text)] == "bool" then
+                loopArray["cardRead"][1].param = 0
+                sendMsg("No need to set access level. This mode doesn't require it :)")
+            elseif editorSettings.settings.type[tonumber(text)] == "int" then
+                if editorSettings.settings.above[tonumber(text)] == true then
+                    text = sendMsg("What level and above should be required?",1)
+                else
+                    text = sendMsg("what level exactly should be required?",1)
+                end
+                loopArray["cardRead"][1].param = tonumber(text)
+            elseif editorSettings.settings.type[tonumber(text)] == "-int" then
+                local nextmsg = "What group are you wanting to set?"
+                for i=1,#editorSettings.settings.data[tonumber(text)],1 do
+                    nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[tonumber(text)][i]
                 end
                 text = sendMsg(nextmsg,1)
-                loopArray["cardRead"] = {{["uuid"]=uuid.next(),["call"]="",["param"]=0,["request"]="supreme",["data"]=false}}
-                if tonumber(text) == 0 then
-                    loopArray["cardRead"][1].call = "checkstaff"
-                    loopArray["cardRead"][1].param = 0
-                    sendMsg("No need to set access level. This mode doesn't require it :)")
-                else
-                    loopArray["cardRead"][1].call = editorSettings.settings.calls[tonumber(text)]
-                    if editorSettings.settings.type[tonumber(text)] == "string" or editorSettings.settings.type[tonumber(text)] == "-string" then
-                        text = sendMsg("What is the string you would like to read? Enter text.",1)
-                        loopArray["cardRead"][1].param = text
-                    elseif editorSettings.settings.type[tonumber(text)] == "bool" then
-                        loopArray["cardRead"][1].param = 0
-                        sendMsg("No need to set access level. This mode doesn't require it :)")
-                    elseif editorSettings.settings.type[tonumber(text)] == "int" then
-                        if editorSettings.settings.above[tonumber(text)] == true then
-                            text = sendMsg("What level and above should be required?",1)
-                        else
-                            text = sendMsg("what level exactly should be required?",1)
-                        end
-                        loopArray["cardRead"][1].param = tonumber(text)
-                    elseif editorSettings.settings.type[tonumber(text)] == "-int" then
-                        local nextmsg = "What group are you wanting to set?"
-                        for i=1,#editorSettings.settings.data[tonumber(text)],1 do
-                            nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.data[tonumber(text)][i]
-                        end
-                        text = sendMsg(nextmsg,1)
-                        loopArray["cardRead"][1].param = tonumber(text)
-                    else
-                        sendMsg("error in cardRead area for num 2")
-                        loopArray["cardRead"][1].param = 0
-                    end
-                end
-            end --Sectors beginning
-            if editorSettings.hassector then
-                local nextmsg = "What sector would you like this door to be part of? 0 = no sector"
-                for i=1,#editorSettings.settings.sectors,1 do
-                    nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.sectors[i].name
-                end
-                text = tonumber(sendMsg(nextmsg,1))
-                if text == 0 then
-                    loopArray["sector"]=false
-                else
-                    loopArray["sector"]=editorSettings.settings.sectors[text].uuid
-                end
+                loopArray["cardRead"][1].param = tonumber(text)
             else
-                loopArray["sector"] = false
+                sendMsg("error in cardRead area for num 2")
+                loopArray["cardRead"][1].param = 0
             end
-        end --END OF 2.0.0 & sectors -----------------------------------------------------
-        if editorSettings.type == "multi" then tmpTable[j] = loopArray else tmpTable = loopArray end
+        end
+    end --Sectors beginning
+    if editorSettings.hassector then
+        local nextmsg = "What sector would you like this door to be part of? 0 = no sector"
+        for i=1,#editorSettings.settings.sectors,1 do
+            nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.sectors[i].name
+        end
+        text = tonumber(sendMsg(nextmsg,1))
+        if text == 0 then
+            loopArray["sector"]=false
+        else
+            loopArray["sector"]=editorSettings.settings.sectors[text].uuid
+        end
+    else
+        loopArray["sector"] = false
     end
+    tmpTable[j] = loopArray
+    end --FIXME: Make sure I didn't mess up any indenting back home
     text = sendMsg("All done with installer!","Would you like to start the computer now?","1 for yes, 2 for no",1)
     editorSettings.start = false
     if tonumber(text) == 1 then
@@ -359,7 +386,8 @@ local function oldFiles()
         sendMsg("Error reading config file. Is this an up to date version?","It is recommended to wipe and reinstall at this point",4)
     end
     editorSettings.type = config.type
-    local text = sendMsg("Old files detected. Please select an option:","1 = wipe all files","2 = add more doors)","3 = delete a door","4 = change a door","5 = update door","6 = change cryptKey",1)
+    editorSettings.single = false
+    local text = sendMsg("Old files detected. Please select an option:","1 = wipe all files","2 = add more doors (depreciated)","3 = delete a door (depreciated)","4 = change a door (depreciated)","5 = update door","6 = change cryptKey","7 = change port",1)
     if tonumber(text) == 1 then
         term.clear()
         sendMsg("Deleting all files...")
@@ -483,11 +511,15 @@ local function oldFiles()
         else
             sendMsg("Ok, closing out.",4)
         end
+    elseif tonumber(text) == 7 then
+        config.port = modemPort
+        sendMsg("Port changed to " .. modemPort)
+        saveTable(config,configFileName)
     end
     config = nil
 end
 
-modem.close()
+modem.close() --TEST: Does autoinstaller still work?
 term.clear()
 
 if component.isAvailable("tunnel") then
@@ -530,14 +562,39 @@ editorSettings.hassector = query.data.sectors ~= nil
 editorSettings.settings = query.data.passSettings
 editorSettings.scanner = false
 editorSettings.accelerate = false
+editorSettings.single = false
 term.clear()
 local text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires a diagnostic tablet (found on github)","1 for yes, 2 for no",1) --TODO: Set accelerated setup to only use diagPort, cause remembering numbers is STUPID + updates for version 3.0.0 including port config.
 if tonumber(text) == 1 then
-    local code = math.floor(math.random(1000,9999))
-    modem.open(code)
-    sendMsg("Code is:  " .. tostring(code),"Enter the code into the door setup tablet. In 60 seconds setup will cancel.")
-    local e, _, from, port, _, msg, barcode = event.pull(60, "modem_message")
+    modem.open(diagPort)
+    modem.close(modemPort)
+    sendMsg("Start up accelerated door setup on your diagnostic tablet","in 60 seconds with no changes the program will close")
+
+    local time = 0
+    local timer = function(seconds)
+        time = seconds
+        for i=1,seconds, 1 do
+            os.sleep(1)
+            time = time - 1
+        end
+    end
+    local waiter = true
+    local e, _, from, port, _, msg, barcode, t
+    t = thread.setup(timer)
+    while waiter do
+        e, _, from, port, _, msg, barcode = event.pull(time, "modem_message")
+        if e then
+            if msg == "accsetup" then
+                waiter = false
+            end
+        else
+            waiter = false
+        end
+    end
+
     if e then
+        modem.open(modemPort)
+        t:kill()
         send(from,port,false,"connected")
         term.clear()
         sendMsg("Connection successful! All prompts will be on the tablet now on.")
@@ -547,7 +604,7 @@ if tonumber(text) == 1 then
         editorSettings.from = from
         editorSettings.port = port
     else
-        modem.close(code)
+        modem.close(diagPort)
         print("Setup cancelled")
         os.exit()
     end
@@ -563,18 +620,10 @@ if fill~=nil then
     oldFiles()
 else
     term.clear()
-    text = sendMsg("What kind of door do you want? 1 for single, 2 for multi",1)
-    if tonumber(text) == 1 then
-        editorSettings.type = "single"
-        os.execute("wget -f " .. singleCode[editorSettings.num] .. " " .. program)
-    elseif tonumber(text) == 2 then
-        editorSettings.type = "multi"
-        os.execute("wget -f " .. multiCode[editorSettings.num] .. " " .. program)
-    else
-        term.clear()
-        sendMsg("Not an answer:" .. text)
-        os.exit()
-    end
+    editorSettings.type = "doorsystem"
+    os.execute("wget -f " .. doorCode .. " " .. program)
+    text = sendMsg("Would you like to use the simplified single door or multi-door?",1)
+    editorSettings.single = text == "true" and true or false
     settingData = runInstall()
     saveTable(settingData,settingFileName)
     if editorSettings.start == true then
