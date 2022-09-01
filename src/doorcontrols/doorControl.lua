@@ -1,7 +1,5 @@
 --Experimental, combined door control with ability to be a multi or single door.
 
---Library for saving/loading table for all this code. all the settings below are saved in it.
-local ttf=require("tableToFile")
 local doorVersion = "2.5.0"
 local testR = true
 local saveRefresh = true
@@ -90,6 +88,23 @@ local function convert( chars, dist, inv )
     end
     return copy
   end
+
+  --// The Save Function
+local function saveTable(  tbl,filename )
+  local tableFile = fs.open(filename, "w")
+  tableFile:write(ser.serialize(tbl))
+  tableFile:close()
+end
+
+--// The Load Function
+local function loadTable( sfile )
+  local tableFile = fs.open(sfile, "r")
+  if tableFile ~= nil then
+    return ser.unserialize(tableFile:readAll())
+  else
+    return nil
+  end
+end
 
 local function send(port,linker,...)
   if linker and link ~= nil then
@@ -281,7 +296,7 @@ end
           data = ser.unserialize(data)
           settingData = data
           os.execute("copy -f doorSettings.txt dsBackup.txt")
-          ttf.save(settingData,"doorSettings.txt")
+          saveTable(settingData,"doorSettings.txt")
           print("New settings received")
           local fill = {}
           fill["type"] = extraConfig.type
@@ -347,13 +362,13 @@ else
   print("No config detected. Reinstall door control")
 end
 
-extraConfig = ttf.load("extraConfig.txt")
-settingData = ttf.load("doorSettings.txt")
+extraConfig = loadTable("extraConfig.txt")
+settingData = loadTable("doorSettings.txt")
 extraConfig.version = doorVersion
 if extraConfig.port == nil then
   extraConfig.port = 1000
 end
-ttf.save(extraConfig,"extraConfig.txt")
+saveTable(extraConfig,"extraConfig.txt")
 modemPort = extraConfig.port
 
 if modem.isOpen(modemPort) == false and link == nil then
@@ -389,10 +404,10 @@ if e ~= nil then
     for key,_ in pairs(component.list("os_magreader")) do
       table.insert(temp.aaaa.reader,key)
     end
-    ttf.save(temp,"doorSettings.txt")
+    saveTable(temp,"doorSettings.txt")
     settingData = temp
     extraConfig.type = "doorsystem"
-    ttf.save(extraConfig,"extraConfig.txt")
+    saveTable(extraConfig,"extraConfig.txt")
   elseif extraConfig.type == "multi" then
     for key, value in pairs(settingData) do
       if value.forceOpen ~= nil then
@@ -404,9 +419,9 @@ if e ~= nil then
       settingData[key].redSide = 2
       settingData[key].reader = {settingData[key].reader}
     end
-    ttf.save(settingData,"doorSettings.txt")
+    saveTable(settingData,"doorSettings.txt")
     extraConfig.type = "doorsystem"
-    ttf.save(extraConfig,"extraConfig.txt")
+    saveTable(extraConfig,"extraConfig.txt")
   end
 end
 checkBool = nil

@@ -15,13 +15,15 @@ local keyboard = require("keyboard")
 
 local version = "3.0.0"
 
-local serverModules = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/2.%23.%23/modules/modules.txt"
+local serverModules = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/modules/modules.txt"
 
 local commands = {"setdevice","signIn","updateuserlist","loginfo","getquery","syncport"}
 local skipcrypt = {"loginfo","getquery","syncport"}
 
 local modules = {}
 local modulepath = "/modules"
+
+local logUsers = {}
 
 local viewport = 0
 local viewhistory = {}
@@ -178,6 +180,40 @@ local function bdcst(address,port,data,data2)
   end
 end
 
+local function checkPerms(data)
+  if data.command == "check" then
+    local good = false
+    local pre = ""
+    if data.prefix ~= nil then
+      pre = data.prefix .. "."
+    end
+    if logUsers[data.user] == nil then return false, "No user found" end
+    for _,value in pairs(logUsers[data.user].perms) do
+      if value == "all" then
+        good = true
+        break
+      end
+      if value == pre .. "*" and pre ~= "" then
+        good = true
+        break
+      end
+      for i=1,#data,1 do
+        if value == pre .. data[i] then
+          good = true
+          break
+        end
+      end
+      if good then break end
+    end
+    if good then
+      return true, true
+    else
+      return true, false
+    end
+  end
+  return false, "incorrect command"
+end
+
 --------Getting tables and setting up terminal
 term.clear()
 _,viewport = term.getViewport()
@@ -199,7 +235,7 @@ for file in fs.list(modulepath .. "/") do
   end
 end
 
-local logUsers = loadTable("users.txt")
+logUsers = loadTable("users.txt")
 if logUsers == nil then
   logUsers = {}
   saveTable(logUsers,"users.txt")
@@ -475,18 +511,20 @@ while true do
         elseif data.command == "del" then
           logUsers[data.user] = nil
         elseif data.command == "grab" then
-          local check = false
-          for _,value in pairs(logUsers[data.user].perm) do
-            if value == "all" or value == "dev.usermanagement" then
-              check = true
-              break
-            end
-          end
-          if check then
+          local e,worked = checkPerms({["command"]="check",["prefix"]="dev","usermanagement"})
+          if e and worked then
             bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers),settingTable.cryptKey))
           else
             bdcst(from,port,crypt("false",settingTable.cryptKey))
           end
+        end
+      elseif command == "checkPerms" then --Example with passes module & adding variables{["user"]="username"["command"]="check",["prefix"]="passes","addvar"} = checks both check.* and check.addvar and all
+        data = ser.unserialize(data)
+        local e,worked = checkPerms(data)
+        if e then
+          bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(tostring(worked),settingTable.cryptKey))
+        else
+          bdcst(from,port,crypt("false",settingTable.cryptKey),crypt(worked,settingTable.cryptKey))
         end
       elseif command == "setdevice" then
         historyUpdate("Received device parameters from id: " .. add,0xFFFF80,false,true)

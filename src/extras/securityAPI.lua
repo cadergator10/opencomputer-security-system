@@ -1,4 +1,4 @@
-local version = "2.4.0"
+local version = "3.0.0"
 --testR = true
 
 local security = {}
@@ -103,13 +103,7 @@ local function update(_, localAddress, remoteAddress, port, distance, msg, data)
   end
 end
 
-  function security.setup(tabler)
-    if component.isAvailable("tunnel") then
-      link = component.tunnel
-      modem.close(modemPort)
-    else
-      modem.open(modemPort)
-    end
+  function security.setup()
     local e
     local fill = io.open("extraConfig.txt", "r")
     if fill ~= nil then
@@ -149,13 +143,19 @@ end
     end
     extraConfig = loadTable("extraConfig.txt")
     modemPort = extraConfig.port
-    send(nil,modemPort,true,"getquery",ser.serialize({"passSettings","&&&crypt"}))
+    if component.isAvailable("tunnel") then
+      link = component.tunnel
+      modem.close(modemPort)
+    else
+      modem.open(modemPort)
+    end
+    send(nil,modemPort,true,"getquery",ser.serialize({"passSettings"}))
     e,_,_,_,_,query = event.pull(3,"modem_message")
     if e == nil then
       print("Failed query. Is the server on?")
       os.exit()
     end
-    query = ser.unserialize(query)
+    query = ser.unserialize(crypt(query,extraConfig.cryptKey,true))
     if query.num ~= 3 then
       print("Server is not 3.0.0 and up")
       os.exit()
@@ -164,7 +164,6 @@ end
     if fill ~= nil then
       io.close(fill)
     else
-      if tabler == nil then
         term.clear()
         settingData = {}
         print("First time pass setup")
@@ -304,11 +303,7 @@ end
           end
         end
         saveTable(settingData,"securitySettings.txt")
-      else
-        saveTable(tabler,"securitySettings.txt")
-      end
     end
-
     term.clear()
     settingData = loadTable("securitySettings.txt")
     fill = {}
@@ -334,7 +329,7 @@ end
   function security.checkPass(str,loc)
     local data = crypt(str,extraConfig.cryptKey,true)
     local tmpTable = ser.unserialize(data)
-    tmpTable["type"] = "single"
+    tmpTable["type"] = "doorsystem"
     data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
     if loc ~= nil then
         send(loc,modemPort,true,"checkRules",data,true)

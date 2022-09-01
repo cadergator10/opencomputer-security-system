@@ -13,11 +13,9 @@ local syncPort = 199
 local diagPort = 180
 
 local program = "ctrl.lua"
-local tableToFileName = "tableToFile.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
-local tableToFileCode = "https://raw.githubusercontent.com/cadergator10/opensecurity-scp-security-system/main/src/libraries/tableToFile.lua"
-local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/2.%23.%23/doorControl.lua"
+local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/doorControl.lua"
 local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
 
 local settingData = {}
@@ -136,7 +134,6 @@ local function runInstall()
     else
         times = 1
     end
-    os.execute("wget -f " .. tableToFileCode .. " " .. tableToFileName)
 
     local config = {}
     if editorSettings.edit then
@@ -393,7 +390,6 @@ local function oldFiles()
         sendMsg("Deleting all files...")
         local path = shell.getWorkingDirectory()
         fs.remove(path .. "/" .. program)
-        fs.remove(path .. "/" .. tableToFileName)
         fs.remove(path .. "/" .. settingFileName)
         if config ~= nil then fs.remove(path .. "/" .. configFileName) end
         local fill = io.open(settingFileName)

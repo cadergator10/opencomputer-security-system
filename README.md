@@ -1,49 +1,41 @@
 # opensecurity-security-system
 
-<a href="https://oc.cil.li/topic/994-security-system-for-opensecurity">This was built off of DustPuppy's system here</a>
+A Fully fleshed out Security System solution for OpenComputers and OpenSecurity using the servertine system.
 
-Version 1.#.# of the security system was originally built for the <a href="https://www.technicpack.net/modpack/site-91.1622979">Site 91</a> modpack official server, but I made it public so others could enjoy it. It is obsolete as well and is discontinued with the diagnostic tablet and future QOL updates.
-Version 2.#.# is an entire remake of the entire system and the code is more than just an editing of the original code (I actually rewrote it didn't just copy paste.)
+Featuring...
+<ul>
+   <li>Multiple door controlling with a single door computer</li>
+   <li>Powerful passes system you set up yourself</li>
+   <li>Security card blocking and disabling from the database</li>
+   <li>Easy door creation using the Autoinstaller or door creation module</li>
+   <li>Easy door editing, installing, and diagnostics with the diagnostic program</li>
+   <li>Long-range data transfer with built-in support for servertine's range extender program</li>
+   <li>Modularity with a modified servertine API with support for changing user card data</li>
+   <li>Optional modules you can play with that interface with your system (like Sectors module)</li>
+   <li>And much more!</li>
+</ul>
 
-Go to bottom for a changelog, future changes, and some extra information about how to use the system
-
-In total: this is what the second generation new system supports:
-
-<ol>
-  <li>A MineOS database.</li>
-  <li>Fully modular settings!!! (passes, levels, groups, and even custom strings)</li>
-  <li>Two door control types: One is for a single door and supports normal redstone, rolldoor, bundled redstone, and doorcontrol, and a Multidoor, that can control any amount of doors from a single computer</li>
-  <li>An automatic door setup, with easy setup and updating.</li>
-  <li>Easy setting edits: Autoinstaller has functions to let you edit, add, or remove doors as well as wipe all files and update the computer!</li>
-  <li>Editable crypt key, so your information being passed isn't easilly read (has a default if you don't want to change it)</li>
-  <li>A diagnostic tablet which can show door settings, help you with door setup with the accelerated door setup, or easilly change door settings with runtime editing.</li>
-</ol>
+If you have used this before, you may be wondering, "what's servertine?" I split up the server and database from the security system and am making them into a new project called "Servertine", which is a powerful system you can create powerful modules for and easilly connect to them using the servertine API. They also support other features like the range extender. The reason being for this is an API I can easilly build more programs off of and ease of updating the existing passes system. The move to a modular system brings no drawbacks to the system as well.
 
 I will be making a full video tutorial series soon. <a href="https://www.youtube.com/channel/UCC492g_YuYcWKRIeQD3kqdQ">Channel is here</a>
 
-----Server: This has to be running all the time no matter what, as it receives the door signals and tells them to open or not to. It also is necessary for the autoinstaller to know what type of door it is (if 1.#.# or 2.#.#) The server has to be on when editing card settings, or the server will not receive them. Needs a modem and an internet card to run, and a minimum of tier 2 computer.
+----Server: The brain of the system. Install the security module onto the servertine server and keep it running and everything is handled for you! it stores user data as well as pass data and handles the logic for doorcontrol systems.
 
-----Database: This is where you edit the accounts and write the cards. There are 2 types for 1.#.#, but the 2.#.# version ONLY HAS MINEOS, so make sure you understand what you're doing. Requires a modem and card writer connected to it, and a tier 3 computer and highest specs if you can! I recommend putting MineOS one on a server rack with 4 tier 3.5 memory modules, but the OpenOS one is lighter.
+----Database: Where you modify the system parameters. Install the Servertine Database on MineOS and install the security module and manage users, passes, and such with ease and speed.
 
-      OpenOS: You need to add both the openOSDatabase and the gui programs to the drive. This isn't updated much and might be broken (maybe) Name the GUI one gui.lua. It is only available for 1.#.# systems.
+----Door Control: Control security door and redstone from these convenient door systems! Easy to set up and easy to change settings with, these really have it all.
 
-      MineOS: Much sleeker and faster and basically better in every way. The database is available in the AppStore of MineOS and installs all necessary dependencies for you, but if you do it manually, you will still have to install the serialization and the uuid library by user cadergator10 on there. Its just the OpenOS serialization and uuid libraries, but if you need it, it is available here. Make sure you do install the correct version!!! 1.#.# database IS NOT COMPATABLE WITH 2.#.# version!
+   Autoinstaller setup: Run the command "pastebin run cP70MhB0" and follow the prompts. Syncs nicely with the accelerated door setup program on the diagnostic tablet to allow for scanning of the doors and readers instead of copying the uuid with an analyzer.
 
-----Door Control: All the doorcontrol scripts. Can be very low spec honestly, but at least one 3.5 tier ram is probably safe :) Requires a Modem, redstone tier 2 card, and internet card.
+   Door Setup module setup: Setup the passes and simple settings on the database, install the stuff onto a drive, and finish on the computer.
 
-   All you have to do is run the command "pastebin run cP70MhB0" and follow the prompts. For multidoor, you will have to use an analyzer to copy the ids of the magstrip readers and rolldoor/doorcontrol blocks, while you dont with the single door one. However, if you want to look at the code, the code is in the github. HOWEVER, the programs do require a library to work, which the autorun command does for you, so I recommend just doing the above command. SERVER MUST BE ON IN ORDER FOR AUTOINSTALLER TO INSTALL CORRECT DOOR CONTROL VERSION!
-
-----Autoinstaller: just follow the prompts to install! It's actually that simple! PLUS, it comes with more extra features than just that. You can update the door program, wipe all files, add more doors to a multidoor, delete a door from a multidoor, change settings of doors, and more!
+----Autoinstaller: Install the doors with ths simple autoinstaller! Just follow the prompts
  
-   If you want to use pastebin run command, do 
-   
     pastebin run cP70MhB0
-    (If you have a 7.0 or earlier version of doorcontrol, run pastebin run X8M664ew to update to new version)
 
-----Extra features: 
-   Diagnostic tablet: A program with accelerated door setup and door diagnostics all rolled up into one easy to use program.
+----Diagnostic tablet: A program with a whole bunch of programs to make door setup, management, and more easier
       
-      Diagnostics: a special program that works with the new admin card to get info about a door and it's settings and if it works. It is best used with a tablet that has a tier 3 gpu, a wireless modem, and an internet card. When the admin card is scanned, it sends all the info of the computer to the tablet. It's most noteable use is with the multidoor computer, as it tells you if that magnetic card reader is connected to a door, what the key of the door is (if you want to edit door settings after first set up) and more.
+      Diagnostics: a special program that works with the new admin card to get info about a door and it's settings and if it works. It is best used with a tablet that has a tier 2 gpu, a wireless modem, and an internet card. When the admin card is scanned, it sends all the info of the computer to the tablet. It's most noteable use is with the multidoor computer, as it tells you if that magnetic card reader is connected to a door, what the key of the door is (if you want to edit door settings after first set up) and more.
 
       Accelerated door setup program to put on a tablet. This helps accelerate multi-door setup time, as it is portable compared to moving back and forth between the pc and the door. Also, if your tablet has an analyzer with it, you can scan the blocks with the tablet instead of just entering the uuid manually
 
@@ -51,7 +43,11 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
 
       Remote Control: Open and close doors from any distance without having to swipe cards. You get access to every single door linked to the server. This also lets you open doors contrary to what the settings are set to for the door, like toggling doors that would normally be delayed.
 
-   Security API so you can make your own programs that sync with the security system! ex. swipe a card and check its permissions, and if true, perform a function.
+----Security API is a modified version of the Servertine API, with locked data that is sent to the server, ability to check passes from a card that is swiped, and get and set variables in user accounts (if string)
+
+----Optional modules for more functionality
+
+      Sector system- Give doors groups which you can manage with the sector control computer. Lock doors open or lock them shut and let certain passes either bypass these or turn them off.
 
 If you have any questions, don't hesitate to ask!
 
@@ -61,20 +57,7 @@ If you have any questions, don't hesitate to ask!
 ![2022-03-31_18 17 25](https://user-images.githubusercontent.com/75097681/161160580-5213b4f9-2f69-4f06-ae74-f48a20d6c1c4.png)
 ![image](https://user-images.githubusercontent.com/75097681/153966774-ddea0e15-01ef-47db-a975-8f0b3b63fed0.png)
 
-Beta Changelog:
-<ul>
-   <li>6.0 and before: don't have specific updates on stuff, basically everything that isn't past this.</li>
-   <li>7.0: I believe I changed the system in which users are saved on the cards. Before it split string and now it uses serialized array.</li>
-   <li>7.1: Server's text is now colored. MineOS database linking uses background container instead of an alert (linking is for Site 91)</li>
-</ul>
-
-1.#.# Changelog:
-<ul>
-   <li>1.8.0: Updates to add cryptKey function to old system (added in new system) 3/15 </li>
-   <li>1.8.1: Now sends it's type (type 1) to diag tablet. Although this is to ensure diag tablet won't crash because it isn't supported. 3/23</li>
-</ul>
-
-2.#.# Changelog:
+Changelog:
 <ul>
    <li>2.1.0: Completely from scratch work for door now out with full modular support! 3/15</li>
    <li>2.1.1: Bug fixes I believe... 3/23</li>
@@ -88,20 +71,19 @@ Beta Changelog:
    <li>2.3.1 QOL update: MineOS database now has lang file support as well as a dark style you can enable in dbsettings. Diagnostic tablet's editing mode can now add and delete doors and change the pass settings 6/26</li>
    <li>2.3.2 Remote Control update: Diagnostic tablet can now remote control doors! Either toggle a door open/closed or open with a delay. Server must be updated to version 2.3.2, but doors may not have to be updated (still recommended) 7/12</li>
    <li>2.4.0 Sector Update: Replaced the useless forceOpen and bypassLock settings with the new sectors system. You can create however many sectors you like in the mineOS database and set doors to that sector. Then, with the new sectorcontrol program, you can control sectors with redstone, locking them down or locking them open. Certain passes can also be set to open locked down doors or just bypass the lockdown! This also comes with the range extender program for doorcontrols and modules system to build in your own programs to be part of the server. Server also got a GUI upgrade and autoinstaller can install servers and modules. 7/26</li>
+   <li>3.0.0 Servertine split: Split up the security system with the server and database. They are now modules. 9/#</li>
 </ul>
 
 Queued updates:
 <ol>
-   <li>2.5.0: MineOS Database Modularity update: Going to rework the entire MineOS database to the best of my ability, using layouts as much as I can around it. Also will do minor things here and there, like server guis and such.</li>
+   <li>None Yet :)</li>
 </ol>
 
 Future updates:
 <ol>
-   <li>Ability to set a password on server that databases have to enter before editing passes</li>
+   <li>Undecided</li>
 </ol>
 
 Important information:
-   The first number of a security system update is a full system update, which can possibly break previous systems. The second is a small update that doesn't involve updating every single device. Second number should be able to be mixed and matched (eg a 7.1 device works with a 7.0 server), but the first cannot (8.0 device SHOULD/WILL NOT work with a 7.0 device.)
-   1.#.# ARE NEVER COMPATABLE WITH 2.#.# VERSIONS!
-   Future quality of life updates are not going to be compatable with 1.#.# if extra work is needed. (if you really want it, you can always add it in yourself and submit a pull request)
+   Previous versions have been wiped completely out! The old 1.#.# version is no longer able to be downloaded for less confusion.
    If you have anything you would like to try adding yourself, feel free to add whatever you want to the code and pull request it into the main branch. I can then check if it's a worthwhile update and merge.
