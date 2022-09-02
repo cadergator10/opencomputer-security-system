@@ -260,6 +260,12 @@ end, ["save"] = function()
   saveTable(userTable,"userlist.txt")
 end, ["crypt"]=function(str,reverse)
   return crypt(str,settingTable.cryptKey,reverse)
+end, ["send"]=function(wait,data,data2)
+  if wait then
+    return callModem(modemPort,data,data2)
+  else
+    modem.broadcast(modemPort,data,data2)
+  end
 end}
 
 window:addChild(GUI.panel(1,11,12,12,style.listPanel))

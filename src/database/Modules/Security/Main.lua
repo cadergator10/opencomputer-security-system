@@ -9,11 +9,13 @@ local writer
 
 local handler
 
+local permissions = {}
+
 local userTable
 
 local workspace, window, loc, database, style = table.unpack({...})
 
-module.name = "Passes"
+module.name = "Security"
 module.table = {"passes","passSettings"}
 module.debug = false
 
@@ -66,43 +68,83 @@ module.onTouch = function()
     end
   end
 
+  local function permissionRefresh()
+    local distable = {}
+    for i=1,#userTable.passSettings.var,1 do
+      table.insert(distable,userTable.passSettings.var[i])
+    end
+    local e,_,_,_,_,good,msg = database.send(true,"checkPerms",ser.serialize({["user"]="username",["command"]="return",["prefix"]="passes",table.unpack(distable)})) --TODO: Finish permissions refresh
+    if e then
+      if database.crypt(good,true) == "true" then
+        permissions = {}
+        msg = ser.unserialize(database.crypt(msg,true))
+        for i=1,#msg,1 do
+          permissions[msg[i]] = true
+        end
+        return true, "Success"
+      else
+        return false, "Failed to check perms"
+      end
+    else
+      return false, "Failed to connect to server"
+    end
+  end
+
+  local function checkPerms(data, reverse)
+    for i=1,#data,1 do
+      if permissions["~security." .. data[i]] == true then
+        return reverse == true and true or false
+      end
+    end
+    if permissions["all"] == true or permissions["security.*"] == true then
+      return reverse == false and true or false
+    end
+    for i=1,#data,1 do
+      if permissions["security." .. data[i]] == true then
+        return reverse == false and true or false
+      end
+    end
+    return reverse == true and true or false
+  end
+  --Pass types: security.* = all, security.passediting = pass stuff, security.varmanagement = add/del passes, security.resetuuid = reset user uuid (make card useless)
   local function userListCallback()
     local selectedId = pageMult * listPageNumber + userList.selectedItem
     userNameText.text = userTable.passes[selectedId].name
     userUUIDLabel.text = "UUID      : " .. userTable.passes[selectedId].uuid
     if enableLinking == true then
       linkUserLabel.text = "LINK      : " .. userTable.passes[selectedId].link
-      linkUserButton.disabled = false
+      linkUserButton.disabled = checkPerms({"passediting","varmanagement","link"},true)
     end
     if userTable.passes[selectedId].blocked == true then
       cardBlockedYesButton.pressed = true
     else
       cardBlockedYesButton.pressed = false
     end
-    cardBlockedYesButton.disabled = false
+    cardBlockedYesButton.disabled = checkPerms({"passediting","varmanagement","block"},true)
     if userTable.passes[selectedId].staff == true then
       StaffYesButton.pressed = true
     else
       StaffYesButton.pressed = false
     end
-    StaffYesButton.disabled = false
+    StaffYesButton.disabled = checkPerms({"passediting","varmanagement","staff"},true)
     listPageLabel.text = tostring(listPageNumber + 1)
-    userNameText.disabled = false
+    userNameText.disabled = checkPerms({"passediting","varmanagement","name"},true)
     for i=1,#userTable.passSettings.var,1 do
+      local pees = checkPerms({"passediting","varmanagement",userTable.passSettings.var[i]},true)
       if userTable.passSettings.type[i] == "bool" then
         guiCalls[i][1].pressed = userTable.passes[selectedId][userTable.passSettings.var[i]]
-        guiCalls[i][1].disabled = false
+        guiCalls[i][1].disabled = pees
       elseif userTable.passSettings.type[i] == "string" or userTable.passSettings.type[i] == "-string" then
         guiCalls[i][1].text = tostring(userTable.passes[selectedId][userTable.passSettings.var[i]])
-        if userTable.passSettings.type[i] == "string" then guiCalls[i][1].disabled = false end
+        if userTable.passSettings.type[i] == "string" then guiCalls[i][1].disabled = pees end
       elseif userTable.passSettings.type[i] == "int" or userTable.passSettings.type[i] == "-int" then
         if userTable.passSettings.type[i] == "-int" then
           guiCalls[i][3].text = tostring(guiCalls[i][4][userTable.passes[selectedId][userTable.passSettings.var[i]]] or "none")
         else
           guiCalls[i][3].text = tostring(userTable.passes[selectedId][userTable.passSettings.var[i]])
         end
-        guiCalls[i][1].disabled = false
-        guiCalls[i][2].disabled = false
+        guiCalls[i][1].disabled = pees
+        guiCalls[i][2].disabled = pees
       else
         GUI.alert("Potential error in line 157 in function userListCallback()")
       end
@@ -507,7 +549,7 @@ module.onTouch = function()
   listPageNumber = 0
   updateList()
 
-  --user infos
+  --user infos TODO: checkPerms for all buttons to enable/disable & actually pull the perms and such & allow rewriting of screen when adding/del var
   local labelSpot = 1
   window:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"User name : "))
   userNameText = window:addChild(GUI.input(64,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))

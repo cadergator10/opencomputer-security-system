@@ -181,36 +181,45 @@ local function bdcst(address,port,data,data2)
 end
 
 local function checkPerms(data)
-  if data.command == "check" then
-    local good = false
+  if data.command == "check" or data.command == "return" then
+    local good = data.command == "check" and false or {}
     local pre = ""
+    local goodthing = function(value)
+      if data.command == "check" then
+        good = true
+      else
+        table.insert(good,value)
+      end
+    end
     if data.prefix ~= nil then
       pre = data.prefix .. "."
     end
     if logUsers[data.user] == nil then return false, "No user found" end
     for _,value in pairs(logUsers[data.user].perms) do
       if value == "all" then
-        good = true
-        break
+        goodthing(value)
+        if data.command == "check" then break end
       end
       if value == pre .. "*" and pre ~= "" then
-        good = true
-        break
+        goodthing(value)
+        if data.command == "check" then break end
       end
       for i=1,#data,1 do
         if value == pre .. data[i] then
-          good = true
+          goodthing(value)
           break
         end
       end
-      if good then break end
+      if data.command == "check" and good then break end
+    end
+    if data.command == "return" then
+      return true, good
     end
     if good then
       return true, true
     else
       return true, false
     end
-  end
   return false, "incorrect command"
 end
 
@@ -518,7 +527,7 @@ while true do
             bdcst(from,port,crypt("false",settingTable.cryptKey))
           end
         end
-      elseif command == "checkPerms" then --Example with passes module & adding variables{["user"]="username"["command"]="check",["prefix"]="passes","addvar"} = checks both check.* and check.addvar and all
+      elseif command == "checkPerms" then --Example with passes module & adding variables{["user"]="username",["command"]="check",["prefix"]="passes","addvar"} = checks both check.* and check.addvar and all
         data = ser.unserialize(data)
         local e,worked = checkPerms(data)
         if e then
