@@ -179,7 +179,7 @@ local function runInstall()
                 j = editorSettings.key
             end
             j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
-            text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet." or "Enter the uuid of the device in TEXT. When finished, don't type anything and just press enter",5) --TODO: Change the reader to multi-reader mode, as well as if single, then put every magreader in table.
+            text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet." or "Enter the uuid of the device in TEXT. When finished, don't type anything and just press enter",5)
             loopArray["reader"] = text
         else
             local distable = {}
@@ -560,7 +560,7 @@ editorSettings.scanner = false
 editorSettings.accelerate = false
 editorSettings.single = false
 term.clear()
-local text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires a diagnostic tablet (found on github)","1 for yes, 2 for no",1) --TODO: Set accelerated setup to only use diagPort, cause remembering numbers is STUPID + updates for version 3.0.0 including port config.
+local text = sendMsg("Would you like to use an external device for accelerated setup?","This makes it easier to set up doors without having to move from the door to the pc constantly.","It requires a diagnostic tablet (found on github)","1 for yes, 2 for no",1)
 if tonumber(text) == 1 then
     modem.open(diagPort)
     modem.close(modemPort)

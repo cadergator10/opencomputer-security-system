@@ -73,7 +73,7 @@ module.onTouch = function()
     for i=1,#userTable.passSettings.var,1 do
       table.insert(distable,userTable.passSettings.var[i])
     end
-    local e,_,_,_,_,good,msg = database.send(true,"checkPerms",ser.serialize({["user"]="username",["command"]="return",["prefix"]="passes",table.unpack(distable)})) --TODO: Finish permissions refresh
+    local e,_,_,_,_,good,msg = database.send(true,"checkPerms",ser.serialize({["user"]="username",["command"]="return",["prefix"]="passes",table.unpack(distable)}))
     if e then
       if database.crypt(good,true) == "true" then
         permissions = {}
@@ -106,7 +106,7 @@ module.onTouch = function()
     end
     return reverse == true and true or false
   end
-  --Pass types: security.* = all, security.passediting = pass stuff, security.varmanagement = add/del passes, security.resetuuid = reset user uuid (make card useless)
+  --Pass types: security.* = all, security.passediting = pass stuff, security.varmanagement = add/del passes + users security.resetuuid = reset user uuid (make card useless)
   local function userListCallback()
     local selectedId = pageMult * listPageNumber + userList.selectedItem
     userNameText.text = userTable.passes[selectedId].name
@@ -543,6 +543,8 @@ module.onTouch = function()
     checkTypeCallback(nil,{["izit"]="edit"})
   end
 
+  permissionRefresh()
+
   window:addChild(GUI.panel(1,1,37,33,style.listPanel))
   userList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
   userList:addItem("HELLO")
@@ -648,20 +650,28 @@ module.onTouch = function()
   --window:addChild(GUI.panel(115,11,1,26,style.bottomDivider))
   --window:addChild(GUI.panel(64,10,86,1,style.bottomDivider))
   --window:addChild(GUI.panel(64,36,86,1,style.bottomDivider))
+  local va = checkPerms({"varmanagement"},true)
   userNewButton = window:addChild(GUI.button(118,12,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new)) --118 is furthest right
   userNewButton.onTouch = newUserCallback
+  userNewButton.disabled = va
   userDeleteButton = window:addChild(GUI.button(118,14,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delete))
   userDeleteButton.onTouch = deleteUserCallback
+  userDeleteButton.disabled = va
   userChangeUUIDButton = window:addChild(GUI.button(118,18,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.resetuuid))
   userChangeUUIDButton.onTouch = changeUUID
+  userChangeUUIDButton.disabled = checkPerms({"varmanagement","resetuuid"},true)
   createAdminCardButton = window:addChild(GUI.button(118,30,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.admincardbutton))
   createAdminCardButton.onTouch = writeAdminCardCallback
+  createAdminCardButton.disabled = checkPerms({"varmanagement","admincard"},true)
   addVarButton = window:addChild(GUI.button(118,22,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.addvar))
   addVarButton.onTouch = addVarCallback
+  addVarButton.disabled = va
   delVarButton = window:addChild(GUI.button(118,26,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delvar))
   delVarButton.onTouch = delVarCallback
+  delVarButton.disabled = va
   editVarButton = window:addChild(GUI.button(118,24,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.editvar))
   editVarButton.onTouch = editVarCallback
+  editVarButton.disabled = va
 
   --Database name and stuff and CardWriter
   window:addChild(GUI.panel(123,2,12,3,style.cardStatusPanel))
@@ -670,6 +680,9 @@ module.onTouch = function()
   --write card button
   cardWriteButton = window:addChild(GUI.button(118,32,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.writebutton))
   cardWriteButton.onTouch = writeCardCallback
+  cardWriteButton.disabled = va
+
+  va = nil
 
   handler = event.addHandler(eventCallback)
 end
