@@ -13,7 +13,7 @@ local permissions = {}
 
 local userTable
 
-local workspace, window, loc, database, style = table.unpack({...})
+local workspace, window, loc, database, style, permissions = table.unpack({...})
 
 module.name = "Security"
 module.table = {"passes","passSettings"}
@@ -68,18 +68,18 @@ module.onTouch = function()
     end
   end
 
-  local function permissionRefresh()
+  --[[local function permissionRefresh(user) --Hid because likely not to be used (handled by database)
     local distable = {}
     for i=1,#userTable.passSettings.var,1 do
       table.insert(distable,userTable.passSettings.var[i])
     end
-    local e,_,_,_,_,good,msg = database.send(true,"checkPerms",ser.serialize({["user"]="username",["command"]="return",["prefix"]="passes",table.unpack(distable)}))
+    local e,_,_,_,_,good,msg = database.send(true,"checkPerms",ser.serialize({["user"]=user,["command"]="return",["prefix"]="passes",table.unpack(distable)}))
     if e then
       if database.crypt(good,true) == "true" then
         permissions = {}
         msg = ser.unserialize(database.crypt(msg,true))
         for i=1,#msg,1 do
-          permissions[msg[i]] = true
+          permissions[msg[i]]--[[ = true
         end
         return true, "Success"
       else
@@ -88,24 +88,8 @@ module.onTouch = function()
     else
       return false, "Failed to connect to server"
     end
-  end
+  end]]
 
-  local function checkPerms(data, reverse)
-    for i=1,#data,1 do
-      if permissions["~security." .. data[i]] == true then
-        return reverse == true and true or false
-      end
-    end
-    if permissions["all"] == true or permissions["security.*"] == true then
-      return reverse == false and true or false
-    end
-    for i=1,#data,1 do
-      if permissions["security." .. data[i]] == true then
-        return reverse == false and true or false
-      end
-    end
-    return reverse == true and true or false
-  end
   --Pass types: security.* = all, security.passediting = pass stuff, security.varmanagement = add/del passes + users security.resetuuid = reset user uuid (make card useless)
   local function userListCallback()
     local selectedId = pageMult * listPageNumber + userList.selectedItem
@@ -113,24 +97,24 @@ module.onTouch = function()
     userUUIDLabel.text = "UUID      : " .. userTable.passes[selectedId].uuid
     if enableLinking == true then
       linkUserLabel.text = "LINK      : " .. userTable.passes[selectedId].link
-      linkUserButton.disabled = checkPerms({"passediting","varmanagement","link"},true)
+      linkUserButton.disabled = database.checkPerms("security",{"passediting","varmanagement","link"},true)
     end
     if userTable.passes[selectedId].blocked == true then
       cardBlockedYesButton.pressed = true
     else
       cardBlockedYesButton.pressed = false
     end
-    cardBlockedYesButton.disabled = checkPerms({"passediting","varmanagement","block"},true)
+    cardBlockedYesButton.disabled = database.checkPerms("security",{"passediting","varmanagement","block"},true)
     if userTable.passes[selectedId].staff == true then
       StaffYesButton.pressed = true
     else
       StaffYesButton.pressed = false
     end
-    StaffYesButton.disabled = checkPerms({"passediting","varmanagement","staff"},true)
+    StaffYesButton.disabled = database.checkPerms("security",{"passediting","varmanagement","staff"},true)
     listPageLabel.text = tostring(listPageNumber + 1)
-    userNameText.disabled = checkPerms({"passediting","varmanagement","name"},true)
+    userNameText.disabled = database.checkPerms("security",{"passediting","varmanagement","name"},true)
     for i=1,#userTable.passSettings.var,1 do
-      local pees = checkPerms({"passediting","varmanagement",userTable.passSettings.var[i]},true)
+      local pees = database.checkPerms("security",{"passediting","varmanagement",userTable.passSettings.var[i]},true)
       if userTable.passSettings.type[i] == "bool" then
         guiCalls[i][1].pressed = userTable.passes[selectedId][userTable.passSettings.var[i]]
         guiCalls[i][1].disabled = pees
@@ -543,7 +527,7 @@ module.onTouch = function()
     checkTypeCallback(nil,{["izit"]="edit"})
   end
 
-  permissionRefresh()
+  --permissionRefresh() permissions given by database
 
   window:addChild(GUI.panel(1,1,37,33,style.listPanel))
   userList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
@@ -650,7 +634,7 @@ module.onTouch = function()
   --window:addChild(GUI.panel(115,11,1,26,style.bottomDivider))
   --window:addChild(GUI.panel(64,10,86,1,style.bottomDivider))
   --window:addChild(GUI.panel(64,36,86,1,style.bottomDivider))
-  local va = checkPerms({"varmanagement"},true)
+  local va = database.checkPerms("security",{"varmanagement"},true)
   userNewButton = window:addChild(GUI.button(118,12,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new)) --118 is furthest right
   userNewButton.onTouch = newUserCallback
   userNewButton.disabled = va
@@ -659,10 +643,10 @@ module.onTouch = function()
   userDeleteButton.disabled = va
   userChangeUUIDButton = window:addChild(GUI.button(118,18,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.resetuuid))
   userChangeUUIDButton.onTouch = changeUUID
-  userChangeUUIDButton.disabled = checkPerms({"varmanagement","resetuuid"},true)
+  userChangeUUIDButton.disabled = database.checkPerms("security",{"varmanagement","resetuuid"},true)
   createAdminCardButton = window:addChild(GUI.button(118,30,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.admincardbutton))
   createAdminCardButton.onTouch = writeAdminCardCallback
-  createAdminCardButton.disabled = checkPerms({"varmanagement","admincard"},true)
+  createAdminCardButton.disabled = database.checkPerms("security",{"varmanagement","admincard"},true)
   addVarButton = window:addChild(GUI.button(118,22,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.addvar))
   addVarButton.onTouch = addVarCallback
   addVarButton.disabled = va

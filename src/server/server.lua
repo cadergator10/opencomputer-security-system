@@ -520,7 +520,7 @@ while true do
         elseif data.command == "del" then
           logUsers[data.user] = nil
         elseif data.command == "grab" then
-          local e,worked = checkPerms({["command"]="check",["prefix"]="dev","usermanagement"})
+          local e,worked = checkPerms({["command"]="check",["user"]=data.user,["pass"]=data.pass,["prefix"]="dev","usermanagement"})
           if e and worked then
             bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers),settingTable.cryptKey))
           else

@@ -18,6 +18,8 @@ module.onTouch = function()
   local sectorList, sectorNameInput, newSectorButton, delSectorButton, sectorPassNew, sectorPassRemove, sectorPassList, userPassSelfSelector, userPassDataSelector, userPassTypeSelector, userPassPrioritySelector
   local sectorListNum, sectorListUp, sectorListDown, sectorPassListNum, sectorPassListUp, sectorPassListDown
 
+  local canPerm
+
   local pageMult = 10
   local listPageNumber = 0
   local previousPage = 0
@@ -52,7 +54,7 @@ module.onTouch = function()
           userPassDataSelector = window:addChild(GUI.input(100,22,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
         end
         userPassDataSelector.text = ""
-        userPassDataSelector.disabled = false
+        userPassDataSelector.disabled = canPerm
       elseif userTable.passSettings.type[uuid] == "-int" then
         if prevPass ~= "-int" then
           userPassDataSelector:remove()
@@ -165,6 +167,8 @@ module.onTouch = function()
     sectorListCallback()
   end
 
+  canPerm = database.checkPerms("security",{"sector"},true)
+
   --GUI Setup
   window:addChild(GUI.panel(1,1,37,33,style.listPanel))
   sectorList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
@@ -182,11 +186,14 @@ module.onTouch = function()
     updateSecList()
     sectorListCallback()
   end
+  sectorNameInput.disabled = canPerm
 
   newSectorButton = window:addChild(GUI.button(85,12,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
   newSectorButton.onTouch = createSector
+  newSectorButton.disabled = canPerm
   delSectorButton = window:addChild(GUI.button(100,12,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
   delSectorButton.onTouch = deleteSector
+  delSectorButton.disabled = canPerm
 
   window:addChild(GUI.panel(40,14,96,1,style.bottomDivider))
   window:addChild(GUI.panel(40,15,1,18,style.bottomDivider))
@@ -200,22 +207,28 @@ module.onTouch = function()
   for i=1,#userTable.passSettings.var,1 do
     userPassSelfSelector:addItem(userTable.passSettings.label[i]).onTouch = refreshInput
   end
+  userPassSelfSelector.disabled = canPerm --TODO: Check if combo boxes can be disabled like this or not
   window:addChild(GUI.label(85,22,1,1,style.passNameLabel,"Change Input: "))
   userPassDataSelector = window:addChild(GUI.input(100,22,30,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
+  userPassDataSelector.disabled = true
   refreshInput(0)
   window:addChild(GUI.label(85,26,1,1,style.passNameLabel,"Bypass Type : "))
   userPassTypeSelector = window:addChild(GUI.comboBox(100,25,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+  userPassTypeSelector.disabled = canPerm
   userPassTypeSelector:addItem(loc.sectoropen)
   userPassTypeSelector:addItem(loc.sectordislock)
   window:addChild(GUI.label(85,30,1,1,style.passNameLabel,"Priority    : "))
   userPassPrioritySelector = window:addChild(GUI.comboBox(100,29,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+  userPassPrioritySelector.disabled = canPerm
   for i=1,5,1 do
     userPassPrioritySelector:addItem(tostring(i))
   end
   sectorPassNew = window:addChild(GUI.button(85,33,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
   sectorPassNew.onTouch = createSectorPass
+  sectorPassNew.disabled = canPerm
   sectorPassRemove = window:addChild(GUI.button(100,33,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
   sectorPassRemove.onTouch = deleteSectorPass
+  sectorPassRemove.disabled = canPerm
 end
 
 module.close = function()

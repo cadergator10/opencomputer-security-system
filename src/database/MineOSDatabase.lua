@@ -22,7 +22,7 @@ local loc = system.getLocalization(aRD .. "Localizations/")
 
 --------
 
-local workspace, window, menu, userTable, settingTable, modulesLayout, modules
+local workspace, window, menu, userTable, settingTable, modulesLayout, modules, permissions
 local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
 local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, extraVar3, settingsButton
@@ -128,6 +128,23 @@ local function callModem(callPort,...) --Does it work?
   else
     return false
   end
+end
+
+local function checkPerms(base,data, reverse)
+  for i=1,#data,1 do
+    if permissions["~" .. base .."." .. data[i]] == true then
+      return reverse == true and true or false
+    end
+  end
+  if permissions["all"] == true or permissions[base .. ".*"] == true then
+    return reverse == false and true or false
+  end
+  for i=1,#data,1 do
+    if permissions[base .. "." .. data[i]] == true then
+      return reverse == false and true or false
+    end
+  end
+  return reverse == true and true or false
 end
 
 ----------Callbacks
@@ -252,98 +269,125 @@ workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,style.win
 --window.modLayout = window:addChild(GUI.layout(14, 12, window.width - 14, window.height - 12, 1, 1))
 window.modLayout = window:addChild(GUI.container(14, 12, window.width - 14, window.height - 12)) --136 width, 33 height
 
-local dbstuff = {["update"] = function(table,its)
-  if its and settingTable.autoupdate then
-    updateServer(table)
-  end
-end, ["save"] = function()
-  saveTable(userTable,"userlist.txt")
-end, ["crypt"]=function(str,reverse)
-  return crypt(str,settingTable.cryptKey,reverse)
-end, ["send"]=function(wait,data,data2)
-  if wait then
-    return callModem(modemPort,data,data2)
-  else
-    modem.broadcast(modemPort,data,data2)
-  end
-end}
-
-window:addChild(GUI.panel(1,11,12,12,style.listPanel))
-modulesLayout = window:addChild(GUI.list(2,12,10,10,3,0,style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
-local modulors = fs.list(modulesPath)
-modules = {}
-table.insert(modulors,1,"dev")
-for i = 1, #modulors do
-  if i == 1 then
-    local object = modulesLayout:addItem(modulors[i])
-    local success, result = pcall(devMod, workspace, window.modLayout, loc, dbstuff, style)
-    if success then
-      object.module = result
-      object.isDefault = true
-      object.onTouch = modulePress
-      table.insert(modules,result)
-    else
-      error("Failed to execute module " .. modulors[i] .. ": " .. tostring(result))
+local function finishSetup()
+  local dbstuff = {["update"] = function(table,its)
+    if its and settingTable.autoupdate then
+      updateServer(table)
     end
-  else
-    local result, reason = loadfile(modulesPath .. modulors[i] .. "Main.lua")
-    if result then
-      local success, result = pcall(result, workspace, window.modLayout, loc, dbstuff, style)
+  end, ["save"] = function()
+    saveTable(userTable,"userlist.txt")
+  end, ["crypt"]=function(str,reverse)
+    return crypt(str,settingTable.cryptKey,reverse)
+  end, ["send"]=function(wait,data,data2)
+    if wait then
+      return callModem(modemPort,data,data2)
+    else
+      modem.broadcast(modemPort,data,data2)
+    end
+  end, ["checkPerms"] = checkPerms}
+
+  window:addChild(GUI.panel(1,11,12,window.height - 11,style.listPanel))
+  modulesLayout = window:addChild(GUI.list(2,12,10,window.height - 13,3,0,style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+  local modulors = fs.list(modulesPath)
+  modules = {}
+  table.insert(modulors,1,"dev")
+  for i = 1, #modulors do
+    if i == 1 then
+      local object = modulesLayout:addItem(modulors[i])
+      local success, result = pcall(devMod, workspace, window.modLayout, loc, dbstuff, style)
       if success then
-        local object = modulesLayout:addItem(result.name)
         object.module = result
-        object.isDefault = false
+        object.isDefault = true
         object.onTouch = modulePress
         table.insert(modules,result)
-        for i=1,#result.table,1 do
-          table.insert(tableRay,result.table[i])
-        end
       else
         error("Failed to execute module " .. modulors[i] .. ": " .. tostring(result))
       end
     else
-      error("Failed to load module " .. modulors[i] .. ": " .. tostring(reason))
+      local result, reason = loadfile(modulesPath .. modulors[i] .. "Main.lua")
+      if result then
+        local success, result = pcall(result, workspace, window.modLayout, loc, dbstuff, style)
+        if success then
+          local object = modulesLayout:addItem(result.name)
+          object.module = result
+          object.isDefault = false
+          object.onTouch = modulePress
+          table.insert(modules,result)
+          for i=1,#result.table,1 do
+            table.insert(tableRay,result.table[i])
+          end
+        else
+          error("Failed to execute module " .. modulors[i] .. ": " .. tostring(result))
+        end
+      else
+        error("Failed to load module " .. modulors[i] .. ": " .. tostring(reason))
+      end
+    end
+  end
+
+  local check,_,_,_,_,work = callModem(modemPort,"getquery",ser.serialize(tableRay))
+  if check then
+    work = ser.unserialize(crypt(work,settingTable.cryptKey,true))
+    saveTable(work.data,aRD .. "userlist.txt")
+    userTable = work.data
+  else
+    GUI.alert(loc.userlistfailgrab)
+    userTable = loadTable(aRD .. "userlist.txt")
+    if userTable == nil then
+      GUI.alert("No userlist found")
+      window:remove()
+    end
+  end
+
+  for i=1,#modules,1 do
+    modules[i].init(userTable)
+  end
+
+  local contextMenu = menu:addContextMenuItem("File")
+  contextMenu:addItem("Close").onTouch = function()
+    window:remove()
+    --os.exit()
+  end
+
+  --Settings Stuff
+  settingsButton = window:addChild(GUI.button(40,3,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.settingsvar))
+  settingsButton.onTouch = changeSettings
+
+  --Database name and stuff and CardWriter
+  window:addChild(GUI.panel(64,2,88,5,style.cardStatusPanel))
+  window:addChild(GUI.label(66,4,3,3,style.cardStatusLabel,prgName .. " | " .. version))
+  cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,loc.cardabsent))
+
+  --[[if settingTable.autoupdate == false then
+    updateButton = window:addChild(GUI.button(128,8,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.updateserver))
+    updateButton.onTouch = updateServer
+  end]]
+end
+
+local function signInPage()
+  local username = window.modLayout.addChild(GUI.input(30,3,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "username"))
+  local password = window.modLayout.addChild(GUI.input(30,6,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "password",true,"*"))
+  local submit = window.modLayout.addChild(GUI.button(30,9,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "submit"))
+  submit.onTouch = function()
+    local check, work
+    check,_,_,_,_,work,permissions = callModem(modemPort,"signIn",crypt(ser.serialize({["command"]="signIn",["user"]=username.text,["pass"]=password.text}),settingTable.cryptKey))
+    if check then
+      work = crypt(work,settingTable.cryptKey,true)
+      if work == "true" then
+        permissions = ser.unserialize(crypt(permissions,settingTable.cryptKey,true))
+        GUI.alert("Successfully signed in!")
+        window.modLayout:removeChildren()
+        finishSetup()
+      else
+        GUI.alert("Incorrect username/password")
+      end
+    else
+      GUI.alert("Failed to receive confirmatin from server")
     end
   end
 end
 
-local check,_,_,_,_,work = callModem(modemPort,"getquery",ser.serialize(tableRay))
-if check then
-  work = ser.unserialize(crypt(work,settingTable.cryptKey,true))
-  saveTable(work.data,aRD .. "userlist.txt")
-  userTable = work.data
-else
-  GUI.alert(loc.userlistfailgrab)
-  userTable = loadTable(aRD .. "userlist.txt")
-  if userTable == nil then
-    GUI.alert("No userlist found")
-    window:remove()
-  end
-end
-
-for i=1,#modules,1 do
-  modules[i].init(userTable)
-end
-
-local contextMenu = menu:addContextMenuItem("File")
-contextMenu:addItem("Close").onTouch = function()
-  window:remove()
-  --os.exit()
-end
-
---Settings Stuff
-settingsButton = window:addChild(GUI.button(40,3,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.settingsvar))
-settingsButton.onTouch = changeSettings
-
---Database name and stuff and CardWriter
-window:addChild(GUI.panel(64,2,88,5,style.cardStatusPanel))
-window:addChild(GUI.label(66,4,3,3,style.cardStatusLabel,prgName .. " | " .. version))
-cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,loc.cardabsent))
-
---[[if settingTable.autoupdate == false then
-  updateButton = window:addChild(GUI.button(128,8,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.updateserver))
-  updateButton.onTouch = updateServer
-end]]
+signInPage()
 
 workspace:draw()
 workspace:start()
