@@ -41,8 +41,7 @@ end
 module.onTouch = function()
   local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
   local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
-  local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, extraVar3, settingsButton
-  local sectComboBox, sectLockBox, sectNewButton, sectDelButton, sectUserButton
+  local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2
 
   local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
   local guiCalls = {}
@@ -59,14 +58,6 @@ module.onTouch = function()
   local pageMult = 10
   local listPageNumber = 0
   local previousPage = 0
-
-  local function eventCallback(ev, id)
-    if ev == "cardInsert" then
-      cardStatusLabel.text = loc.cardpresent
-    elseif ev == "cardRemove" then
-      cardStatusLabel.text = loc.cardabsent
-    end
-  end
 
   --[[local function permissionRefresh(user) --Hid because likely not to be used (handled by database)
     local distable = {}

@@ -220,7 +220,8 @@ local function checkPerms(data)
     else
       return true, false
     end
-  return false, "incorrect command"
+    return false, "incorrect command"
+  end
 end
 
 --------Getting tables and setting up terminal

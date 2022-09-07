@@ -23,20 +23,8 @@ local loc = system.getLocalization(aRD .. "Localizations/")
 --------
 
 local workspace, window, menu, userTable, settingTable, modulesLayout, modules, permissions
-local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
-local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
-local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2, extraVar3, settingsButton
-local sectComboBox, sectLockBox, sectNewButton, sectDelButton, sectUserButton
+local cardStatusLabel, varContainer, addVarArray, settingsButton
 
-local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
-local guiCalls = {}
---[[set up on startup according to extra modifiers added by user.
-If type is string, [1] = text input.
-If type is -string, [1] = text label.
-If type is bool, [1] = toggleable button.
-If type is int, [1] = minus button, [2] = plus button, [3] = value label.
-If type is -int, [1] = minus button, [2] = plus button, [3] = value label, [4] = {array of string values}
-]]
 ----------
 
 local prgName = loc.name
@@ -46,10 +34,6 @@ local modem
 
 local tableRay = {}
 local prevmod
-
------------ Site 91 specific configuration (to avoid breaking commercial systems, don't enable)
-local enableLinking = false
------------
 
 if component.isAvailable("os_cardwriter") then
   writer = component.os_cardwriter
@@ -166,15 +150,19 @@ local function updateServer(table)
   modem.broadcast(modemPort, "updateuserlist", crypted)
 end
 
-local function devMod()
+local function devMod(...)
   local module = {}
   local component = require("component")
+
+  local workspace, window, loc, database, style, permissions = table.unpack({...})
 
   module.init = function()
 
   end
-  module.onTouch = function()
-    GUI.alert("It worked!")
+  module.onTouch = function() --TODO: Prepare this for Module installation, user permissions, and more.
+
+
+
   end
   module.close = function()
 
