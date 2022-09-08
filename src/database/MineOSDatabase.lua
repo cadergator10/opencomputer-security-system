@@ -216,24 +216,28 @@ local function devMod(...)
       end
 
       local function pageCallback(workspace,button)
+        local count = {}
+        for key,_ in pairs(users) do
+          table.insert(count,key)
+        end
         if button.isPos then
-          if button.isListNum = 1 then
-            if listPageNumber < #userTable.sectors/pageMult - 1 then
+          if button.isListNum == 1 then
+            if listPageNumber < #count/pageMult - 1 then
               listPageNumber = listPageNumber + 1
             end
           else
-            if listPageNumberPass < #userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass/pageMultPass - 1 then
-              listPageNumberPass = listPageNumberPass + 1
+            if listPageNumber2 < #users[count[pageMult * listPageNumber + userList.selectedItem]].perms/pageMult - 1 then
+              listPageNumber2 = listPageNumber2 + 1
             end
           end
         else
-          if button.isListNum = 1 then
+          if button.isListNum == 1 then
             if listPageNumber > 0 then
               listPageNumber = listPageNumber - 1
             end
           else
-            if listPageNumberPass > 0 then
-              listPageNumberPass = listPageNumberPass - 1
+            if listPageNumber2 > 0 then
+              listPageNumber2 = listPageNumber2 - 1
             end
           end
         end
@@ -247,7 +251,7 @@ local function devMod(...)
       
       local e,_,_,_,_,peed,meed = callModem(modemPort,"signIn",crypt(ser.serialize({["command"]="grab",["user"]=usernamename,["pass"]=userpasspass}),settingTable.cryptKey))
       if e then
-        if crypt(peed,settingTable.cryptKey,true) = "true" then
+        if crypt(peed,settingTable.cryptKey,true) == "true" then
           users = ser.unserialize(crypt(meed,settingTable.cryptKey,true))
           layout:addChild(GUI.panel(1,1,37,33,style.listPanel))
           userList = layout:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
