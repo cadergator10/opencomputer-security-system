@@ -100,6 +100,7 @@ module.onTouch = function()
     sectorNameInput.text = userTable.sectors[selectedId].name
     sectorPassList:removeChildren()
     local temp = pageMultPass * listPageNumberPass
+    sectorPassListNum.text = tostring(listPageNumberPass + 1)
     for i = temp + 1, temp + pageMultPass, 1 do
       if (userTable.sectors[selectedId].pass[i] == nil) then
 
@@ -121,6 +122,7 @@ module.onTouch = function()
     local selectedId = sectorList.selectedItem
     sectorList:removeChildren()
     local temp = pageMult * listPageNumber
+    sectorListNum.text = tostring(listPageNumber + 1)
     for i = temp + 1, temp + pageMult, 1 do
       if (userTable.sectors[i] == nil) then
 
@@ -132,10 +134,38 @@ module.onTouch = function()
     if (previousPage == listPageNumber) then
       sectorList.selectedItem = selectedId
     else
+      listPageNumberPass = 0
+      sectorListCallback()
       previousPage = listPageNumber
     end
     database.update()
     workspace:draw()
+  end
+
+  local function pageCallback(workspace,button)
+    if button.isPos then
+      if button.isListNum = 1 then
+        if listPageNumber < #userTable.sectors/pageMult - 1 then
+          listPageNumber = listPageNumber + 1
+        end
+      else
+        if listPageNumberPass < #userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass/pageMultPass - 1 then
+          listPageNumberPass = listPageNumberPass + 1
+        end
+      end
+    else
+      if button.isListNum = 1 then
+        if listPageNumber > 0 then
+          listPageNumber = listPageNumber - 1
+        end
+      else
+        if listPageNumberPass > 0 then
+          listPageNumberPass = listPageNumberPass - 1
+        end
+      end
+    end
+    updateSecList()
+    sectorListCallback()
   end
 
   local function createSector()
@@ -229,6 +259,18 @@ module.onTouch = function()
   sectorPassRemove = window:addChild(GUI.button(100,33,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
   sectorPassRemove.onTouch = deleteSectorPass
   sectorPassRemove.disabled = canPerm
+  --List Buttons Setup
+  sectorListNum = window:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
+  sectorListUp = window:addChild(GUI.button(8,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
+  sectorListUp.onTouch, sectorListUp.isPos, sectorListUp.isListNum = pageCallback,true,1
+  sectorListDown = window:addChild(GUI.button(12,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
+  sectorListDown.onTouch, sectorListDown.isPos, sectorListDown.isListNum = pageCallback,false,1
+
+  sectorPassListNum = window:addChild(GUI.label(43,33,3,3,style.listPageLabel,tostring(listPageNumberPass + 1)))
+  sectorPassListUp = window:addChild(GUI.button(51,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
+  sectorPassListUp.onTouch, sectorPassListUp.isPos, sectorPassListUp.isListNum = pageCallback,true,2
+  sectorPassListDown = window:addChild(GUI.button(55,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
+  sectorPassListDown.onTouch, sectorPassListDown.isPos, sectorPassListDown.isListNum = pageCallback,false,2
 end
 
 module.close = function()

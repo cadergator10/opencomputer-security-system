@@ -39,12 +39,13 @@ local function split(s, delimiter)
 end
 
 module.onTouch = function()
+  local varEditWindow --Container of all the stuff for variable editing for easy removal of it all.
   local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
   local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
   local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2
 
   local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
-  local guiCalls = {}
+  local guiCalls = {} --TODO: Set -string (hidden string) to have data be a parameter to ask if it should be shown on database.
 
   ----------- Site 91 specific configuration (to avoid breaking commercial systems, don't enable)
   local enableLinking = false
@@ -144,7 +145,7 @@ module.onTouch = function()
     else
       previousPage = listPageNumber
     end
-    database.update()
+    database.update({"passes","passSettings"})
   end
 
   local function eventCallback(ev, id)
@@ -329,6 +330,131 @@ module.onTouch = function()
     userListCallback()
   end
 
+  local function passSetup(deleteprev) --TODO: Check for errors in code due to local files missing :)
+    if deleteprev then varEditWindow:removeChildren()
+    --user infos TODO: checkPerms for all buttons to enable/disable & actually pull the perms and such & allow rewriting of screen when adding/del var
+    local labelSpot = 1
+    varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"User name : "))
+    userNameText = varEditWindow:addChild(GUI.input(64,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
+    userNameText.onInputFinished = inputCallback
+    userNameText.disabled = true
+    labelSpot = labelSpot + 2
+    userUUIDLabel = varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"UUID      : " .. loc.usernotselected))
+    labelSpot = labelSpot + 2
+    varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"STAFF     : "))
+    StaffYesButton = varEditWindow:addChild(GUI.button(64,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
+    StaffYesButton.switchMode = true
+    StaffYesButton.onTouch = staffUserCallback
+    StaffYesButton.disabled = true
+    labelSpot = labelSpot + 2
+    varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"Blocked   : "))
+    cardBlockedYesButton = varEditWindow:addChild(GUI.button(64,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
+    cardBlockedYesButton.switchMode = true
+    cardBlockedYesButton.onTouch = blockUserCallback
+    cardBlockedYesButton.disabled = true
+    labelSpot = labelSpot + 2
+
+    for i=1,#userTable.passSettings.var,1 do
+      local labelText = userTable.passSettings.label[i]
+      local spaceNum = 10 - #labelText
+      if spaceNum < 0 then spaceNum = 0 end
+      for j=1,spaceNum,1 do
+        labelText = labelText .. " "
+      end
+      labelText = labelText .. ": "
+      varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,labelText))
+      guiCalls[i] = {}
+      if userTable.passSettings.type[i] == "string" then
+        guiCalls[i][1] = varEditWindow:addChild(GUI.input(64,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
+        guiCalls[i][1].buttonInt = i
+        guiCalls[i][1].callbackInt = i + #baseVariables
+        guiCalls[i][1].onInputFinished = buttonCallback
+        guiCalls[i][1].disabled = true
+      elseif userTable.passSettings.type[i] == "-string" then
+        guiCalls[i][1] = varEditWindow:addChild(GUI.label(64,labelSpot,3,3,style.passIntLabel,"NAN"))
+      elseif userTable.passSettings.type[i] == "int" then
+        guiCalls[i][3] = varEditWindow:addChild(GUI.label(72,labelSpot,3,3,style.passIntLabel,"#"))
+        guiCalls[i][1] = varEditWindow:addChild(GUI.button(64,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
+        guiCalls[i][1].buttonInt = i
+        guiCalls[i][1].callbackInt = i + #baseVariables
+        guiCalls[i][1].isPos = true
+        guiCalls[i][1].onTouch = buttonCallback
+        guiCalls[i][2] = varEditWindow:addChild(GUI.button(68,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "-"))
+        guiCalls[i][2].buttonInt = i
+        guiCalls[i][2].callbackInt = i + #baseVariables
+        guiCalls[i][2].isPos = false
+        guiCalls[i][2].onTouch = buttonCallback
+        guiCalls[i][1].disabled = true
+        guiCalls[i][2].disabled = true
+      elseif userTable.passSettings.type[i] == "-int" then
+        guiCalls[i][3] = varEditWindow:addChild(GUI.label(72,labelSpot,3,3,style.passIntLabel,"NAN"))
+        guiCalls[i][1] = varEditWindow:addChild(GUI.button(64,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
+        guiCalls[i][1].buttonInt = i
+        guiCalls[i][1].callbackInt = i + #baseVariables
+        guiCalls[i][1].isPos = true
+        guiCalls[i][1].onTouch = buttonCallback
+        guiCalls[i][2] = varEditWindow:addChild(GUI.button(68,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "-"))
+        guiCalls[i][2].buttonInt = i
+        guiCalls[i][2].callbackInt = i + #baseVariables
+        guiCalls[i][2].isPos = false
+        guiCalls[i][2].onTouch = buttonCallback
+        guiCalls[i][4] = userTable.passSettings.data[i]
+        guiCalls[i][1].disabled = true
+        guiCalls[i][2].disabled = true
+      elseif userTable.passSettings.type[i] == "bool" then
+        guiCalls[i][1] = varEditWindow:addChild(GUI.button(64,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
+        guiCalls[i][1].buttonInt = i
+        guiCalls[i][1].callbackInt = i + #baseVariables
+        guiCalls[i][1].switchMode = true
+        guiCalls[i][1].onTouch = buttonCallback,i,i + #baseVariables
+        guiCalls[i][1].disabled = true
+      end
+      labelSpot = labelSpot + 2
+    end
+
+    if enableLinking == true then
+      linkUserLabel = varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"LINK      : " .. loc.usernotselected))
+      labelSpot = labelSpot + 2
+      linkUserButton = varEditWindow:addChild(GUI.button(40,labelSpot,16,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.linkdevice))
+      linkUserButton.onTouch = linkUserCallback
+      linkUserButton.disabled = true
+    end
+
+    listPageLabel = window:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
+    listUpButton = window:addChild(GUI.button(8,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
+    listUpButton.onTouch, listUpButton.isPos = pageCallback,true
+    listDownButton = window:addChild(GUI.button(12,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
+    listDownButton.onTouch, listDownButton.isPos = pageCallback,false
+
+    --Line and user buttons
+
+    --window:addChild(GUI.panel(115,11,1,26,style.bottomDivider))
+    --window:addChild(GUI.panel(64,10,86,1,style.bottomDivider))
+    --window:addChild(GUI.panel(64,36,86,1,style.bottomDivider))
+    local va = database.checkPerms("security",{"varmanagement"},true)
+    userNewButton = window:addChild(GUI.button(118,12,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new)) --118 is furthest right
+    userNewButton.onTouch = newUserCallback
+    userNewButton.disabled = va
+    userDeleteButton = window:addChild(GUI.button(118,14,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delete))
+    userDeleteButton.onTouch = deleteUserCallback
+    userDeleteButton.disabled = va
+    userChangeUUIDButton = window:addChild(GUI.button(118,18,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.resetuuid))
+    userChangeUUIDButton.onTouch = changeUUID
+    userChangeUUIDButton.disabled = database.checkPerms("security",{"varmanagement","resetuuid"},true)
+    createAdminCardButton = window:addChild(GUI.button(118,30,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.admincardbutton))
+    createAdminCardButton.onTouch = writeAdminCardCallback
+    createAdminCardButton.disabled = database.checkPerms("security",{"varmanagement","admincard"},true)
+    addVarButton = window:addChild(GUI.button(118,22,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.addvar))
+    addVarButton.onTouch = addVarCallback
+    addVarButton.disabled = va
+    delVarButton = window:addChild(GUI.button(118,26,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delvar))
+    delVarButton.onTouch = delVarCallback
+    delVarButton.disabled = va
+    editVarButton = window:addChild(GUI.button(118,24,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.editvar))
+    editVarButton.onTouch = editVarCallback
+    editVarButton.disabled = va
+  end
+
   local function checkTypeCallback()
     local typeArray = {"string","-string","int","-int","bool"}
     local selected
@@ -413,8 +539,8 @@ module.onTouch = function()
     varContainer = nil
     database.save()
     GUI.alert(loc.newvaradded)
-    database.update()
-    window:remove()
+    database.update({"passes","passSettings"})
+    passSetup(true)
   end
 
   local function addVarCallback()
@@ -460,8 +586,8 @@ module.onTouch = function()
     varContainer = nil
     database.save()
     GUI.alert(loc.delvarcompleted)
-    database.update()
-    window:remove()
+    database.update({"passes","passSettings"})
+    passSetup(true)
   end
 
   local function delVarCallback()
@@ -488,8 +614,8 @@ module.onTouch = function()
     varContainer = nil
     database.save()
     GUI.alert(loc.changevarcompleted)
-    database.update()
-    window:remove()
+    database.update({"passes","passSettings"})
+    passSetup(true)
   end
 
   local function editVarCallback()
@@ -520,133 +646,15 @@ module.onTouch = function()
 
   --permissionRefresh() permissions given by database
 
+  varEditWindow = window:addChild(GUI.container(1,1,window.width,window.height))
   window:addChild(GUI.panel(1,1,37,33,style.listPanel))
   userList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
   userList:addItem("HELLO")
   listPageNumber = 0
   updateList()
 
-  --user infos TODO: checkPerms for all buttons to enable/disable & actually pull the perms and such & allow rewriting of screen when adding/del var
-  local labelSpot = 1
-  window:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"User name : "))
-  userNameText = window:addChild(GUI.input(64,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
-  userNameText.onInputFinished = inputCallback
-  userNameText.disabled = true
-  labelSpot = labelSpot + 2
-  userUUIDLabel = window:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"UUID      : " .. loc.usernotselected))
-  labelSpot = labelSpot + 2
-  window:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"STAFF     : "))
-  StaffYesButton = window:addChild(GUI.button(64,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
-  StaffYesButton.switchMode = true
-  StaffYesButton.onTouch = staffUserCallback
-  StaffYesButton.disabled = true
-  labelSpot = labelSpot + 2
-  window:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"Blocked   : "))
-  cardBlockedYesButton = window:addChild(GUI.button(64,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
-  cardBlockedYesButton.switchMode = true
-  cardBlockedYesButton.onTouch = blockUserCallback
-  cardBlockedYesButton.disabled = true
-  labelSpot = labelSpot + 2
-
-  for i=1,#userTable.passSettings.var,1 do
-    local labelText = userTable.passSettings.label[i]
-    local spaceNum = 10 - #labelText
-    if spaceNum < 0 then spaceNum = 0 end
-    for j=1,spaceNum,1 do
-      labelText = labelText .. " "
-    end
-    labelText = labelText .. ": "
-    window:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,labelText))
-    guiCalls[i] = {}
-    if userTable.passSettings.type[i] == "string" then
-      guiCalls[i][1] = window:addChild(GUI.input(64,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
-      guiCalls[i][1].buttonInt = i
-      guiCalls[i][1].callbackInt = i + #baseVariables
-      guiCalls[i][1].onInputFinished = buttonCallback
-      guiCalls[i][1].disabled = true
-    elseif userTable.passSettings.type[i] == "-string" then
-      guiCalls[i][1] = window:addChild(GUI.label(64,labelSpot,3,3,style.passIntLabel,"NAN"))
-    elseif userTable.passSettings.type[i] == "int" then
-      guiCalls[i][3] = window:addChild(GUI.label(72,labelSpot,3,3,style.passIntLabel,"#"))
-      guiCalls[i][1] = window:addChild(GUI.button(64,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
-      guiCalls[i][1].buttonInt = i
-      guiCalls[i][1].callbackInt = i + #baseVariables
-      guiCalls[i][1].isPos = true
-      guiCalls[i][1].onTouch = buttonCallback
-      guiCalls[i][2] = window:addChild(GUI.button(68,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "-"))
-      guiCalls[i][2].buttonInt = i
-      guiCalls[i][2].callbackInt = i + #baseVariables
-      guiCalls[i][2].isPos = false
-      guiCalls[i][2].onTouch = buttonCallback
-      guiCalls[i][1].disabled = true
-      guiCalls[i][2].disabled = true
-    elseif userTable.passSettings.type[i] == "-int" then
-      guiCalls[i][3] = window:addChild(GUI.label(72,labelSpot,3,3,style.passIntLabel,"NAN"))
-      guiCalls[i][1] = window:addChild(GUI.button(64,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
-      guiCalls[i][1].buttonInt = i
-      guiCalls[i][1].callbackInt = i + #baseVariables
-      guiCalls[i][1].isPos = true
-      guiCalls[i][1].onTouch = buttonCallback
-      guiCalls[i][2] = window:addChild(GUI.button(68,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "-"))
-      guiCalls[i][2].buttonInt = i
-      guiCalls[i][2].callbackInt = i + #baseVariables
-      guiCalls[i][2].isPos = false
-      guiCalls[i][2].onTouch = buttonCallback
-      guiCalls[i][4] = userTable.passSettings.data[i]
-      guiCalls[i][1].disabled = true
-      guiCalls[i][2].disabled = true
-    elseif userTable.passSettings.type[i] == "bool" then
-      guiCalls[i][1] = window:addChild(GUI.button(64,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
-      guiCalls[i][1].buttonInt = i
-      guiCalls[i][1].callbackInt = i + #baseVariables
-      guiCalls[i][1].switchMode = true
-      guiCalls[i][1].onTouch = buttonCallback,i,i + #baseVariables
-      guiCalls[i][1].disabled = true
-    end
-    labelSpot = labelSpot + 2
-  end
-
-  if enableLinking == true then
-    linkUserLabel = window:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"LINK      : " .. loc.usernotselected))
-    labelSpot = labelSpot + 2
-    linkUserButton = window:addChild(GUI.button(40,labelSpot,16,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.linkdevice))
-    linkUserButton.onTouch = linkUserCallback
-    linkUserButton.disabled = true
-  end
-
-  listPageLabel = window:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
-  listUpButton = window:addChild(GUI.button(8,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
-  listUpButton.onTouch, listUpButton.isPos = pageCallback,true
-  listDownButton = window:addChild(GUI.button(12,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
-  listDownButton.onTouch, listDownButton.isPos = pageCallback,false
-
-  --Line and user buttons
-
-  --window:addChild(GUI.panel(115,11,1,26,style.bottomDivider))
-  --window:addChild(GUI.panel(64,10,86,1,style.bottomDivider))
-  --window:addChild(GUI.panel(64,36,86,1,style.bottomDivider))
   local va = database.checkPerms("security",{"varmanagement"},true)
-  userNewButton = window:addChild(GUI.button(118,12,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new)) --118 is furthest right
-  userNewButton.onTouch = newUserCallback
-  userNewButton.disabled = va
-  userDeleteButton = window:addChild(GUI.button(118,14,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delete))
-  userDeleteButton.onTouch = deleteUserCallback
-  userDeleteButton.disabled = va
-  userChangeUUIDButton = window:addChild(GUI.button(118,18,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.resetuuid))
-  userChangeUUIDButton.onTouch = changeUUID
-  userChangeUUIDButton.disabled = database.checkPerms("security",{"varmanagement","resetuuid"},true)
-  createAdminCardButton = window:addChild(GUI.button(118,30,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.admincardbutton))
-  createAdminCardButton.onTouch = writeAdminCardCallback
-  createAdminCardButton.disabled = database.checkPerms("security",{"varmanagement","admincard"},true)
-  addVarButton = window:addChild(GUI.button(118,22,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.addvar))
-  addVarButton.onTouch = addVarCallback
-  addVarButton.disabled = va
-  delVarButton = window:addChild(GUI.button(118,26,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delvar))
-  delVarButton.onTouch = delVarCallback
-  delVarButton.disabled = va
-  editVarButton = window:addChild(GUI.button(118,24,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.editvar))
-  editVarButton.onTouch = editVarCallback
-  editVarButton.disabled = va
+  passSetup(false)  
 
   --Database name and stuff and CardWriter
   window:addChild(GUI.panel(123,2,12,3,style.cardStatusPanel))

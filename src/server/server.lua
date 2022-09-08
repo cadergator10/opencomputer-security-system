@@ -510,16 +510,23 @@ while true do
         end
       elseif command == "signIn" then
         data = ser.unserialize(data)
-        if data.command == "signIn" then --TODO: Finish sign in stuff
-          if crypt(logUsers[data.user].pass,settingTable.cryptKey,true) == data.pass then
-            bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers[data.user].perm),settingTable.cryptKey))
+        if data.command == "signIn" then --TODO: Test signIn stuff as well as default admin signin for servers with no accounts yet.
+          if #logUsers == 0 then
+            if data.user == "admin" and data.pass = "password" .. tostring(modemPort) then
+              bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize({"all"}),settingTable.cryptKey))
+            else
+              bdcst(from,port,crypt("false",settingTable.cryptKey))
+            end
           else
-            bdcst(from,port,crypt("false",settingTable.cryptKey))
+            if crypt(logUsers[data.user].pass,settingTable.cryptKey,true) == data.pass then
+              bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers[data.user].perm),settingTable.cryptKey))
+            else
+              bdcst(from,port,crypt("false",settingTable.cryptKey))
+            end
           end
-        elseif data.command == "add" then
-          logUsers[data.user] = data.data
-        elseif data.command == "del" then
-          logUsers[data.user] = nil
+        elseif data.command == "update" then
+          logUsers = data.data
+          saveTable(logUsers,"users.txt")
         elseif data.command == "grab" then
           local e,worked = checkPerms({["command"]="check",["user"]=data.user,["pass"]=data.pass,["prefix"]="dev","usermanagement"})
           if e and worked then

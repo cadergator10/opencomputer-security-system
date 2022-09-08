@@ -24,6 +24,7 @@ local loc = system.getLocalization(aRD .. "Localizations/")
 
 local workspace, window, menu, userTable, settingTable, modulesLayout, modules, permissions
 local cardStatusLabel, varContainer, addVarArray, settingsButton
+local usernamename, userpasspass
 
 ----------
 
@@ -160,9 +161,157 @@ local function devMod(...)
 
   end
   module.onTouch = function() --TODO: Prepare this for Module installation, user permissions, and more.
+    local userEditButton, moduleInstallButton, layout
 
+    local function disabledSet()
+      userEditButton.disabled = checkPerms("dev",{"usermanagement"},true)
+      moduleInstallButton.disabled = checkPerms("dev",{"systemmanagement",true})
+    end
 
+    --Big Callbacks
+    local function beginUserEditing() --136 width, 33 height big area, 116 width, 33 height extra area.
+      local userList, permissionList, permissionInput, addPerm, deletePerm, users, addUser, deleteUser, userInput, passwordInput
+      local listUp, listDown, listNum, listUp2, listDown2, listNum2
 
+      local pageMult = 10
+      local listPageNumber = 0
+      local previousPage = 0
+
+      local listPageNumber2 = 0
+      local previousPage2 = 0
+
+      local function updateUserStuff()
+        local selectedId = pageMult * listPageNumber + userList.selectedItem
+        local disselect = pageMult * listPageNumber2
+        local pees = userList:getItem(userList.selectedItem)
+        permissionList:removeChildren()
+        for i=temp+1,temp+pageMult,1 do
+          if users[pees.text].perm[i] == nil then
+
+          else
+            permissionList:addItem(users[pees.text].perm[i])
+          end
+        end
+        permissionInput.disabled = false
+        addPerm.disabled = false
+        deletePerm.disabled = false
+      end
+
+      local function updateList()
+        local selectedId = userList.selectedItem
+        userList:removeChildren()
+        local temp = pageMult * listPageNumber
+        local count = 0
+        for key,_ in pairs(users) do
+          count = count + 1
+          if count >= temp + 1 and count <= temp + pageMult then
+            userList:addItem(key).onTouch = updateUserStuff
+          end
+        end
+        if previousPage == listPageNumber then
+          userList.selectedItem = selectedId
+        else
+          previousPage = listPageNumber
+        end
+      end
+
+      local function pageCallback(workspace,button)
+        if button.isPos then
+          if button.isListNum = 1 then
+            if listPageNumber < #userTable.sectors/pageMult - 1 then
+              listPageNumber = listPageNumber + 1
+            end
+          else
+            if listPageNumberPass < #userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass/pageMultPass - 1 then
+              listPageNumberPass = listPageNumberPass + 1
+            end
+          end
+        else
+          if button.isListNum = 1 then
+            if listPageNumber > 0 then
+              listPageNumber = listPageNumber - 1
+            end
+          else
+            if listPageNumberPass > 0 then
+              listPageNumberPass = listPageNumberPass - 1
+            end
+          end
+        end
+        updateList()
+        updateUserStuff()
+      end
+
+      layout:removeChildren()
+      userEditButton.disabled = true
+      moduleInstallButton.disabled = true
+      
+      local e,_,_,_,_,peed,meed = callModem(modemPort,"signIn",crypt(ser.serialize({["command"]="grab",["user"]=usernamename,["pass"]=userpasspass}),settingTable.cryptKey))
+      if e then
+        if crypt(peed,settingTable.cryptKey,true) = "true" then
+          users = ser.unserialize(crypt(meed,settingTable.cryptKey,true))
+          layout:addChild(GUI.panel(1,1,37,33,style.listPanel))
+          userList = layout:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+          userList:addItem("HELLO")
+          listPageNumber = 0
+          layout:addChild(GUI.panel(40,1,37,33,style.listPanel))
+          permissionList = layout:addChild(GUI.list(41, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+          listPageNumber2 = 0
+          updateList()
+          --local permissionInput, addPerm, deletePerm, users, addUser, deleteUser
+          userInput = layout:addChild(GUI.input(80,1,30,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
+          passwordInput = layout:addChild(GUI.input(80,3,30,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "input pass",true,"*"))
+          addUser = layout:addChild(GUI.button(80,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Add User"))
+          addUser.onTouch = function()
+            users[userInput.text] = {["pass"]=crypt(passwordInput.text,settingTable.cryptKey),["perms"]={}}
+            modem.broadcast(modemPort,"signIn",ser.serialize({["command"]="update",["data"]=users}))
+            userInput.text = ""
+            passwordInput.text = ""
+            updateList()
+          end
+          deleteUser = layout:addChild(GUI.button(100,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Delete User"))
+          deleteUser.onTouch = function()
+            users[userList:getItem(userList.selectedItem).text] = nil
+            modem.broadcast(modemPort,"signIn",ser.serialize({["command"]="update",["data"]=users}))
+            updateList()
+          end
+          layout:addChild(GUI.panel(80,7,36,1,style.bottomDivider))
+          permissionInput = layout:addChild(GUI.input(80,9,30,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "Input Perm"))
+          addPerm = layout:addChild(GUI.button(80,11,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Add Perm"))
+          addPerm.onTouch = function()
+            table.insert(users[userList:getItem(userList.selectedItem).text].perms,permissionInput.text)
+            permissionInput.text = ""
+            modem.broadcast(modemPort,"signIn",ser.serialize({["command"]="update",["data"]=users}))
+            updateUserStuff()
+          end
+          addPerm.disabled = true
+          deletePerm = layout:addChild(GUI.button(100,11,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Delete Perm"))
+          deletePerm.onTouch = function()
+            table.remove(users[userList:getItem(userList.selectedItem).text].perms,pageMult * listPageNumber2 + permissionList.selectedItem)
+            modem.broadcast(modemPort,"signIn",ser.serialize({["command"]="update",["data"]=users}))
+            updateUserStuff()
+          end
+          addPerm.disabled = true
+        else
+          GUI.alert("incorrect permissions to grab userlist")
+          disabledSet()
+        end
+      else
+        GUI.alert("failed to grab permissions")
+        disabledSet()
+      end
+    end
+    local function moduleInstallation()
+      layout:removeChildren()
+      userEditButton.disabled = true
+      moduleInstallButton.disabled = true
+    end
+    
+    layout = window:addChild(GUI.container(20,1,window.width - 20, window.height))
+    userEditButton = window:addChild(GUI.button(3,3,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Edit Users"))
+    userEditButton.onTouch = beginUserEditing
+    moduleInstallButton = window:addChild(GUI.button(3,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Manage Modules")) --LEFT OFF
+    moduleInstallButton.onTouch = moduleInstallation()
+    disabledSet()
   end
   module.close = function()
 
@@ -180,7 +329,7 @@ local function modulePress()
   local selected = modulesLayout.selectedItem
   if prevmod ~= nil then
     local p = prevmod.close()
-    if p then
+    if p and settingTable.autoupdate then
       updateServer(p)
     end
   end
@@ -216,7 +365,7 @@ local function changeSettings()
     varContainer:remove()
     varContainer = nil
     GUI.alert(loc.settingchangecompleted)
-    updateServer(tableRay)
+    updateServer()
     window:remove()
     event.push("gonow")
   end
@@ -258,8 +407,8 @@ workspace, window, menu = system.addWindow(GUI.filledWindow(2,2,150,45,style.win
 window.modLayout = window:addChild(GUI.container(14, 12, window.width - 14, window.height - 12)) --136 width, 33 height
 
 local function finishSetup()
-  local dbstuff = {["update"] = function(table,its)
-    if its and settingTable.autoupdate then
+  local dbstuff = {["update"] = function(table,force)
+    if force or settingTable.autoupdate then
       updateServer(table)
     end
   end, ["save"] = function()
@@ -343,13 +492,14 @@ local function finishSetup()
 
   --Database name and stuff and CardWriter
   window:addChild(GUI.panel(64,2,88,5,style.cardStatusPanel))
-  window:addChild(GUI.label(66,4,3,3,style.cardStatusLabel,prgName .. " | " .. version))
+  window:addChild(GUI.label(66,3,3,1,style.cardStatusLabel,prgName .. " | " .. version))
+  window:addChild(GUI.label(66,5,3,1,style.cardStatusLabel,"Welcome " .. usernamename))
   cardStatusLabel = window:addChild(GUI.label(116, 4, 3,3,style.cardStatusLabel,loc.cardabsent))
 
-  --[[if settingTable.autoupdate == false then
-    updateButton = window:addChild(GUI.button(128,8,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.updateserver))
+  if settingTable.autoupdate == false then
+    updateButton = window:addChild(GUI.button(40,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.updateserver))
     updateButton.onTouch = updateServer
-  end]]
+  end
 end
 
 local function signInPage()
@@ -364,6 +514,7 @@ local function signInPage()
       if work == "true" then
         permissions = ser.unserialize(crypt(permissions,settingTable.cryptKey,true))
         GUI.alert("Successfully signed in!")
+        usernamename, userpasspass = username.text,password.text
         window.modLayout:removeChildren()
         finishSetup()
       else
