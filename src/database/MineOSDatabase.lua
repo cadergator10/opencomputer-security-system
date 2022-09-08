@@ -23,7 +23,7 @@ local loc = system.getLocalization(aRD .. "Localizations/")
 --------
 
 local workspace, window, menu, userTable, settingTable, modulesLayout, modules, permissions
-local cardStatusLabel, varContainer, addVarArray, settingsButton
+local cardStatusLabel, varContainer, addVarArray, settingsButton, updateButton
 local usernamename, userpasspass
 
 ----------
@@ -165,7 +165,7 @@ local function devMod(...)
 
     local function disabledSet()
       userEditButton.disabled = checkPerms("dev",{"usermanagement"},true)
-      moduleInstallButton.disabled = checkPerms("dev",{"systemmanagement",true})
+      moduleInstallButton.disabled = checkPerms("dev",{"systemmanagement"},true)
     end
 
     --Big Callbacks
@@ -185,7 +185,7 @@ local function devMod(...)
         local disselect = pageMult * listPageNumber2
         local pees = userList:getItem(userList.selectedItem)
         permissionList:removeChildren()
-        for i=temp+1,temp+pageMult,1 do
+        for i=disselect+1,disselect+pageMult,1 do
           if users[pees.text].perm[i] == nil then
 
           else
@@ -502,21 +502,27 @@ local function finishSetup()
 
   if settingTable.autoupdate == false then
     updateButton = window:addChild(GUI.button(40,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.updateserver))
-    updateButton.onTouch = updateServer
+    updateButton.onTouch = function()
+      updateServer()
+    end
   end
 end
 
 local function signInPage()
-  local username = window.modLayout.addChild(GUI.input(30,3,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "username"))
-  local password = window.modLayout.addChild(GUI.input(30,6,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "password",true,"*"))
-  local submit = window.modLayout.addChild(GUI.button(30,9,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "submit"))
+  local username = window.modLayout:addChild(GUI.input(30,3,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "username"))
+  local password = window.modLayout:addChild(GUI.input(30,6,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "password",true,"*"))
+  local submit = window.modLayout:addChild(GUI.button(30,9,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "submit"))
   submit.onTouch = function()
     local check, work
     check,_,_,_,_,work,permissions = callModem(modemPort,"signIn",crypt(ser.serialize({["command"]="signIn",["user"]=username.text,["pass"]=password.text}),settingTable.cryptKey))
     if check then
       work = crypt(work,settingTable.cryptKey,true)
       if work == "true" then
-        permissions = ser.unserialize(crypt(permissions,settingTable.cryptKey,true))
+        local pees = ser.unserialize(crypt(permissions,settingTable.cryptKey,true))
+        permissions = {}
+        for _,value in pairs(pees) do
+          permissions[value] = true
+        end
         GUI.alert("Successfully signed in!")
         usernamename, userpasspass = username.text,password.text
         window.modLayout:removeChildren()

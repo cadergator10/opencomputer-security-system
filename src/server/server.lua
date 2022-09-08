@@ -511,7 +511,11 @@ while true do
       elseif command == "signIn" then
         data = ser.unserialize(data)
         if data.command == "signIn" then --TODO: Test signIn stuff as well as default admin signin for servers with no accounts yet.
-          if #logUsers == 0 then
+          local count = 0
+          for _,_ in pairs(logUsers) do
+            count = count + 1
+          end
+          if count == 0 then
             if data.user == "admin" and data.pass == "password" .. tostring(modemPort) then
               bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize({"all"}),settingTable.cryptKey))
             else

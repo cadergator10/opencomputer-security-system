@@ -109,7 +109,7 @@ module.onTouch = function()
         local lockType = {loc.sectoropen,loc.sectordislock}
         if pass ~= 0 then
           local disdata = userTable.sectors[selectedId].pass[i].data ~= nil and userTable.sectors[selectedId].pass[i].data or "0"
-          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. disdata .. " : p" .. userTable.sectors[selectedId].pass[i].priority .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock]) --TODO: Test if this is fixed
+          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. disdata .. " : p" .. userTable.sectors[selectedId].pass[i].priority .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock]) --FIXME: Still does not work. One of these are NIL
         else
           sectorPassList:addItem("Staff : 0 : p" .. userTable.sectors[selectedId].pass[i].priority .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock])
         end
@@ -144,7 +144,7 @@ module.onTouch = function()
 
   local function pageCallback(workspace,button)
     if button.isPos then
-      if button.isListNum = 1 then
+      if button.isListNum == 1 then
         if listPageNumber < #userTable.sectors/pageMult - 1 then
           listPageNumber = listPageNumber + 1
         end
@@ -154,7 +154,7 @@ module.onTouch = function()
         end
       end
     else
-      if button.isListNum = 1 then
+      if button.isListNum == 1 then
         if listPageNumber > 0 then
           listPageNumber = listPageNumber - 1
         end
@@ -204,7 +204,6 @@ module.onTouch = function()
   sectorList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
   sectorList:addItem("HELLO")
   listPageNumber = 0
-  updateSecList()
 
 
   --Sector infos newSectorButton, delSectorButton
@@ -212,7 +211,7 @@ module.onTouch = function()
   sectorNameInput = window:addChild(GUI.input(64,12,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
   sectorNameInput.onInputFinished = function()
     local selected = pageMult * listPageNumber + sectorList.selectedItem
-    userTable.passes[selected].name = sectorNameInput.text
+    userTable.sectors[selected].name = sectorNameInput.text
     updateSecList()
     sectorListCallback()
   end
@@ -271,6 +270,8 @@ module.onTouch = function()
   sectorPassListUp.onTouch, sectorPassListUp.isPos, sectorPassListUp.isListNum = pageCallback,true,2
   sectorPassListDown = window:addChild(GUI.button(55,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
   sectorPassListDown.onTouch, sectorPassListDown.isPos, sectorPassListDown.isListNum = pageCallback,false,2
+
+  updateSecList()
 end
 
 module.close = function()
