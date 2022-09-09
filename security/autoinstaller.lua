@@ -515,7 +515,7 @@ local function oldFiles()
     config = nil
 end
 
-modem.close() --TEST: Does autoinstaller still work?
+modem.close()
 term.clear()
 
 if component.isAvailable("tunnel") then

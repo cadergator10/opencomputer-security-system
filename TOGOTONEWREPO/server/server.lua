@@ -315,6 +315,18 @@ else
       userTable.passSettings = userTable.settings
       userTable.settings = nil
     end
+    for i=1,#userTable.passSettings.var,1 do
+      if userTable.passSettings.type[i] == "string" then
+        if userTable.passSettings.data[i] == false then
+          userTable.passSettings.data[i] = 1
+        end
+      elseif userTable.passSettings.type[i] == "-string" then
+        if userTable.passSettings.data[i] == false then
+          userTable.passSettings.type[i] = "string"
+          userTable.passSettings.data[i] = 2
+        end
+      end
+    end
     if #userTable > 0 then
       userTable.passes = {}
       for i=1,#userTable,1 do
@@ -339,7 +351,7 @@ end,["modulemsg"]=function(command,data)
   return msgToModule("message",command,data,add)
 end}
 
-for _,value in pairs(modules) do
+for _,value in pairs(modules) do --TODO: Convert to use similar method to MineOS for simplicity.
   addcommands(value.commands,value.skipcrypt,value.table)
   value.debug = debug
   value.init(userTable, doorTable, server)

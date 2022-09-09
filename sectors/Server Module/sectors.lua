@@ -75,8 +75,15 @@ function module.message(command,datar) --Called when a command goes past all def
                   for j=1,#userTable.passSettings.calls,1 do
                     if userTable.passSettings.calls[j] == value.uuid then
                       local check = function(rule)
-                        if userTable.passSettings.type[j] == "string" or userTable.passSettings.type[j] == "-string" then
+                        if userTable.passSettings.type[j] == "string" then
                           return userTable.passes[user][userTable.passSettings.var[j]] == rule
+                        elseif userTable.passSettings.type[j] == "-string" then
+                          for z=1,#userTable.passes[user][userTable.passSettings.var[j]],1 do
+                            if userTable.passes[user][userTable.passSettings.var[j]][z] == rule then
+                              return true
+                            end
+                          end
+                          return false
                         elseif userTable.passSettings.type[j] == "int" or userTable.passSettings.type[j] == "-int" then
                           if userTable.passSettings.above[j] == false or userTable.passSettings.type[j] == "-int" then
                             return userTable.passes[user][userTable.passSettings.var[j]] == tonumber(rule)

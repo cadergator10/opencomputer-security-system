@@ -109,9 +109,12 @@ module.onTouch = function()
         local lockType = {loc.sectoropen,loc.sectordislock}
         if pass ~= 0 then
           local disdata = userTable.sectors[selectedId].pass[i].data ~= nil and userTable.sectors[selectedId].pass[i].data or "0"
-          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. disdata .. " : p" .. userTable.sectors[selectedId].pass[i].priority .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock]) --FIXME: Still does not work. One of these are NIL
+          if userTable.passSettings.type[pass] == "-int" then
+            disdata = userTable.passSettings.data[pass][disdata]
+          end
+          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. tostring(disdata) .. " : p" .. tostring(userTable.sectors[selectedId].pass[i].priority) .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock]) --FIXME: Still does not work. One of these are NIL
         else
-          sectorPassList:addItem("Staff : 0 : p" .. userTable.sectors[selectedId].pass[i].priority .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock])
+          sectorPassList:addItem("Staff : 0 : p" .. tostring(userTable.sectors[selectedId].pass[i].priority) .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock])
         end
       end
     end

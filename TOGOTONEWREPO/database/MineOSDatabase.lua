@@ -295,6 +295,18 @@ local function devMod(...)
             updateUserStuff()
           end
           addPerm.disabled = true
+
+          listNum = window:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
+          listUp = window:addChild(GUI.button(8,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
+          listUp.onTouch, listUp.isPos, listUp.isListNum = pageCallback,true,1
+          listDown = window:addChild(GUI.button(12,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
+          listDown.onTouch, listDown.isPos, listDown.isListNum = pageCallback,false,1
+
+          listNum2 = window:addChild(GUI.label(41,33,3,3,style.listPageLabel,tostring(listPageNumberPass + 1)))
+          listUp2 = window:addChild(GUI.button(49,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
+          listUp2.onTouch, listUp2.isPos, listUp2.isListNum = pageCallback,true,2
+          listDown2 = window:addChild(GUI.button(53,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
+          listDown2.onTouch, listDown2.isPos, listDown2.isListNum = pageCallback,false,2
         else
           GUI.alert("incorrect permissions to grab userlist")
           disabledSet()

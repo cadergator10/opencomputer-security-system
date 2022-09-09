@@ -371,12 +371,13 @@ end
     local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
       data = crypt(msg, extraConfig.cryptKey, true)
-      return true, data
+      
+      return true, ser.unserialize(data) or data
     else
       return false, "timed out or user not found"
     end
   end
-  function security.setVar(str,var,it,loc)
+  function security.setVar(str,var,it,loc) --TODO: Update set and get to new string stuff.
     local data = crypt(str,extraConfig.cryptKey,true)
     data = ser.unserialize(data)
     if type(var) == "boolean" then

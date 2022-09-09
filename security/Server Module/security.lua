@@ -44,8 +44,15 @@ end
 
 local function checkVar(rule,user,index)
     if index ~= 0 then
-        if userTable.passSettings.type[index] == "string" or userTable.passSettings.type[index] == "-string" then
+        if userTable.passSettings.type[index] == "string" then
             return user[userTable.passSettings.var[index]] == rule.param
+        elseif userTable.passSettings.type[index] == "-string" then
+            for i=1,#user[userTable.passSettings.var[index]],1 do
+                if user[userTable.passSettings.var[index]][i] == rule.param then
+                    return true
+                end
+            end
+            return false
         elseif userTable.passSettings.type[index] == "int" or userTable.passSettings.type[index] == "-int" then
             if userTable.passSettings.above[index] == false or userTable.passSettings.type[index] == "-int" then
                 return user[userTable.passSettings.var[index]] == rule.param
@@ -217,7 +224,8 @@ function module.message(command,datar,from) --Called when a command goes past al
         for _, value in pairs(userTable.passes) do
             if value.uuid == data.uuid then
                 worked = true
-                return true,nil,false,true,server.crypt(value[data.var])
+                local mee = type(value[data.var]) == "table" and ser.serialize(value[data.var]) or value[data.var]
+                return true,nil,false,true,server.crypt(mee)
             end
         end
     elseif command == "setvar" then
@@ -226,7 +234,9 @@ function module.message(command,datar,from) --Called when a command goes past al
         for _, value in pairs(userTable.passes) do
             if value.uuid == data.uuid then
                 worked = true
-                userTable.passes[counter][data.var] = data.data
+                if type(userTable.passes[counter][data.var]) == type(data.data) then
+                    userTable.passes[counter][data.var] = data.data
+                end
                 return true,nil,false,true,server.crypt("true")
             else
                 counter = counter + 1

@@ -410,7 +410,7 @@ local function diagThr(num,diagInfo)
                     term.clear()
                     pageChange(true,#indexed,doorDiag,false,indexed, diagInfo)
                     os.sleep(1)
-                elseif char == "enter" then --TODO: Add identify to the diagnostic mode as well. Double check if dis works?
+                elseif char == "enter" then --TEST: Double check if identify on diagnostic works?
                     sendit(from,port,false,"identifyMag",ser.serialize(diagInfo[pageNum]))
                 end
             end
