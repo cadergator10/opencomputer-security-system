@@ -35,6 +35,7 @@ local ser = require("serialization")
 local term = require("term")
 local thread = require("thread")
 local process = require("process")
+local fs = require("filesystem")
 local computer = component.computer
 
 local magReader = component.os_magreader
@@ -89,18 +90,16 @@ local function convert( chars, dist, inv )
     return copy
   end
 
-  --// The Save Function
 local function saveTable(  tbl,filename )
-  local tableFile = fs.open(filename, "w")
+  local tableFile = assert(io.open(filename, "w"))
   tableFile:write(ser.serialize(tbl))
   tableFile:close()
 end
 
---// The Load Function
 local function loadTable( sfile )
-  local tableFile = fs.open(sfile, "r")
+  local tableFile = io.open(sfile)
   if tableFile ~= nil then
-    return ser.unserialize(tableFile:readAll())
+    return ser.unserialize(tableFile:read("*all"))
   else
     return nil
   end

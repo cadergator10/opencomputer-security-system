@@ -105,7 +105,7 @@ module.onTouch = function()
       if (userTable.sectors[selectedId].pass[i] == nil) then
 
       else
-        local pass = uuidtopass(userTable.sectors[selectedId].pass[i].uuid)
+        local work, pass = uuidtopass(userTable.sectors[selectedId].pass[i].uuid)
         local lockType = {loc.sectoropen,loc.sectordislock}
         if pass ~= 0 then
           local disdata = userTable.sectors[selectedId].pass[i].data ~= nil and userTable.sectors[selectedId].pass[i].data or "0"

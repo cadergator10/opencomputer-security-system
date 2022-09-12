@@ -273,11 +273,11 @@ module.onTouch = function()
     for i=1,#userTable.passSettings.var,1 do
       local tmp = userTable.passSettings.type[i]
       if tmp == "bool" then
-        guicalls[i][1].disabled = true
+        guiCalls[i][1].disabled = true
       elseif tmp == "string" then
         tmp = userTable.passSettings.data[i]
         if tmp == 0 then
-          guicalls[i][1].disabled = true
+          guiCalls[i][1].disabled = true
           guiCalls[i][1].text = ""
         elseif tmp == 1 then
           guiCalls[i][1].text = ""
@@ -285,7 +285,7 @@ module.onTouch = function()
       elseif tmp == "-string" then
         tmp = userTable.passSettings.data[i]
         if tmp == 0 then
-          guicalls[i][1].disabled = true
+          guiCalls[i][1].disabled = true
           guiCalls[i][1]:removeChildren()
           guiCalls[i][2].disabled = true
           guiCalls[i][3].disabled = true
@@ -485,6 +485,7 @@ module.onTouch = function()
       cardBlockedYesButton.disabled = true
       labelSpot = labelSpot + 2
 
+      guiCalls = {}
       for i=1,#userTable.passSettings.var,1 do
         local labelText = userTable.passSettings.label[i]
         local spaceNum = 10 - #labelText
@@ -494,7 +495,6 @@ module.onTouch = function()
         end
         labelText = labelText .. ": "
         varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,labelText))
-        guiCalls = {}
         guiCalls[i] = {}
         if userTable.passSettings.type[i] == "string" then
           if userTable.passSettings.data[i] == 1 then
@@ -509,8 +509,8 @@ module.onTouch = function()
             guiCalls[i][1] = varEditWindow:addChild(GUI.label(64,labelSpot,3,3,style.passIntLabel,"String Hidden"))
           end
         elseif userTable.passSettings.type[i] == "-string" then
-          if userTable.passSettings.data[i] = 0 then
-            guiCalls[i][1] = varEditwindow:addChild(GUI.comboBox(64,labelSpot,30,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+          if userTable.passSettings.data[i] == 0 then
+            guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,30,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             guiCalls[i][1].buttonInt = i
             guiCalls[i][1].callbackInt = i + #baseVariables
             guiCalls[i][2] = varEditWindow:addChild(GUI.button(96,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
@@ -529,8 +529,8 @@ module.onTouch = function()
             guiCalls[i][4].buttonInt = i
             guiCalls[i][4].callbackInt = i + #baseVariables
             guiCalls[i][4].disabled = true
-          elseif userTable.passSettings.data[i] = 1 then
-            guiCalls[i][1] = varEditwindow:addChild(GUI.comboBox(64,labelSpot,30,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+          elseif userTable.passSettings.data[i] == 1 then
+            guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,30,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
           else
             guiCalls[i][1] = varEditWindow:addChild(GUI.label(64,labelSpot,3,3,style.passIntLabel,"Strings Hidden"))
           end
@@ -594,7 +594,7 @@ module.onTouch = function()
       --window:addChild(GUI.panel(64,10,86,1,style.bottomDivider))
       --window:addChild(GUI.panel(64,36,86,1,style.bottomDivider))
       local va = database.checkPerms("security",{"varmanagement"},true) --TODO: Convert all string vars to new system of multistring and any can be hidden.
-      userNewButton = window:addChild(GUI.button(118,12,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new)) --118 is furthest right
+      userNewButton = window:addChild(GUI.button(118,12,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new)) --118 is furthest right --TODO: Fix why adding vars doesn't add it to users + MultiString doesnt work
       userNewButton.onTouch = newUserCallback
       userNewButton.disabled = va
       userDeleteButton = window:addChild(GUI.button(118,14,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delete))
