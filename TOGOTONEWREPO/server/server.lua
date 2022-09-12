@@ -522,7 +522,7 @@ while true do
         end
       elseif command == "signIn" then
         data = ser.unserialize(data)
-        if data.command == "signIn" then --FIXME: Fix admin signIn thing for pulling userList.
+        if data.command == "signIn" then --FIXME: Is nil when updating userlist at this line
           local count = 0
           for _,_ in pairs(logUsers) do
             count = count + 1
@@ -534,7 +534,7 @@ while true do
               bdcst(from,port,crypt("false",settingTable.cryptKey))
             end
           else
-            if crypt(logUsers[data.user].pass,settingTable.cryptKey,true) == data.pass then
+            if crypt(logUsers[data.user].pass,settingTable.cryptKey,true) == data.pass then --FIXME: Crashes when signing in wit users.
               bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers[data.user].perm),settingTable.cryptKey))
             else
               bdcst(from,port,crypt("false",settingTable.cryptKey))
@@ -544,11 +544,19 @@ while true do
           logUsers = data.data
           saveTable(logUsers,"users.txt")
         elseif data.command == "grab" then
-          local e,worked = checkPerms({["command"]="check",["user"]=data.user,["pass"]=data.pass,["prefix"]="dev","usermanagement"})
-          if e and worked then
+          local count = 0
+          for _,_ in pairs(logUsers) do
+            count = count + 1
+          end
+          if count == 0 then
             bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers),settingTable.cryptKey))
           else
-            bdcst(from,port,crypt("false",settingTable.cryptKey))
+            local e,worked = checkPerms({["command"]="check",["user"]=data.user,["pass"]=data.pass,["prefix"]="dev","usermanagement"})
+            if e and worked then
+              bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers),settingTable.cryptKey))
+            else
+              bdcst(from,port,crypt("false",settingTable.cryptKey))
+            end
           end
         end
       elseif command == "checkPerms" then --Example with passes module & adding variables{["user"]="username",["command"]="check",["prefix"]="passes","addvar"} = checks both check.* and check.addvar and all

@@ -186,10 +186,10 @@ local function devMod(...)
         local pees = userList:getItem(userList.selectedItem)
         permissionList:removeChildren()
         for i=disselect+1,disselect+pageMult,1 do
-          if users[pees.text].perm[i] == nil then
+          if users[pees.text].perms[i] == nil then
 
           else
-            permissionList:addItem(users[pees.text].perm[i])
+            permissionList:addItem(users[pees.text].perms[i])
           end
         end
         permissionInput.disabled = false
@@ -267,7 +267,7 @@ local function devMod(...)
           addUser = layout:addChild(GUI.button(80,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Add User"))
           addUser.onTouch = function()
             users[userInput.text] = {["pass"]=crypt(passwordInput.text,settingTable.cryptKey),["perms"]={}}
-            modem.broadcast(modemPort,"signIn",ser.serialize({["command"]="update",["data"]=users}))
+            modem.broadcast(modemPort,"signIn",crypt(ser.serialize({["command"]="update",["data"]=users}),settingTable.cryptKey))
             userInput.text = ""
             passwordInput.text = ""
             updateList()
@@ -275,7 +275,7 @@ local function devMod(...)
           deleteUser = layout:addChild(GUI.button(100,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Delete User"))
           deleteUser.onTouch = function()
             users[userList:getItem(userList.selectedItem).text] = nil
-            modem.broadcast(modemPort,"signIn",ser.serialize({["command"]="update",["data"]=users}))
+            modem.broadcast(modemPort,"signIn",crypt(ser.serialize({["command"]="update",["data"]=users}),settingTable.cryptKey))
             updateList()
           end
           layout:addChild(GUI.panel(80,7,36,1,style.bottomDivider))
@@ -284,14 +284,14 @@ local function devMod(...)
           addPerm.onTouch = function()
             table.insert(users[userList:getItem(userList.selectedItem).text].perms,permissionInput.text)
             permissionInput.text = ""
-            modem.broadcast(modemPort,"signIn",ser.serialize({["command"]="update",["data"]=users}))
+            modem.broadcast(modemPort,"signIn",crypt(ser.serialize({["command"]="update",["data"]=users}),settingTable.cryptKey))
             updateUserStuff()
           end
           addPerm.disabled = true
           deletePerm = layout:addChild(GUI.button(100,11,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Delete Perm"))
           deletePerm.onTouch = function()
             table.remove(users[userList:getItem(userList.selectedItem).text].perms,pageMult * listPageNumber2 + permissionList.selectedItem)
-            modem.broadcast(modemPort,"signIn",ser.serialize({["command"]="update",["data"]=users}))
+            modem.broadcast(modemPort,"signIn",crypt(ser.serialize({["command"]="update",["data"]=users}),settingTable.cryptKey))
             updateUserStuff()
           end
           addPerm.disabled = true
@@ -302,7 +302,7 @@ local function devMod(...)
           listDown = window:addChild(GUI.button(12,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
           listDown.onTouch, listDown.isPos, listDown.isListNum = pageCallback,false,1
 
-          listNum2 = window:addChild(GUI.label(41,33,3,3,style.listPageLabel,tostring(listPageNumberPass + 1)))
+          listNum2 = window:addChild(GUI.label(41,33,3,3,style.listPageLabel,tostring(listPageNumber2 + 1)))
           listUp2 = window:addChild(GUI.button(49,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
           listUp2.onTouch, listUp2.isPos, listUp2.isListNum = pageCallback,true,2
           listDown2 = window:addChild(GUI.button(53,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))

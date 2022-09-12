@@ -44,16 +44,19 @@ local hassector = false
 local experimental = false
 --------Base Functions
 
-local function saveTable(table, location)
-    --saves a table to a file
-    local tableFile = assert(io.open(location, "w"))
-    tableFile:write(ser.serialize(table))
+local function saveTable(  tbl,filename )
+    local tableFile = assert(io.open(filename, "w"))
+    tableFile:write(ser.serialize(tbl))
     tableFile:close()
 end
-local function loadTable(location)
-    --returns a table stored in a file.
-    local tableFile = assert(io.open(location))
-    return ser.unserialize(tableFile:read("*all"))
+
+local function loadTable( sfile )
+    local tableFile = io.open(sfile)
+    if tableFile ~= nil then
+        return ser.unserialize(tableFile:read("*all"))
+    else
+        return nil
+    end
 end
 
 local function convert( chars, dist, inv )
@@ -542,14 +545,12 @@ local function doorediting()
         setGui(7,"")
         if editTable[pageNum].doorType == 0 or editTable[pageNum].doorType == 3 then
             setGui(16,"Door Address: " .. editTable[pageNum].doorAddress)
-            setGui(17,"Reader Address: " .. editTable[pageNum].reader)
         elseif editTable[pageNum].doorType == 2 then
             setGui(16,"Bundled redstone color: " .. redColorTypes[editTable[pageNum].redColor + 1] .. " / Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
-            setGui(17,"Reader Address: " .. editTable[pageNum].reader)
         else
             setGui(16,"Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
-            setGui(17,"Reader Address: " .. editTable[pageNum].reader)
         end
+        setGui(17,#editTable[pageNum].reader == 1 and "Reader Address: " .. editTable[pageNum].reader[1] or "Reader Amount: " .. #editTable[pageNum].reader)
         setGui(8,"1. Change Door Name: " .. editTable[pageNum].name)
         setGui(9,"2. Change Door type/color/uuid/side")
         setGui(10,"3. Change toggle and delay")
@@ -1061,7 +1062,7 @@ if config == nil then
     end
     saveTable(config,"extraConfig.txt")
 end
-modemPort = config.ports
+modemPort = config.port
 
 if component.isAvailable("tunnel") then
     link = component.tunnel
