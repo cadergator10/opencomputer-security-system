@@ -1,0 +1,1 @@
+{{name="Security",id=1111,database={folder="Security",main="rawurldatabase",extras={}},server={folder="Security",main="rawurlserver",extras={}},requirements={}},{name="Sectors",id=1112,database={folder="Sectors",main="rawurldatabase",extras={}},server={folder="Sectors",main="rawurlserver",extras={}},requirements={"1111"}}}

@@ -1,5 +1,5 @@
 local modemPort = 1000 --1000 is new default. Port is chosen on device setups.
-local syncPort = 199 --TODO: Port all devices and systems EVERYWHERE to the new syncPort to check port or manual entry, and using special port selected for all messages.
+local syncPort = 199
 
 local component = require("component")
 local event = require("event")
@@ -235,8 +235,8 @@ if fs.exists(modulepath) == false then
   os.execute("mkdir modules")
 end
 
-for file in fs.list(modulepath .. "/") do
-  local result, reason = loadfile(modulepath .. "/" .. file)
+for file in fs.list(modulepath .. "/") do --TEST: Does this successfully pull the Main.lua in folders.
+  local result, reason = loadfile(modulepath .. "/" .. file .. "/Main.lua")
   if result then
     local success, result = pcall(result)
     if success then
@@ -522,7 +522,7 @@ while true do
         end
       elseif command == "signIn" then
         data = ser.unserialize(data)
-        if data.command == "signIn" then --TODO: Test signIn stuff as well as default admin signin for servers with no accounts yet.
+        if data.command == "signIn" then --FIXME: Fix admin signIn thing for pulling userList.
           local count = 0
           for _,_ in pairs(logUsers) do
             count = count + 1

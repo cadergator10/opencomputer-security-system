@@ -377,7 +377,7 @@ end
       return false, "timed out or user not found"
     end
   end
-  function security.setVar(str,var,it,loc) --TODO: Update set and get to new string stuff.
+  function security.setVar(str,var,it,loc)
     local data = crypt(str,extraConfig.cryptKey,true)
     data = ser.unserialize(data)
     if type(var) == "boolean" then
@@ -407,6 +407,13 @@ end
 
 function security.crypt(str,reverse)
   return true,crypt(str,extraConfig.cryptKey,reverse)
+end
+
+function security.save(table,location)
+  saveTable(table,location)
+end
+function security.load(location)
+  return loadTable(location)
 end
 
 function security.send(wait,...)

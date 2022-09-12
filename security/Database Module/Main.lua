@@ -45,7 +45,7 @@ module.onTouch = function()
   local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2
 
   local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
-  local guiCalls = {} --TODO: Set -string (hidden string) to have data be a parameter to ask if it should be shown on database.
+  local guiCalls = {}
 
   ----------- Site 91 specific configuration (to avoid breaking commercial systems, don't enable)
   local enableLinking = false
@@ -84,7 +84,7 @@ module.onTouch = function()
 
   --Pass types: security.* = all, security.passediting = pass stuff, security.varmanagement = add/del passes + users security.resetuuid = reset user uuid (make card useless)
   local function userListCallback()
-    local selectedId = pageMult * listPageNumber + userList.selectedItem --TEST: Does this work with new strng stuff
+    local selectedId = pageMult * listPageNumber + userList.selectedItem
     userNameText.text = userTable.passes[selectedId].name
     userUUIDLabel.text = "UUID      : " .. userTable.passes[selectedId].uuid
     if enableLinking == true then
@@ -461,7 +461,7 @@ module.onTouch = function()
     end
   end
 
-  local function passSetup(deleteprev) --TODO: Check for errors in code due to local files missing :)
+  local function passSetup(deleteprev)
     if deleteprev then varEditWindow:removeChildren() end
       --user infos TODO: checkPerms for all buttons to enable/disable & actually pull the perms and such & allow rewriting of screen when adding/del var
       local labelSpot = 1
@@ -508,7 +508,7 @@ module.onTouch = function()
           else
             guiCalls[i][1] = varEditWindow:addChild(GUI.label(64,labelSpot,3,3,style.passIntLabel,"String Hidden"))
           end
-        elseif userTable.passSettings.type[i] == "-string" then
+        elseif userTable.passSettings.type[i] == "-string" then --FIXME: Fix MultiString stuff
           if userTable.passSettings.data[i] == 0 then
             guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,30,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             guiCalls[i][1].buttonInt = i
@@ -593,8 +593,8 @@ module.onTouch = function()
       --window:addChild(GUI.panel(115,11,1,26,style.bottomDivider))
       --window:addChild(GUI.panel(64,10,86,1,style.bottomDivider))
       --window:addChild(GUI.panel(64,36,86,1,style.bottomDivider))
-      local va = database.checkPerms("security",{"varmanagement"},true) --TODO: Convert all string vars to new system of multistring and any can be hidden.
-      userNewButton = window:addChild(GUI.button(118,12,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new)) --118 is furthest right --TODO: Fix why adding vars doesn't add it to users + MultiString doesnt work
+      local va = database.checkPerms("security",{"varmanagement"},true)
+      userNewButton = window:addChild(GUI.button(118,12,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new)) --118 is furthest right
       userNewButton.onTouch = newUserCallback
       userNewButton.disabled = va
       userDeleteButton = window:addChild(GUI.button(118,14,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delete))
@@ -632,7 +632,7 @@ module.onTouch = function()
         lik.onTouch = checkTypeCallback
         varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvaraddbutton))
         varYesButton.onTouch = function()
-          for i=1,#userTable,1 do
+          for i=1,#userTable.passes,1 do
             if addVarArray.type == "string" then
               userTable.passes[i][addVarArray.var] = "none"
             elseif addVarArray.type == "-string" then

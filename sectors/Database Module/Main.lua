@@ -112,7 +112,7 @@ module.onTouch = function()
           if userTable.passSettings.type[pass] == "-int" then
             disdata = userTable.passSettings.data[pass][disdata]
           end
-          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. tostring(disdata) .. " : p" .. tostring(userTable.sectors[selectedId].pass[i].priority) .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock]) --FIXME: Still does not work. One of these are NIL
+          sectorPassList:addItem(userTable.passSettings.label[pass] .. " : " .. tostring(disdata) .. " : p" .. tostring(userTable.sectors[selectedId].pass[i].priority) .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock])
         else
           sectorPassList:addItem("Staff : 0 : p" .. tostring(userTable.sectors[selectedId].pass[i].priority) .. " : " .. lockType[userTable.sectors[selectedId].pass[i].lock])
         end
