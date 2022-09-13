@@ -9,13 +9,15 @@ local workspace, window, loc, database, style = table.unpack({...})
 module.name = "Sectors"
 module.table = {"sectors"}
 module.debug = false
+module.version = "3.0.0"
+module.id = 1112
 
 module.init = function(usTable)
   userTable = usTable
 end
 
 module.onTouch = function()
-  local sectorList, sectorNameInput, newSectorButton, delSectorButton, sectorPassNew, sectorPassRemove, sectorPassList, userPassSelfSelector, userPassDataSelector, userPassTypeSelector, userPassPrioritySelector
+  local sectorList, sectorNameInput, newSectorButton, delSectorButton, sectorPassNew, sectorPassRemove, sectorPassEdit, sectorPassList, userPassSelfSelector, userPassDataSelector, userPassTypeSelector, userPassPrioritySelector
   local sectorListNum, sectorListUp, sectorListDown, sectorPassListNum, sectorPassListUp, sectorPassListDown
 
   local canPerm
@@ -43,10 +45,8 @@ module.onTouch = function()
     return false
   end
 
-  local function refreshInput(uuid)
-    if uuid == nil then
-      uuid = userPassSelfSelector.selectedItem - 1
-    end
+  local function refreshInput() --TEST: Make sure this works after changing up.
+    local uuid = userPassSelfSelector.selectedItem - 1
     if uuid ~= 0 then
       if userTable.passSettings.type[uuid] == "string" or userTable.passSettings.type[uuid] == "-string" or userTable.passSettings.type[uuid] == "int" then
         if prevPass == "-int" then
@@ -101,9 +101,15 @@ module.onTouch = function()
     sectorPassList:removeChildren()
     local temp = pageMultPass * listPageNumberPass
     sectorPassListNum.text = tostring(listPageNumberPass + 1)
+    sectorPassNew.disabled = canPerm
+    sectorPassRemove.disabled = canPerm
+    sectorPassEdit.disabled = canPerm
     for i = temp + 1, temp + pageMultPass, 1 do
       if (userTable.sectors[selectedId].pass[i] == nil) then
-
+        if i == temp + 1 then
+          sectorPassRemove.disabled = true
+          sectorPassEdit.disabled = true
+        end
       else
         local work, pass = uuidtopass(userTable.sectors[selectedId].pass[i].uuid)
         local lockType = {loc.sectoropen,loc.sectordislock}
@@ -189,7 +195,7 @@ module.onTouch = function()
 
   local function createSectorPass()
     local selected = userPassSelfSelector.selectedItem - 1
-    local data = selected == 0 and nil or userTable.passSettings.type[selected] == "-int" and userPassDataSelector.selectedItem or userTable.passSettings.type[selected] == "bool" and nil or userPassDataSelector.text
+    local data = selected == 0 and nil or userTable.passSettings.type[selected] == "-int" and userPassDataSelector.selectedItem or userTable.passSettings.type[selected] == "bool" and nil or userTable.passSettings.type[selected] == "int" and tonumber(userPassDataSelector.text) or userPassDataSelector.text
     local uuid = selected == 0 and "checkstaff" or userTable.passSettings.calls[selected]
     table.insert(userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass,{["uuid"]=uuid,["data"]=data,["lock"]=userPassTypeSelector.selectedItem,["priority"]=userPassPrioritySelector.selectedItem})
     sectorListCallback()
@@ -198,6 +204,24 @@ module.onTouch = function()
     local selected = pageMultPass * listPageNumberPass + sectorPassList.selectedItem
     table.remove(userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass,selected)
     sectorListCallback()
+  end
+  local function editSectorPass()
+    local selected = pageMultPass * listPageNumberPass + sectorPassList.selectedItem
+    local apples = userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass[selected]
+    table.remove(userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass,selected)
+    sectorListCallback()
+    userPassPrioritySelector.selectedItem = apples.priority
+    userPassTypeSelector.selectedItem = apples.lock
+    apples.uuid = uuidtopass(apples.uuid)
+    userPassSelfSelector.selectedItem = apples.uuid + 1
+    refreshInput()
+    if apples.uuid == 0 or userTable.passSettings.type[apples.uuid] == "bool" then
+
+    elseif userTable.passSettings.type[apples.uuid] == "-int" then
+      userPassDataSelector.selectedItem = apples.data
+    else
+      userPassDataSelector.text = userTable.passSettings.type[apples.uuid] == "int" and tostring(apples.data) or apples.data
+    end
   end
 
   canPerm = database.checkPerms("security",{"sector"},true)
@@ -243,7 +267,7 @@ module.onTouch = function()
   window:addChild(GUI.label(85,22,1,1,style.passNameLabel,"Change Input: "))
   userPassDataSelector = window:addChild(GUI.input(100,22,30,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
   userPassDataSelector.disabled = true
-  refreshInput(0)
+  refreshInput()
   window:addChild(GUI.label(85,26,1,1,style.passNameLabel,"Bypass Type : "))
   userPassTypeSelector = window:addChild(GUI.comboBox(100,25,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
   userPassTypeSelector.disabled = canPerm
@@ -257,10 +281,13 @@ module.onTouch = function()
   end
   sectorPassNew = window:addChild(GUI.button(85,33,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
   sectorPassNew.onTouch = createSectorPass
-  sectorPassNew.disabled = canPerm
+  sectorPassNew.disabled = true
   sectorPassRemove = window:addChild(GUI.button(100,33,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
   sectorPassRemove.onTouch = deleteSectorPass
-  sectorPassRemove.disabled = canPerm
+  sectorPassRemove.disabled = true
+  sectorPassEdit = window:addChild(GUI.button(115,33,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.editvar))
+  sectorPassEdit.onTouch = editSectorPass
+  sectorPassEdit.disabled = true
   --List Buttons Setup
   sectorListNum = window:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
   sectorListUp = window:addChild(GUI.button(8,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))

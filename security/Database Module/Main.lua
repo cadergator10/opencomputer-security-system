@@ -18,6 +18,8 @@ local workspace, window, loc, database, style, permissions = table.unpack({...})
 module.name = "Security"
 module.table = {"passes","passSettings"}
 module.debug = false
+module.version = "3.0.0"
+module.id = 1111
 
 module.init = function(usTable)
   userTable = usTable
@@ -246,12 +248,12 @@ module.onTouch = function()
     userListCallback()
   end
 
-  local function newUserCallback()
+  local function newUserCallback() --Issue with -strings
     local tmpTable = {["name"] = "new", ["blocked"] = false, ["staff"] = false, ["uuid"] = uuid.next(), ["link"] = "nil"}
     for i=1,#userTable.passSettings.var,1 do
       if userTable.passSettings.type[i] == "string" then
         tmpTable[userTable.passSettings.var[i]] = "none"
-      elseif userTable.passSettings.type == "-string" then
+      elseif userTable.passSettings.type[i] == "-string" then
         tmpTable[userTable.passSettings.var[i]] = {}
       elseif  userTable.passSettings.type[i] == "bool" then
         tmpTable[userTable.passSettings.var[i]] = false
@@ -286,14 +288,14 @@ module.onTouch = function()
         tmp = userTable.passSettings.data[i]
         if tmp == 0 then
           guiCalls[i][1].disabled = true
-          guiCalls[i][1]:removeChildren()
+          guiCalls[i][1]:clear()
           guiCalls[i][2].disabled = true
           guiCalls[i][3].disabled = true
           guiCalls[i][4].disabled = true
           guiCalls[i][4].text = ""
         elseif tmp == 1 then
           guiCalls[i][1].disabled = true
-          guiCalls[i][1]:removeChildren()
+          guiCalls[i][1]:clear()
         end
       elseif tmp == "int" or tmp == "-int" then
         if tmp == "-int" then
@@ -508,24 +510,24 @@ module.onTouch = function()
           else
             guiCalls[i][1] = varEditWindow:addChild(GUI.label(64,labelSpot,3,3,style.passIntLabel,"String Hidden"))
           end
-        elseif userTable.passSettings.type[i] == "-string" then --FIXME: Fix MultiString stuff
+        elseif userTable.passSettings.type[i] == "-string" then
           if userTable.passSettings.data[i] == 1 then
-            guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,30,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+            guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             guiCalls[i][1].buttonInt = i
             guiCalls[i][1].callbackInt = i + #baseVariables
-            guiCalls[i][2] = varEditWindow:addChild(GUI.button(96,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
+            guiCalls[i][2] = varEditWindow:addChild(GUI.button(86,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
             guiCalls[i][2].buttonInt = i
             guiCalls[i][2].callbackInt = i + #baseVariables
             guiCalls[i][2].isPos = true
             guiCalls[i][2].onTouch = buttonCallback
-            guiCalls[i][3] = varEditWindow:addChild(GUI.button(100,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "-"))
+            guiCalls[i][3] = varEditWindow:addChild(GUI.button(90,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "-"))
             guiCalls[i][3].buttonInt = i
             guiCalls[i][3].callbackInt = i + #baseVariables
             guiCalls[i][3].isPos = false
             guiCalls[i][3].onTouch = buttonCallback
             guiCalls[i][2].disabled = true
             guiCalls[i][3].disabled = true
-            guiCalls[i][4] = varEditWindow:addChild(GUI.input(104,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
+            guiCalls[i][4] = varEditWindow:addChild(GUI.input(94,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
             guiCalls[i][4].buttonInt = i
             guiCalls[i][4].callbackInt = i + #baseVariables
             guiCalls[i][4].disabled = true
@@ -660,7 +662,6 @@ module.onTouch = function()
           varContainer:remove()
           varContainer = nil
           database.save()
-          GUI.alert(loc.newvaradded)
           database.update({"passes","passSettings"})
           passSetup(true)
         end
@@ -690,7 +691,6 @@ module.onTouch = function()
           varContainer:remove()
           varContainer = nil
           database.save()
-          GUI.alert(loc.delvarcompleted)
           database.update({"passes","passSettings"})
           passSetup(true)
         end
@@ -730,7 +730,6 @@ module.onTouch = function()
           varContainer:remove()
           varContainer = nil
           database.save()
-          GUI.alert(loc.changevarcompleted)
           database.update({"passes","passSettings"})
           passSetup(true)
         end
@@ -758,7 +757,7 @@ module.onTouch = function()
     --write card button
     cardWriteButton = window:addChild(GUI.button(118,32,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.writebutton))
     cardWriteButton.onTouch = writeCardCallback
-    cardWriteButton.disabled = va
+    cardWriteButton.disabled = database.checkPerms("security",{"varmanagement","writecard"},true)
 
     va = nil
 

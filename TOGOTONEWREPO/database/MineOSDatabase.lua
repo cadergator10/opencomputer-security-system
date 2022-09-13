@@ -12,6 +12,7 @@ local event = require("event")
 local ser = require("serialization")
 local uuid = require("uuid")
 local fs = require("Filesystem")
+local internet = require("Internet")
 local writer
 
 local aRD = fs.path(system.getCurrentScript())
@@ -35,6 +36,8 @@ local modem
 
 local tableRay = {}
 local prevmod
+
+local download = "urltomodulestxt"
 
 if component.isAvailable("os_cardwriter") then
   writer = component.os_cardwriter
@@ -320,6 +323,7 @@ local function devMod(...)
       layout:removeChildren()
       userEditButton.disabled = true
       moduleInstallButton.disabled = true
+
     end
     
     layout = window:addChild(GUI.container(20,1,window.width - 20, window.height))
@@ -532,7 +536,7 @@ local function signInPage()
       if work == "true" then
         local pees = ser.unserialize(crypt(permissions,settingTable.cryptKey,true))
         permissions = {}
-        for _,value in pairs(pees) do
+        for _,value in pairs(pees) do --issue
           permissions[value] = true
         end
         GUI.alert("Successfully signed in!")

@@ -8,6 +8,8 @@ module.commands = {"test"}
 module.skipcrypt = {"test"}
 module.table = {}
 module.debug = false
+module.version = "" --Version of module. If different from version on global module.txt file, it will alert server.
+module.id = 1234 --ID of module according to modules.txt global file.
 
 function module.init(settings, doors, serverCommands) --Called when server is first started
   settingstable = settings

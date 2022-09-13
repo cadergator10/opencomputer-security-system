@@ -351,7 +351,7 @@ end,["modulemsg"]=function(command,data)
   return msgToModule("message",command,data,add)
 end}
 
-for _,value in pairs(modules) do --TODO: Convert to use similar method to MineOS for simplicity.
+for _,value in pairs(modules) do
   addcommands(value.commands,value.skipcrypt,value.table)
   value.debug = debug
   value.init(userTable, doorTable, server)
@@ -522,7 +522,7 @@ while true do
         end
       elseif command == "signIn" then
         data = ser.unserialize(data)
-        if data.command == "signIn" then --FIXME: Is nil when updating userlist at this line
+        if data.command == "signIn" then
           local count = 0
           for _,_ in pairs(logUsers) do
             count = count + 1
@@ -534,8 +534,8 @@ while true do
               bdcst(from,port,crypt("false",settingTable.cryptKey))
             end
           else
-            if crypt(logUsers[data.user].pass,settingTable.cryptKey,true) == data.pass then --FIXME: Crashes when signing in wit users.
-              bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers[data.user].perm),settingTable.cryptKey))
+            if logUsers[data.user] ~= nil and crypt(logUsers[data.user].pass,settingTable.cryptKey,true) == data.pass then
+              bdcst(from,port,crypt("true",settingTable.cryptKey),crypt(ser.serialize(logUsers[data.user].perms),settingTable.cryptKey))
             else
               bdcst(from,port,crypt("false",settingTable.cryptKey))
             end

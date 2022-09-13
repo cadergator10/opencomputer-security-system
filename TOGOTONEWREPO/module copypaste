@@ -1,1 +1,1 @@
-{name="name",id=1111,database={folder="test module",main="rawurldatabase",extras={name="hello",url="notherurl"}},server={folder="hello",main="rawurlserver",extras={name="yes",url="no"}},requirements={"1112"}}
+{name="name",id=1111,version="",database={folder="test module",main="rawurldatabase",extras={name="hello",url="notherurl"}},server={folder="hello",main="rawurlserver",extras={name="yes",url="no"}},requirements={"1112"}}
