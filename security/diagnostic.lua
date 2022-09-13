@@ -306,14 +306,14 @@ local function accsetup()
     modem.open(diagPort)
     --local temp = {}
     --temp["analyzer"]=component.isAvailable("barcode_reader")
-    sendit(nil,diagPort,false,"link",component.isAvailable("barcode_reader"))
+    sendit(nil,diagPort,false,"accsetup",component.isAvailable("barcode_reader"))
     print("linking...")
     local e, _, from, port, _, msg = event.pull(3, "modem_message")
     if e then
         print("successful link")
         local stayIn = true
         while stayIn do
-            local data
+            local data,text
             e, _, from, port, _, msg, data = event.pull("modem_message")
             if msg == "print" then
                 print(data)

@@ -169,8 +169,8 @@ end
 
 local bing,add,from,port
 local function bdcst(address,port,data,data2)
-  if bing then
-    modem.send(address,port,"rebroadcast",ser.serialize({["uuid"]=add,["data"]=data,["data2"]=data2}))
+  if bing and address then
+    modem.send(address,port,"rebroadcast",ser.serialize({["uuid"]=add,["data"]=data,["data2"]=data2})) --issue
   else
     if address then
       modem.send(address,port,data,data2)
@@ -599,13 +599,13 @@ while true do
         if wait ~= nil then
           for i=1,#wait,1 do
             if wait[i] ~= "&&&crypt" then
-              data.data[wait[i]] = userTable[wait[i]]
+              data.data[wait[i]] = userTable[wait[i]] --Issue
             else
               docrypt = false
             end
           end
         end
-        data.num = 2
+        data.num = 3
         data.version = version
         data = ser.serialize(data)
         data = docrypt and crypt(data,settingTable.cryptKey) or data

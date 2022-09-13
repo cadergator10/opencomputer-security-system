@@ -6,6 +6,7 @@ local fs = require("filesystem")
 local shell = require("shell")
 local event = require("event")
 local uuid = require("uuid")
+local thread = require("thread")
 local modem = component.modem
 local link
 local modemPort = 1000
@@ -70,7 +71,7 @@ local function sendMsg(...)
                     local distable = {}
                     while wait do
                         local e, _, _, _, _, text = event.pull("modem_message")
-                        if text == "finish" then
+                        if text == "finished" then
                             return distable
                         else
                             table.insert(distable,text)
@@ -351,7 +352,7 @@ local function runInstall()
     end --Sectors beginning
     if editorSettings.hassector then
         local nextmsg = "What sector would you like this door to be part of? 0 = no sector"
-        for i=1,#editorSettings.settings.sectors,1 do
+        for i=1,#editorSettings.settings.sectors,1 do --Issue
             nextmsg = nextmsg .. ", " .. i .. " = " .. editorSettings.settings.sectors[i].name
         end
         text = tonumber(sendMsg(nextmsg,1))
@@ -364,7 +365,7 @@ local function runInstall()
         loopArray["sector"] = false
     end
     tmpTable[j] = loopArray
-    end --FIXME: Make sure I didn't mess up any indenting back home
+    end
     text = sendMsg("All done with installer!","Would you like to start the computer now?","1 for yes, 2 for no",1)
     editorSettings.start = false
     if tonumber(text) == 1 then
@@ -471,16 +472,16 @@ local function oldFiles()
             if config.type == "single" then
                 sendMsg("downloading...")
                 if config.num == 1 then
-                    os.execute("wget -f " .. singleCode[1] .. " " .. program)
+                    os.execute("wget -f " .. singleCode .. " " .. program)
                 else
-                    os.execute("wget -f " .. singleCode[2] .. " " .. program)
+                    os.execute("wget -f " .. singleCode .. " " .. program)
                 end
             elseif config.type == "multi" then
                 sendMsg("downloading...")
                 if config.num == 1 then
-                    os.execute("wget -f " .. multiCode[1] .. " " .. program)
+                    os.execute("wget -f " .. multiCode .. " " .. program)
                 else
-                    os.execute("wget -f " .. multiCode[2] .. " " .. program)
+                    os.execute("wget -f " .. multiCode .. " " .. program)
                 end
             else
 
@@ -539,7 +540,7 @@ print("Sending query to server...")
 if link == nil then
     modem.open(modemPort)
 end
-send(nil,modemPort,true,"getquery",ser.serialize("passSettings","sectors"))
+send(nil,modemPort,true,"getquery",ser.serialize({"passSettings","sectors","&&&crypt"}))
 local e,_,from,port,_,msg = event.pull(3,"modem_message")
 if e == nil then
     print("No query received. Assuming old server system is in place and will not work.")
@@ -556,6 +557,7 @@ editorSettings.num = query.num
 editorSettings.version = query.version
 editorSettings.hassector = query.data.sectors ~= nil
 editorSettings.settings = query.data.passSettings
+editorSettings.settings.sectors = query.data.sectors
 editorSettings.scanner = false
 editorSettings.accelerate = false
 editorSettings.single = false
@@ -576,7 +578,7 @@ if tonumber(text) == 1 then
     end
     local waiter = true
     local e, _, from, port, _, msg, barcode, t
-    t = thread.setup(timer)
+    t = thread.create(timer) --setup incorrect
     while waiter do
         e, _, from, port, _, msg, barcode = event.pull(time, "modem_message")
         if e then
@@ -618,7 +620,7 @@ else
     term.clear()
     editorSettings.type = "doorsystem"
     os.execute("wget -f " .. doorCode .. " " .. program)
-    text = sendMsg("Would you like to use the simplified single door or multi-door?",1)
+    text = sendMsg("Would you like to use the simplified single door or multi-door?","true for single door of false for regular, multidoor setup",1)
     editorSettings.single = text == "true" and true or false
     settingData = runInstall()
     saveTable(settingData,settingFileName)

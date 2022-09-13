@@ -189,13 +189,11 @@ function module.message(command,datar,from) --Called when a command goes past al
         local sendTable = {}
         for _,value in pairs(doorTable) do
             local datar
-            if value.type == "multi" then
+            if value.type == "doorsystem" then
                 datar = {}
                 for key,pal in pairs(value.data) do
                     datar[key] = {["name"]=pal.name}
                 end
-            else
-                datar = {["name"]=value.data.name}
             end
             table.insert(sendTable,{["id"]=value.id,["type"]=value.type,["data"]=datar})
         end

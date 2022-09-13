@@ -465,7 +465,7 @@ module.onTouch = function()
 
   local function passSetup(deleteprev)
     if deleteprev then varEditWindow:removeChildren() end
-      --user infos TODO: checkPerms for all buttons to enable/disable & actually pull the perms and such & allow rewriting of screen when adding/del var
+      --user infos
       local labelSpot = 1
       varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"User name : "))
       userNameText = varEditWindow:addChild(GUI.input(64,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))

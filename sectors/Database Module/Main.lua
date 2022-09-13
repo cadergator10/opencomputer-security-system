@@ -26,7 +26,7 @@ module.onTouch = function()
   local listPageNumber = 0
   local previousPage = 0
 
-  local pageMultPass = 10
+  local pageMultPass = 5
   local listPageNumberPass = 0
   local previousPagePass = 0
   local prevPass = "string"
@@ -94,7 +94,7 @@ module.onTouch = function()
     userPassTypeSelector.selectedItem = sectorpass.lock
     refreshInput(uuid)
   end]]
-
+ --TODO: Update all lists to move back a page if nothing on page
   local function sectorListCallback()
     local selectedId = pageMult * listPageNumber + sectorList.selectedItem
     sectorNameInput.text = userTable.sectors[selectedId].name
@@ -212,8 +212,8 @@ module.onTouch = function()
     sectorListCallback()
     userPassPrioritySelector.selectedItem = apples.priority
     userPassTypeSelector.selectedItem = apples.lock
-    apples.uuid = uuidtopass(apples.uuid)
-    userPassSelfSelector.selectedItem = apples.uuid + 1
+    _, apples.uuid = uuidtopass(apples.uuid)
+    userPassSelfSelector.selectedItem = apples.uuid + 1 --issue
     refreshInput()
     if apples.uuid == 0 or userTable.passSettings.type[apples.uuid] == "bool" then
 

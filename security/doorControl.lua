@@ -156,7 +156,7 @@ end
         component.proxy(key).swipeIndicator(false)
         readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
       end
-      readerLights[key].new = var
+      readerLights[key].new = deepcopy(var)
       if check then readerLights[key].check = check end
     end
     if type(key) == "table" then
