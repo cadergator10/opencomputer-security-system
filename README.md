@@ -17,6 +17,8 @@ Featuring...
 
 If you have used this before, you may be wondering, "what's servertine?" I split up the server and database from the security system and am making them into a new project called "Servertine", which is a powerful system you can create powerful modules for and easilly connect to them using the servertine API. They also support other features like the range extender. The reason being for this is an API I can easilly build more programs off of and ease of updating the existing passes system. The move to a modular system brings no drawbacks to the system as well.
 
+<a href="https://github.com/cadergator10/Opencomputers-serpentine">Download servertine here</a>
+
 I will be making a full video tutorial series soon. <a href="https://www.youtube.com/channel/UCC492g_YuYcWKRIeQD3kqdQ">Channel is here</a>
 
 ----Server: The brain of the system. Install the security module onto the servertine server and keep it running and everything is handled for you! it stores user data as well as pass data and handles the logic for doorcontrol systems.
@@ -51,7 +53,7 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
 
 If you have any questions, don't hesitate to ask!
 
-<a href="https://www.youtube.com/watch?v=Ww2zGUjsZXo&list=PLJjS9EiCaZUUc1ZqsKekK1_S46aFl-682">Tutorial playlist here</a>
+<a href="https://www.youtube.com/watch?v=Ww2zGUjsZXo&list=PLJjS9EiCaZUUc1ZqsKekK1_S46aFl-682">Tutorial playlist here (older videos may be outdated)</a>
 
 ![2022-03-31_18 17 37](https://user-images.githubusercontent.com/75097681/161160569-b7cc527d-f03e-4b8a-8c1c-ba9df040ddf7.png)
 ![2022-03-31_18 17 25](https://user-images.githubusercontent.com/75097681/161160580-5213b4f9-2f69-4f06-ae74-f48a20d6c1c4.png)

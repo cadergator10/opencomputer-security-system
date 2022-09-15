@@ -17,7 +17,7 @@ local version = "3.0.0"
 
 local serverModules = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/server/modules/modules.txt"
 
-local commands = {"setdevice","signIn","updateuserlist","loginfo","getquery","syncport"}
+local commands = {"setdevice","signIn","updateuserlist","loginfo","getquery","syncport","moduleinstall"}
 local skipcrypt = {"loginfo","getquery","syncport"}
 
 local modules = {}
@@ -558,6 +558,30 @@ while true do
               bdcst(from,port,crypt("false",settingTable.cryptKey))
             end
           end
+        end
+      elseif command == "moduleinstall" then
+        --TEST: Does module installation work? I gotta move this all to another gitpod thing
+        data = ser.unserialize(data)
+        if data ~= nil then
+          bdcst(from,port,crypt("true",settingTable.cryptKey))
+          dohistory = false
+          evthread:kill()
+          term.clear()
+          print("Received modules list. Downloading modules...")
+          local path = shell.getWorkingDirectory()
+          fs.remove(path .. "/modules")
+          os.execute("mkdir modules")
+          for _,value in pairs(data) do
+            os.execute("mkdir modules/" .. value.folder)
+            os.execute ("wget -f " .. value.main .. " modules/" .. value.folder .. "/Main.lua")
+            for i=1,#value.extras,1 do
+              os.execute("wget -f " .. value.extras[i].url .. " modules/" .. value.folder .. "/" .. value.extras[i].name)
+            end
+          end
+          print("Finished downloading modules. Restart server")
+          os.exit()
+        else
+          bdcst(from,port,crypt("false",settingTable.cryptKey))
         end
       elseif command == "checkPerms" then --Example with passes module & adding variables{["user"]="username",["command"]="check",["prefix"]="passes","addvar"} = checks both check.* and check.addvar and all
         data = ser.unserialize(data)

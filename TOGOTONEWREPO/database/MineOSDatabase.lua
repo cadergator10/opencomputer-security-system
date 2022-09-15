@@ -124,6 +124,9 @@ local function checkPerms(base,data, reverse)
       return reverse == true and true or false
     end
   end
+  if permissions["~" .. base .. ".*"] == true then
+    return reverse == true and true or false
+  end
   if permissions["all"] == true or permissions[base .. ".*"] == true then
     return reverse == false and true or false
   end
@@ -219,6 +222,10 @@ local function devMod(...)
       end
 
       local function pageCallback(workspace,button)
+        local function canFresh()
+          updateList()
+          updateUserStuff()
+        end
         local count = {}
         for key,_ in pairs(users) do
           table.insert(count,key)
@@ -227,25 +234,27 @@ local function devMod(...)
           if button.isListNum == 1 then
             if listPageNumber < #count/pageMult - 1 then
               listPageNumber = listPageNumber + 1
+              canFresh()
             end
           else
             if listPageNumber2 < #users[count[pageMult * listPageNumber + userList.selectedItem]].perms/pageMult - 1 then
               listPageNumber2 = listPageNumber2 + 1
+              canFresh()
             end
           end
         else
           if button.isListNum == 1 then
             if listPageNumber > 0 then
               listPageNumber = listPageNumber - 1
+              canFresh()
             end
           else
             if listPageNumber2 > 0 then
               listPageNumber2 = listPageNumber2 - 1
+              canFresh()
             end
           end
         end
-        updateList()
-        updateUserStuff()
       end
 
       layout:removeChildren()
@@ -324,13 +333,214 @@ local function devMod(...)
       userEditButton.disabled = true
       moduleInstallButton.disabled = true
 
+      local moduleTable
+      local displayList, downloadList, bothArray, cancelButton, downloadButton
+      --local listUp, listDown, listNum, listUp2, listDown2, listNum2
+
+      local pageMult = 10
+      local listPageNumber = 0
+      local previousPage = 0
+
+      local listPageNumber2 = 0
+      local previousPage2 = 0
+
+      local function updateLists()
+        local leftSelect = pageMult * listPageButton + displayList.selectedItem
+        local rightSelect = pageMult * listPageButton2 + downloadList.selectedItem
+        displayList:removeChildren()
+        downloadList:removeChildren()
+        local text
+        for i=1,#pageMult * listPageNumber + 1,1 do
+          if bothArray[1][i] ~= nil then
+            text = " "
+            if #bothArray[1][i].requirements ~= 0 then
+              text = text .. "#"
+            end
+            if bothArray[1][i].database ~= nil then
+              text = text .. "%"
+            end
+            if bothArray[1][i].server ~= nil then
+              text = text .. "@"
+            end
+            displayList:addItem(bothArray[1][i].name .. text).onTouch = function() --This area manages the moving of data between lists for downloading or removal/no download. More complex due to checking requirements (required files being downloaded as well or removing files that require the file being removed.)
+              table.insert(bothArray[2],bothArray[1][i])
+              local removeId = bothArray[1][i].requirements
+              table.remove(bothArray[1],i)
+              local function removeRequirements = function(removeId)
+                for _,value in pairs(removeId) do
+                  for j=1,#bothArray[1][j],1 do
+                    if bothArray[1][j].id == value then
+                      local be = bothArray[1][j].requirements
+                      table.insert(bothArray[2],bothArray[1][j])
+                      table.remove(bothArray[1],j)
+                      removeRequirements(be)
+                    end
+                  end
+                end
+              end
+              removeRequirements(removeId)
+            end
+            updateLists()
+          end
+          for i=1,#pageMult * listPageNumber2 + 1,1 do
+            if bothArray[2][i] ~= nil then
+              text = " "
+              if #bothArray[2][i].requirements ~= 0 then
+                text = text .. "#"
+              end
+              if bothArray[2][i].database ~= nil then
+                text = text .. "%"
+              end
+              if bothArray[2][i].server ~= nil then
+                text = text .. "@"
+              end
+              downloadList:addItem(bothArray[2][i].name .. text).onTouch = function()
+                table.insert(bothArray[1],bothArray[2][i])
+                local backup = bothArray[2][i].id
+                table.remove(bothArray[2],i)
+                local idList = {}
+                local function removeRequirements = function(removeId)
+                  for j=1,#bothArray[2],1 do
+                    for _,value in pairs(bothArray[2][j].requirements) do
+                      if value == removeId then
+                        table.insert(idList,bothArray[2][j].id)
+                        removeRequirements(bothArray[2][j].id)
+                      end
+                    end
+                  end
+                end
+                removeRequirements(backup)
+                for _,value in pairs(idList) do
+                  for j=1,#bothArray[2],1 do
+                    if bothArray[2][j].id == value then
+                      table.insert(bothArray[1],bothArray[2][j])
+                      table.remove(bothArray[2],j)
+                    end
+                  end
+                end --TODO: DOuble check this is all good.
+                updateLists()
+              end
+              --Continue list update stuff
+              --TODO: When adding page change, make sure if less are visible on a list, that it moves back a page
+              if previousPage == listPageNumber then
+                displayList.selectedItem = leftSelect
+              else
+                previousPage = listPageNumber
+              end
+              if previousPage2 == listPageNumber2 then
+                downloadList.selectedItem = rightSelect
+              else
+                previousPage2 = listPageNumber2
+              end
+            end
+          end
+        end
+      end
+
+      --[[local function pageCallback(workspace,button)
+        local function canFresh()
+          updateList()
+        end
+        if button.isPos then
+          if button.isListNum == 1 then
+            if listPageNumber < #count/pageMult - 1 then
+              listPageNumber = listPageNumber + 1
+              canFresh()
+            end
+          else
+            if listPageNumber2 < #users[count[pageMult * listPageNumber + userList.selectedItem]]--[[.perms/pageMult - 1 then
+              listPageNumber2 = listPageNumber2 + 1
+              canFresh()
+            end
+          end
+        else
+          if button.isListNum == 1 then
+            if listPageNumber > 0 then
+              listPageNumber = listPageNumber - 1
+              canFresh()
+            end
+          else
+            if listPageNumber2 > 0 then
+              listPageNumber2 = listPageNumber2 - 1
+              canFresh()
+            end
+          end
+        end
+      end]]--TODO: Refactor pageChange function when enough modules come into play that it's important.
+
+      local worked,errored = internet.download(download,aRD .. "temporary.txt")
+      if worked then
+        moduleTable = loadTable(aRD .. "temporary.txt")
+        fs.remove(aRD .. "temporary.txt")
+        bothArray = {}
+        bothArray[1],bothArray[2] = {}
+        for i=1,#moduleTable,1 do
+          table.insert(bothArray[1],moduleTable[i])
+        end
+        layout:addChild(GUI.label(2,2,1,1,style.listPageLabel,"Available"))
+        layout:addChild(GUI.label(41,2,1,1,style.listPageLabel,"Downloading"))
+        layout:addChild(GUI.label(2,1,1,1,style.listPageLabel,"# = has requirements / % = database files; @ = server files"))
+        displayList = layout:addChild(GUI.list(2, 3, 35, 30, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+        downloadList = layout:addChild(GUI.list(41, 3, 35, 30, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+        cancelButton = layout:addChild(GUI.button(80,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Cancel"))
+        cancelButton.onTouch = function()
+          layout:removeChildren()
+          disabledSet()
+        end
+        downloadButton = layout:addChild(GUI.button(80,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Setup Modules"))
+        downloadButton.onTouch = function()
+          --TODO: Make this download all the necessary stuff cause I lazies.
+          layout:removeChildren()
+          userEditButton.disabled = true
+          moduleInstallButton.disabled = true
+          modulesLayout:removeChildren()
+          layout:addChild(GUI.label(2,15,3,3,style.listPageLabel,"Downloading " .. #bothArray[2] .. " modules. Be patient and do not exit/power down..."))
+          local pog = layout:addChild(GUI.progressIndicator(4,18,0x3C3C3C, 0x00B640, 0x99FF80))
+          pog.active = true
+          workspace:draw()
+          local serverMods = {}
+          local dbMods = {}
+          for _,value in pairs(bothArray[2]) do
+            if value.server ~= nil then
+              table.insert(serverMods,value.server)
+            end
+            if value.database ~= nil then
+              table.insert(dbMods,value.database)
+            end
+          end
+          local e,_,_,_,_,good = callModem(modemPort,"moduleinstall",crypt(ser.serialize(serverMods),settingTable.cryptKey))
+          if e and crypt(good,settingTable.cryptKey,true) == "true" then --TEST: Does this successfully install everything
+            if fs.isDirectory(aRD .. "/Modules") then fs.remove(aRD .. "/Modules") end
+            fs.makeDirectory(aRD .. "/Modules")
+            for _,value in pairs(dbMods) do
+              fs.makeDirectory(modulesPath .. value.folder)
+              internet.download(value.main,modulesPath .. value.folder .. "/Main.lua")
+              for i=1,#value.extras,1 do
+                internet.download(value.extras[i].url,modulesPath .. value.folder .. "/" .. value.extras[i].name)
+              end
+            end
+            --After done with downloading
+            GUI.alert("Everything has been downloaded on the database. The server will need a reboot after it's done downloading all of the modules. Please restart server after it's done then restart database.")
+            window:removeChildren()
+            window:remove()
+          else
+            GUI.alert("Failed to send server modules. Either the server is offline or there was an error on the server end.")
+            window:removeChildren()
+            window:remove()
+          end
+        end
+        updateList()
+      else
+        GUI.alert(errored)
+        disabledSet()
+      end
     end
     
     layout = window:addChild(GUI.container(20,1,window.width - 20, window.height))
     userEditButton = window:addChild(GUI.button(3,3,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Edit Users"))
     userEditButton.onTouch = beginUserEditing
-    moduleInstallButton = window:addChild(GUI.button(3,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Manage Modules")) --LEFT OFF
-    moduleInstallButton.onTouch = moduleInstallation()
+    moduleInstallButton = window:addChild(GUI.button(3,5,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "Manage Modules"))
+    moduleInstallButton.onTouch = moduleInstallation
     disabledSet()
   end
   module.close = function()

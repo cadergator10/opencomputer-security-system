@@ -152,29 +152,35 @@ module.onTouch = function()
   end
 
   local function pageCallback(workspace,button)
+    local function canFresh()
+      updateSecList()
+      sectorListCallback()
+    end
     if button.isPos then
       if button.isListNum == 1 then
         if listPageNumber < #userTable.sectors/pageMult - 1 then
           listPageNumber = listPageNumber + 1
+          canFresh()
         end
       else
         if listPageNumberPass < #userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass/pageMultPass - 1 then
           listPageNumberPass = listPageNumberPass + 1
+          canFresh()
         end
       end
     else
       if button.isListNum == 1 then
         if listPageNumber > 0 then
           listPageNumber = listPageNumber - 1
+          canFresh()
         end
       else
         if listPageNumberPass > 0 then
           listPageNumberPass = listPageNumberPass - 1
+          canFresh()
         end
       end
     end
-    updateSecList()
-    sectorListCallback()
   end
 
   local function createSector()
@@ -188,6 +194,9 @@ module.onTouch = function()
   local function deleteSector()
     local selected = pageMult * listPageNumber + sectorList.selectedItem
     table.remove(userTable.sectors,selected)
+    if #userTable.sectors < pageMult * listPageNumber + 1 and listPageNumber ~= 0 then
+      listPageNumber = listPageNumber - 1
+    end
     database.save()
     database.update()
     updateSecList()
@@ -198,11 +207,18 @@ module.onTouch = function()
     local data = selected == 0 and nil or userTable.passSettings.type[selected] == "-int" and userPassDataSelector.selectedItem or userTable.passSettings.type[selected] == "bool" and nil or userTable.passSettings.type[selected] == "int" and tonumber(userPassDataSelector.text) or userPassDataSelector.text
     local uuid = selected == 0 and "checkstaff" or userTable.passSettings.calls[selected]
     table.insert(userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass,{["uuid"]=uuid,["data"]=data,["lock"]=userPassTypeSelector.selectedItem,["priority"]=userPassPrioritySelector.selectedItem})
+    database.save()
+    database.update()
     sectorListCallback()
   end
   local function deleteSectorPass()
     local selected = pageMultPass * listPageNumberPass + sectorPassList.selectedItem
     table.remove(userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass,selected)
+    if #userTable.sectors[pageMult * listPageNumber + sectorList.selectedItem].pass < pageMultPass * listPageNumberPass + 1 and listPageNumberPass ~= 0 then
+      listPageNumberPass = listPageNumberPass - 1
+    end
+    database.save()
+    database.update()
     sectorListCallback()
   end
   local function editSectorPass()

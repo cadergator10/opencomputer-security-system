@@ -268,6 +268,9 @@ module.onTouch = function()
   local function deleteUserCallback()
     local selected = pageMult * listPageNumber + userList.selectedItem
     table.remove(userTable.passes,selected)
+    if #userTablePasses < pageMult * listPageNumber + 1 and listPageNumber ~= 0 then
+      listPageNumber = listPageNumber - 1
+    end
     updateList()
     userNameText.text = ""
     userNameText.disabled = true
@@ -348,17 +351,21 @@ module.onTouch = function()
   end
 
   local function pageCallback(workspace,button)
+    local function canFresh()
+      updateList()
+      userListCallback()
+    end
     if button.isPos then
       if listPageNumber < #userTable.passes/pageMult - 1 then
         listPageNumber = listPageNumber + 1
+        canFresh()
       end
     else
       if listPageNumber > 0 then
         listPageNumber = listPageNumber - 1
+        canFresh()
       end
     end
-    updateList()
-    userListCallback()
   end
 
   local function inputCallback()
