@@ -172,8 +172,8 @@ end
         settingData.name = "Test Security API"
         if tonumber(text) == 1 then
           local nextmsg = "What should be read? 0 = staff,"
-          for i=1,#query.data.passSettings.passSettings.var,1 do
-            nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.passSettings.passSettings.label[i]
+          for i=1,#query.data.passSettings.var,1 do
+            nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.passSettings.label[i]
           end
           print(nextmsg)
           text = term.read()
@@ -183,8 +183,8 @@ end
             settingData.cardRead[1].param = 0
             print("No need to set access level. This mode doesn't require it :)")
           else
-            settingData.cardRead[1].call = query.data.passSettings.passSettings.calls[tonumber(text)]
-            if query.data.passSettings.passSettings.type[tonumber(text)] == "string" or query.data.passSettings.passSettings.type[tonumber(text)] == "-string" then
+            settingData.cardRead[1].call = query.data.passSettings.calls[tonumber(text)]
+            if query.data.passSettings.type[tonumber(text)] == "string" or query.data.passSettings.type[tonumber(text)] == "-string" then
               print("What is the string you would like to read? Enter text.")
               text = term.read()
               settingData.cardRead[1].param = text:sub(1,-2)
