@@ -307,9 +307,9 @@ end
     term.clear()
     settingData = loadTable("securitySettings.txt")
     fill = {}
-    fill["type"] = "custom"
+    fill["type"] = "customdoor"
     fill["data"] = settingData
-    send(nil,modemPort,true,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+    send(nil,modemPort,true,"setdevice",crypt(ser.serialize(fill),extraConfig.cryptKey))
     local got, _, _, _, _, fill = event.pull(2, "modem_message")
     if got then
       varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
@@ -326,10 +326,10 @@ end
     end
   end
 
-  function security.checkPass(str,loc)
+  function security.checkPass(str,loc) --FIXME: Find out why this all is breaking the server
     local data = crypt(str,extraConfig.cryptKey,true)
     local tmpTable = ser.unserialize(data)
-    tmpTable["type"] = "doorsystem"
+    tmpTable["type"] = "customdoor"
     data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
     if loc ~= nil then
         send(loc,modemPort,true,"checkRules",data,true)

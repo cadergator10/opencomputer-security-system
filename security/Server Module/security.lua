@@ -144,7 +144,7 @@ end
 
 local function getDoorInfo(type,id,key)
     local arrange
-    if type == "doorsystem" then
+    if type == "doorsystem" or type == "customdoor" then
         for i=1,#doorTable,1 do --doorTable[i] = {type="single or multi",id="computer's modem uuid",data={door's setting table}}
             if doorTable[i].id == id then
                 if doorTable[i].data[key]~=nil then
