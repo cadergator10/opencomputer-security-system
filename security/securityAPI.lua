@@ -172,8 +172,8 @@ end
         settingData.name = "Test Security API"
         if tonumber(text) == 1 then
           local nextmsg = "What should be read? 0 = staff,"
-          for i=1,#query.data.var,1 do
-            nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.label[i]
+          for i=1,#query.data.passSettings.passSettings.var,1 do
+            nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.passSettings.passSettings.label[i]
           end
           print(nextmsg)
           text = term.read()
@@ -183,26 +183,26 @@ end
             settingData.cardRead[1].param = 0
             print("No need to set access level. This mode doesn't require it :)")
           else
-            settingData.cardRead[1].call = query.data.calls[tonumber(text)]
-            if query.data.type[tonumber(text)] == "string" or query.data.type[tonumber(text)] == "-string" then
+            settingData.cardRead[1].call = query.data.passSettings.passSettings.calls[tonumber(text)]
+            if query.data.passSettings.passSettings.type[tonumber(text)] == "string" or query.data.passSettings.passSettings.type[tonumber(text)] == "-string" then
               print("What is the string you would like to read? Enter text.")
               text = term.read()
               settingData.cardRead[1].param = text:sub(1,-2)
-            elseif query.data.type[tonumber(text)] == "bool" then
+            elseif query.data.passSettings.type[tonumber(text)] == "bool" then
               settingData.cardRead[1].param = 0
               print("No need to set access level. This mode doesn't require it :)")
-            elseif query.data.type[tonumber(text)] == "int" then
-              if query.data.above[tonumber(text)] == true then
+            elseif query.data.passSettings.type[tonumber(text)] == "int" then
+              if query.data.passSettings.above[tonumber(text)] == true then
                 print("What level and above should be required?")
               else
                 print("what level exactly should be required?")
               end
               text = term.read()
               settingData.cardRead[1].param = tonumber(text)
-            elseif query.data.type[tonumber(text)] == "-int" then
+            elseif query.data.passSettings.type[tonumber(text)] == "-int" then
               local nextmsg = "What group are you wanting to set?"
-              for i=1,#query.data.data[tonumber(text)],1 do
-                nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.data[tonumber(text)][i]
+              for i=1,#query.data.passSettings.data[tonumber(text)],1 do
+                nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.passSettings.data[tonumber(text)][i]
               end
               print(nextmsg)
               text = term.read()
@@ -227,8 +227,8 @@ end
           settingData.cardRead = {}
           local nextmsg = {}
           nextmsg.beg, nextmsg.mid, nextmsg.back = "What should be read for "," pass number ","? 0 = staff"
-          for i=1,#query.data.var,1 do
-            nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. query.data.label[i]
+          for i=1,#query.data.passSettings.var,1 do
+            nextmsg.back = nextmsg.back .. ", " .. i .. " = " .. query.data.passSettings.label[i]
           end
           local passFunc = function(type,num)
             local newRules = {["uuid"]=uuid.next(),["request"]=type,["data"]=type == "base" and {} or false}
@@ -240,26 +240,26 @@ end
               print("No need for extra parameter. This mode doesn't require it :)")
             else
               newRules["tempint"] = tonumber(text)
-              newRules["call"] = query.data.calls[tonumber(text)]
-              if query.data.type[tonumber(text)] == "string" or query.data.type == "-string" then
+              newRules["call"] = query.data.passSettings.calls[tonumber(text)]
+              if query.data.passSettings.type[tonumber(text)] == "string" or query.data.passSettings.type == "-string" then
                 print("What is the string you would like to read? Enter text.")
                 text = term.read()
                 newRules["param"] = text:sub(1,-2)
-              elseif query.data.type[tonumber(text)] == "bool" then
+              elseif query.data.passSettings.type[tonumber(text)] == "bool" then
                 newRules["param"] = 0
                 print("No need for extra parameter. This mode doesn't require it :)")
-              elseif query.data.type[tonumber(text)] == "int" then
-                if query.data.above[tonumber(text)] == true then
+              elseif query.data.passSettings.type[tonumber(text)] == "int" then
+                if query.data.passSettings.above[tonumber(text)] == true then
                   print("What level and above should be required?")
                 else
                   print("what level exactly should be required?")
                 end
                 text = term.read()
                 newRules["param"] = tonumber(text)
-              elseif query.data.type[tonumber(text)] == "-int" then
+              elseif query.data.passSettings.type[tonumber(text)] == "-int" then
                 local nextmsg = "What group are you wanting to set?"
-                for i=1,#query.data.data[tonumber(text)],1 do
-                  nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.data[tonumber(text)][i]
+                for i=1,#query.data.passSettings.data[tonumber(text)],1 do
+                  nextmsg = nextmsg .. ", " .. i .. " = " .. query.data.passSettings.data[tonumber(text)][i]
                 end
                 print(nextmsg)
                 text = term.read()
@@ -283,7 +283,7 @@ end
             if text ~= 0 then
               local nextAdd = "Which pass do you want to add? "
               for j=1,addNum,1 do
-                nextAdd = nextAdd .. ", " .. j .. " = " .. query.data.label[settingData.cardRead[j].tempint]
+                nextAdd = nextAdd .. ", " .. j .. " = " .. query.data.passSettings.label[settingData.cardRead[j].tempint]
               end
               for j=1,text,1 do
                 print(nextAdd)
@@ -354,9 +354,9 @@ end
     data = ser.unserialize(data)
     if type(var) == "boolean" then
       var = settingData.cardRead[1].call
-      for i=1,#query.data.calls, 1 do
-        if var == query.data.calls[i] then
-          var = query.data.var[i]
+      for i=1,#query.data.passSettings.calls, 1 do
+        if var == query.data.passSettings.calls[i] then
+          var = query.data.passSettings.var[i]
           break
         end
       end
@@ -382,9 +382,9 @@ end
     data = ser.unserialize(data)
     if type(var) == "boolean" then
       var = settingData.cardRead[1].call
-      for i=1,#query.data.calls, 1 do
-        if var == query.data.calls[i] then
-          var = query.data.var[i]
+      for i=1,#query.data.passSettings.calls, 1 do
+        if var == query.data.passSettings.calls[i] then
+          var = query.data.passSettings.var[i]
           break
         end
       end

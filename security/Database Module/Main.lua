@@ -268,7 +268,7 @@ module.onTouch = function()
   local function deleteUserCallback()
     local selected = pageMult * listPageNumber + userList.selectedItem
     table.remove(userTable.passes,selected)
-    if #userTablePasses < pageMult * listPageNumber + 1 and listPageNumber ~= 0 then
+    if #userTable.Passes < pageMult * listPageNumber + 1 and listPageNumber ~= 0 then
       listPageNumber = listPageNumber - 1
     end
     updateList()

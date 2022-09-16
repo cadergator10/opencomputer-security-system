@@ -16,8 +16,8 @@ local diagPort = 180
 local program = "ctrl.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
-local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/doorcontrols/doorControl.lua"
-local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
+local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/security/doorControl.lua"
+--local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
 
 local settingData = {}
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
@@ -179,10 +179,10 @@ local function runInstall()
             else
                 j = editorSettings.key
             end
-            j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
             text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet." or "Enter the uuid of the device in TEXT. When finished, don't type anything and just press enter",5)
             loopArray["reader"] = text
         else
+            j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
             local distable = {}
             for key,_ in pairs(component.list("os_magreader")) do
                 table.insert(distable,key)
@@ -364,7 +364,7 @@ local function runInstall()
     else
         loopArray["sector"] = false
     end
-    tmpTable[j] = loopArray
+    tmpTable[j] = loopArray --Error
     end
     text = sendMsg("All done with installer!","Would you like to start the computer now?","1 for yes, 2 for no",1)
     editorSettings.start = false
@@ -385,7 +385,7 @@ local function oldFiles()
     end
     editorSettings.type = config.type
     editorSettings.single = false
-    local text = sendMsg("Old files detected. Please select an option:","1 = wipe all files","2 = add more doors (depreciated)","3 = delete a door (depreciated)","4 = change a door (depreciated)","5 = update door","6 = change cryptKey","7 = change port",1)
+    local text = sendMsg("Old files detected. Please select an option:","1 = wipe all files","2 = update door","3 = change cryptKey","4 = change port",1)
     if tonumber(text) == 1 then
         term.clear()
         sendMsg("Deleting all files...")
@@ -401,91 +401,9 @@ local function oldFiles()
             sendMsg("all done!",4)
         end
     elseif tonumber(text) == 2 then
-        if config.type == "single" then
-            sendMsg("you cannot add more doors as this is a single door. If you want to swap to a multidoor,","wipe all files and reinstall as a multidoor.",4)
-            os.exit()
-        elseif config.type == "multi" then
-            settingData = loadTable(settingFileName)
-            text = sendMsg("how many doors would you like to add?",1)
-            local num = tonumber(text)
-            editorSettings.times = num
-            editorSettings.data = settingData
-            settingData = runInstall()
-            editorSettings.data = settingData
-            saveTable(settingData,settingFileName)
-            sendMsg("Added the doors. It is recommended you check if it worked, as this is experimental.")
-        else
-            sendMsg("error reading config file",4)
-            os.exit()
-        end
-        if editorSettings.start == true then
-            sendMsg("Starting...",4)
-            os.execute(program)
-        else
-            sendMsg(4)
-        end
-    elseif tonumber(text) == 3 then
-        if config.type == "single" then
-            sendMsg("You cannot remove a door as this is a single door. This only works on a multidoor.","If this is meant to be a multidoor, wipe all files and reinstall as a multidoor.",4)
-            os.exit()
-        elseif config.type == "multi" then
-            settingData = loadTable(settingFileName)
-            text = sendMsg("What is the key for the door?",1)
-            settingData[text] = nil
-            saveTable(settingData,settingFileName)
-            sendMsg("Removed the door. It is recommended you check if it worked, as this is experimental.")
-        else
-            sendMsg("error reading config file",4)
-            os.exit()
-        end
-        if editorSettings.start == true then
-            sendMsg("Starting...",4)
-            os.execute(program)
-        else
-            sendMsg(4)
-        end
-    elseif tonumber(text) == 4 then
-        if config.type == "single" then
-            sendMsg("starting single door editing...")
-            editorSettings.edit = true
-            settingData = runInstall()
-            sendMsg("Old config should be overwritten. It is recommended to double check if it worked.")
-        else
-            text = sendMsg("What is the key for the door you want to edit?",1)
-            editorSettings.key = text
-            editorSettings.edit = true
-            editorSettings.data = loadTable(settingFileName)
-            sendMsg("Starting multi door editing on " .. editorSettings.key .. "...")
-            settingData = runInstall()
-            sendMsg("Door should have been edited. It is recommended to double check if it worked.")
-        end
-        saveTable(settingData,settingFileName)
-        if editorSettings.start == true then
-            sendMsg("Starting...",4)
-            os.execute(program)
-        else
-            sendMsg(4)
-        end
-    elseif tonumber(text) == 5 then
         text = sendMsg("Are you sure you want to do this? New updates sometimes require manual changing of config.","1 for continue, 2 for cancel",1)
         if tonumber(text) == 1 then
-            if config.type == "single" then
-                sendMsg("downloading...")
-                if config.num == 1 then
-                    os.execute("wget -f " .. singleCode .. " " .. program)
-                else
-                    os.execute("wget -f " .. singleCode .. " " .. program)
-                end
-            elseif config.type == "multi" then
-                sendMsg("downloading...")
-                if config.num == 1 then
-                    os.execute("wget -f " .. multiCode .. " " .. program)
-                else
-                    os.execute("wget -f " .. multiCode .. " " .. program)
-                end
-            else
-
-            end
+            os.execute("wget -f " .. doorCode .. " " .. program)
         end
         text = sendMsg("all done! is set to " .. ser.serialize(config.cryptKey),"Would you like to start the computer now?","1 for yes, 2 for no",1)
         if tonumber(text) == 1 then
@@ -494,7 +412,7 @@ local function oldFiles()
         else
             sendMsg("Ok, closing out.",4)
         end
-    elseif tonumber(text) == 6 then
+    elseif tonumber(text) == 3 then
         sendMsg("there are 5 parameters, each requiring a number. Recommend doing 1 digit numbers cause I got no idea how this works lol")
         for i=1,5,1 do
             text = sendMsg("enter param " .. i,1)
@@ -508,7 +426,7 @@ local function oldFiles()
         else
             sendMsg("Ok, closing out.",4)
         end
-    elseif tonumber(text) == 7 then
+    elseif tonumber(text) == 4 then
         config.port = modemPort
         sendMsg("Port changed to " .. modemPort)
         saveTable(config,configFileName)

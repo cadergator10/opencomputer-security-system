@@ -1,1 +1,0 @@
-{name="name",id=1111,version="",database={folder="testmodule",main="rawurldatabase",extras={name="hello.lua",url="notherurl"}},server={folder="hello",main="rawurlserver",extras={name="yes.lua",url="no"}},requirements={"1112"}}

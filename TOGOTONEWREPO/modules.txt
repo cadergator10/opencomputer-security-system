@@ -1,1 +1,0 @@
-{{name="Security",id=1111,version="3.0.0",database={folder="Security",main="rawurldatabase",extras={}},server={folder="Security",main="rawurlserver",extras={}},requirements={}},{name="Sectors",id=1112,version="3.0.0",database={folder="Sectors",main="rawurldatabase",extras={}},server={folder="Sectors",main="rawurlserver",extras={}},requirements={"1111"}}}

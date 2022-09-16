@@ -126,7 +126,7 @@ function module.message(command,datar) --Called when a command goes past all def
     for i=1,#userTable.sectors,1 do
       if userTable.sectors[i].uuid == datar then
         userTable.sectorStatus[userTable.sectors[i].uuid] = 1
-        return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector Lockdown lifted of " .. userTable.sectors[i].name,["color"]=nil,["line"]=false}},true,"checkSector",ser.serialize(userTable.sectorStatus)
+        return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector Lockdown lifted of " .. userTable.sectors[i].name,["color"]=nil,["line"]=false}},true,false,"checkSector",ser.serialize(userTable.sectorStatus)
       end
     end
   else
