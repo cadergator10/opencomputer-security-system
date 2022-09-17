@@ -1,9 +1,11 @@
 local version = "2.4.0"
 
 local sector = {}
+local sectorStatus = {}
 local sectorSettings = {}
 
-local modemPort = 199
+local modemPort = 1000
+local syncPort = 199
 
 local component = require("component")
 local gpu = component.gpu
@@ -274,10 +276,24 @@ else
 end
 
 sectorSettings = loadTable("redstonelinks.txt")
+
+modem.open(syncPort)
+modem.broadcast(syncPort,"syncport")
+local e,_,_,_,_,msg = event.pull(1,"modem_message")
+modem.close(syncPort)
+if e then
+    modemPort = tonumber(msg)
+else
+    print("What port is the server running off of?")
+    local text = term.read()
+    modemPort = tonumber(text:sub(1,-2))
+    term.clear()
+end
+
 print("Sending query to server...")
 modem.open(modemPort)
-modem.broadcast(modemPort,"autoInstallerQuery")
-local e,_,_,_,_,msg = event.pull(3,"modem_message")
+modem.broadcast(modemPort,"getquery",ser.serialize({"sectors","sectorStatus","&&&crypt"}))
+e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then
     print("No query received. Assuming old server system is in place and will not work")
@@ -285,6 +301,7 @@ if e == nil then
 else
     print("Query received")
     query = ser.unserialize(msg).data.sectors
+    sectorStatus = ser.unserialize(msg).data.sectorStatus
 end
 modem.open(modemPort)
 
@@ -314,7 +331,8 @@ while true do
     if #sector ~= 0 then
         if ev == "modem_message" then
             if command == "getSectorList" then
-                query = ser.unserialize(msg)
+                query = ser.unserialize(msg).sectors
+                sectorStatus = ser.unserialize(msg).sectorStatus
                 arrangeSectors(query)
                 pageChange("both",1,#sector, sectorGui, editmode)
             end
@@ -393,22 +411,22 @@ while true do
         elseif ev == "redstone_changed" then
             local red = redstone.getBundledInput()
             for i=1,#query,1 do
-                query[i].status = 1
+                sectorStatus[query[i].uuid] = 1
                 if sectorSettings[query[i].uuid].open.side ~= -1 and sectorSettings[query[i].uuid].open.color ~= -1 then
                     if red[sectorSettings[query[i].uuid].open.side][sectorSettings[query[i].uuid].open.color] > 0 then
-                        query[i].status = 3
+                        sectorStatus[query[i].uuid] = 3
                     end
                 end
                 if sectorSettings[query[i].uuid].lock.side ~= -1 and sectorSettings[query[i].uuid].lock.color ~= -1 then
                     if red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
-                        query[i].status = 2
+                        sectorStatus[query[i].uuid] = 2
                     end
                 end
             end
             if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
                 if updatePulse == false then
                     updatePulse = true
-                    modem.broadcast(modemPort,"sectorupdate",ser.serialize(query))
+                    modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
                 end
             else
                 updatePulse = false

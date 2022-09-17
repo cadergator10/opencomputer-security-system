@@ -1,0 +1,19 @@
+security.* (All things in Security module & Sectors)
+security.varmanagement (add/del users and add/del vars and write cards/admincard)
+security.sectors (All things in Sectors module)
+security.name (Name)
+security.writecard (write card)
+security.admincard (write admin card)
+security.resetuuid (reset user uuid for card)
+security.passediting (all passes)
+security.link (link button)
+security.block (block user)
+security.staff (staff pass)
+security.(any var added by user)
+
+dev.* (all developer module features)
+dev.usermanagement (manage users and passes such.)
+dev.systemmanagement (manage modules)
+
+Any permission written with a ~ before it will be disabled for that user
+(in case you want someone to, say, do all security functions except write a card, do ~security.writecard and security.*)

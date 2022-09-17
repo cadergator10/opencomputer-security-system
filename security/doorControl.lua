@@ -1,8 +1,6 @@
 --Experimental, combined door control with ability to be a multi or single door.
 
---Library for saving/loading table for all this code. all the settings below are saved in it.
-local ttf=require("tableToFile")
-local doorVersion = "2.4.0"
+local doorVersion = "2.5.0"
 local testR = true
 local saveRefresh = true
 
@@ -16,7 +14,6 @@ local redColor = 0
 --Delay before the door closes again
 local delay = 5
 --Which term you want to have the door read.
---Changed heavilly to table of passes. Info in singleDoor
 local cardRead = {};
 
 local readerLights = {} --Table full of all reader id's, which a thread uses.
@@ -29,17 +26,16 @@ local toggle = 0
 
 local adminCard = "admincard"
 
-local modemPort = 199
+local modemPort = 1000 --Ports: 180 = diagPort, 199 = sync port, 198 = reserved, 1000-9999 = valid ports
 local diagPort = 180
 
 local component = require("component")
-local gpu = component.gpu
 local event = require("event")
 local ser = require("serialization")
 local term = require("term")
 local thread = require("thread")
 local process = require("process")
-local uuid = require("uuid")
+local fs = require("filesystem")
 local computer = component.computer
 
 local magReader = component.os_magreader
@@ -48,6 +44,7 @@ local link
 
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 local varSettings = {}
+local enableSectors = true
  
 local settingData = {}
 local extraConfig = {}
@@ -92,6 +89,21 @@ local function convert( chars, dist, inv )
     end
     return copy
   end
+
+local function saveTable(  tbl,filename )
+  local tableFile = assert(io.open(filename, "w"))
+  tableFile:write(ser.serialize(tbl))
+  tableFile:close()
+end
+
+local function loadTable( sfile )
+  local tableFile = io.open(sfile)
+  if tableFile ~= nil then
+    return ser.unserialize(tableFile:read("*all"))
+  else
+    return nil
+  end
+end
 
 local function send(port,linker,...)
   if linker and link ~= nil then
@@ -139,25 +151,20 @@ end
   end
 
   local function colorLink(key, var, check) --{["color"]=0,["delay"]=1} or just a number
-    local beta = true
-    if beta then
+    local chech = function(key)
       if readerLights[key] == nil then
         component.proxy(key).swipeIndicator(false)
         readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
       end
-      readerLights[key].new = var
+      readerLights[key].new = deepcopy(var)
       if check then readerLights[key].check = check end
-    else
-      if type(var) == "table" then
-        thread.create(function(args)
-          for i=1,#args,1 do
-            component.proxy(key).setLightState(args[i].color)
-            os.sleep(args[i].delay)
-          end
-        end, var)
-      else
-        component.proxy(key).setLightState(var)
+    end
+    if type(key) == "table" then
+      for i=1,#key,1 do
+        chech(key[i])
       end
+    else
+      chech(key)
     end
   end
   
@@ -223,50 +230,12 @@ end
   end
 
   local function sectorfresh(data)
-    if extraConfig.type == "single" then
-      if sector ~= false then
-        for i=1,#data,1 do
-          if data[i].uuid == sector then
-            if data[i].status == 1 then
-              if doorType == 0 then
-                component.os_doorcontroller.close()
-              elseif doorType == 3 then
-                component.os_rolldoorcontroller.close()
-              elseif doorType == 1 then
-                component.redstone.setOutput(redSide,0)
-              elseif doorType == 2 then
-                component.redstone.setBundledOutput(redSide, { [redColor] = 0 } )
-              end
-              if osVersion then
-                colorLink(magReader.address,0,0)
-              end
-            elseif data[i].status == 2 then
-              if osVersion then
-                colorLink(magReader.address,1,1)
-              end
-            elseif data[i].status == 3 then
-              if doorType == 0 then
-                component.os_doorcontroller.open()
-              elseif doorType == 3 then
-                component.os_rolldoorcontroller.open()
-              elseif doorType == 1 then
-                component.redstone.setOutput(redSide,15)
-              elseif doorType == 2 then
-                component.redstone.setBundledOutput(redSide, { [redColor] = 255 } )
-              end
-              if osVersion then
-                colorLink(magReader.address,4,4)
-              end
-            end
-          end
-        end
-      end
-    else
+    if enableSectors then
       for _,value in pairs(settingData) do
         if value.sector ~= false then
-          for i=1,#data,1 do
-            if data[i].uuid == value.sector then
-              if data[i].status == 1 then
+          for key,value2 in pairs(data) do
+            if key == value.sector then
+              if value2 == 1 then
                 if value.doorType == 0 or value.doorType == 3 then
                   component.proxy(value.doorAddress).close()
                 elseif value.doorType == 2 then
@@ -275,11 +244,11 @@ end
                 if osVersion then
                   colorLink(value.reader,0,0)
                 end
-              elseif data[i].status == 2 then
+              elseif value2 == 2 then
                 if osVersion then
                   colorLink(value.reader,1,1)
                 end
-              elseif data[i].status == 3 then
+              elseif value2 == 3 then
                 if value.doorType == 0 or value.doorType == 3 then
                   component.proxy(value.doorAddress).open()
                 elseif value.doorType == 2 then
@@ -299,32 +268,21 @@ end
 
   local function update(_, localAddress, remoteAddress, port, distance, msg, data)
     if (testR == true) then
-      if msg == "checkSector" then --Making forceopen obselete. FIXME: Multiple sectors breaks this.
+      if msg == "checkSector" then --Making forceopen obselete.
         data = ser.unserialize(data)
         sectorfresh(data)
       elseif msg == "remoteControl" then --needs to receive {["id"]="modem id",["key"]="door key if multi",["type"]="type of door change",extras like delay and toggle}
         data = ser.unserialize(data)
         if data.id == modem.address then
-          term.write("RemoteControl request received for ")
-          term.write(extraConfig.type == "single" and settingData.name or settingData[data.key].name)
+          term.write("RemoteControl request received for " .. settingData[data.key].name)
           term.write("\n")
-          send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=extraConfig.type == "single" and settingData.name or settingData[data.key].name,["color"]=0xFFFFFF}}))
-          if extraConfig.type == "single" then
-            if data.type == "base" then
-              openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,toggle,doorType,redSide,magReader.address)
-            elseif data.type == "toggle" then
-              openDoor(delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,1,doorType,redSide,magReader.address)
-            elseif data.type == "delay" then
-              openDoor(data.delay,redColor,doorType == 0 and true or doorType == 3 and true or nil,0,doorType,redSide,magReader.address)
-            end
-          else
-            if data.type == "base" then
-              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, 2,settingData[data.key].reader)
-            elseif data.type == "toggle" then
-              thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, 2,settingData[data.key].reader)
-            elseif data.type == "delay" then
-              thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, 2,settingData[data.key].reader)
-            end
+          send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=settingData[data.key].name,["color"]=0xFFFFFF}}))
+          if data.type == "base" then
+            thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
+          elseif data.type == "toggle" then
+            thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
+          elseif data.type == "delay" then
+            thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
           end
         end
       elseif msg == "changeSettings" then
@@ -337,23 +295,15 @@ end
           data = ser.unserialize(data)
           settingData = data
           os.execute("copy -f doorSettings.txt dsBackup.txt")
-          ttf.save(settingData,"doorSettings.txt")
+          saveTable(settingData,"doorSettings.txt")
           print("New settings received")
           local fill = {}
           fill["type"] = extraConfig.type
           fill["data"] = settingData
-          send(modemPort,true,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+          send(modemPort,true,"setdevice",crypt(ser.serialize(fill),extraConfig.cryptKey))
           local got, _, _, _, _, fill = event.pull(2, "modem_message")
           if got then
             varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
-            if extraConfig.type == "single" then
-              doorType = settingData.doorType
-              redSide = settingData.redSide
-              redColor = settingData.redColor
-              delay = settingData.delay
-              cardRead = settingData.cardRead
-              toggle = settingData.toggle
-            end
           else
             print("Failed to receive confirmation from server")
             os.exit()
@@ -386,7 +336,7 @@ end
           end
         end
         thread.create(lightShow,ser.unserialize(data))
-      elseif msg == "doorCheck" then
+      elseif msg == "deviceCheck" then
         send(modemPort,true,"true")
       end
     end
@@ -411,10 +361,14 @@ else
   print("No config detected. Reinstall door control")
 end
 
-extraConfig = ttf.load("extraConfig.txt")
-settingData = ttf.load("doorSettings.txt")
+extraConfig = loadTable("extraConfig.txt")
+settingData = loadTable("doorSettings.txt")
 extraConfig.version = doorVersion
-ttf.save(extraConfig,"extraConfig.txt")
+if extraConfig.port == nil then
+  extraConfig.port = 1000
+end
+saveTable(extraConfig,"extraConfig.txt")
+modemPort = extraConfig.port
 
 if modem.isOpen(modemPort) == false and link == nil then
   modem.open(modemPort)
@@ -426,55 +380,47 @@ if magReader.swipeIndicator ~= nil then
 end
 
 local checkBool = false
-send(modemPort,true,"autoInstallerQuery")
+send(modemPort,true,"getquery",ser.serialize({"passSettings","sectorStatus","&&&crypt"}))
 local e,_,_,_,_,query = event.pull(3,"modem_message")
 query = ser.unserialize(query)
 if e ~= nil then
   if extraConfig.type == "single" then
-    if type(settingData.cardRead) == "number" then
-      settingData.cardRead = settingData.cardRead == 6 and "checkstaff" or query.data.calls[settingData.cardRead - #baseVariables]
-      ttf.save(settingData,"doorSettings.txt")
-    end
-    if type(settingData.cardRead) ~= "table" then
-        local t1, t2 = settingData.cardRead, settingData.accessLevel
-        settingData.accessLevel = nil
-        settingData.cardRead = {}
-        settingData.cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
-        ttf.save(settingData,"doorSettings.txt")
-    end
     if settingData.forceOpen ~= nil then
       settingData.forceOpen = nil
       settingData.bypassLock = nil
       settingData.sector = false
-      ttf.save(settingData,"doorSettings.txt")
     end
-  else
+    local temp = {}
+    temp["aaaa"] = deepcopy(settingData)
+    if temp.aaaa.doorType == 0 then
+      temp.aaaa.doorAddress = component.os_doorcontrol.address
+    elseif temp.aaaa.doorType == 3 then
+      temp.aaaa.doorAddress = component.os_rolldoorcontrol.address
+    else
+      temp.aaaa.doorAddress = ""
+    end
+    temp.aaaa.reader = {}
+    for key,_ in pairs(component.list("os_magreader")) do
+      table.insert(temp.aaaa.reader,key)
+    end
+    saveTable(temp,"doorSettings.txt")
+    settingData = temp
+    extraConfig.type = "doorsystem"
+    saveTable(extraConfig,"extraConfig.txt")
+  elseif extraConfig.type == "multi" then
     for key, value in pairs(settingData) do
-      if type(value.cardRead) == "number" then
-        checkBool = true
-        if value.cardRead ~= 6 then
-          settingData[key].cardRead = query.data.calls[settingData[key].cardRead - #baseVariables]
-        else
-          settingData[key].cardRead = "checkstaff"
-        end
-      end
-      if type(value.cardRead) ~= "table" then
-        checkBool = true
-        local t1, t2 = settingData[key].cardRead, settingData[key].accessLevel
-          settingData[key].accessLevel = nil
-          settingData[key].cardRead = {}
-          settingData[key].cardRead[1] = {["uuid"]=uuid.next(),["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
-      end
       if value.forceOpen ~= nil then
         checkBool = true
         settingData[key].forceOpen = nil
         settingData[key].bypassLock = nil
         settingData[key].sector = false
       end
+      settingData[key].redSide = 2
+      settingData[key].reader = {settingData[key].reader}
     end
-    if checkBool == true then
-      ttf.save(settingData,"doorSettings.txt")
-    end
+    saveTable(settingData,"doorSettings.txt")
+    extraConfig.type = "doorsystem"
+    saveTable(extraConfig,"extraConfig.txt")
   end
 end
 checkBool = nil
@@ -482,7 +428,7 @@ checkBool = nil
 fill = {}
 fill["type"] = extraConfig.type
 fill["data"] = settingData
-send(modemPort,true,"setDoor",crypt(ser.serialize(fill),extraConfig.cryptKey))
+send(modemPort,true,"setdevice",crypt(ser.serialize(fill),extraConfig.cryptKey))
 local got, _, _, _, _, fill = event.pull(2, "modem_message")
 if got then
   varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
@@ -497,7 +443,7 @@ if osVersion then
   for key,_ in pairs(component.list("os_magreader")) do
     component.proxy(key).swipeIndicator(false)
     colorLink(key,0)
-    readerLights[key] = {["new"]=0,["old"]=-1}
+    readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
   end
   thread.create(colorupdate)
 end
@@ -507,55 +453,12 @@ end
 for key,_ in pairs(component.list("os_rolldoorcontrol")) do
   component.proxy(key).close()
 end
-sectorfresh(query.data.sectors)
-
-if extraConfig.type == "single" then
-  doorType = settingData.doorType
-	redSide = settingData.redSide
-	redColor = settingData.redColor
-	delay = settingData.delay
-	cardRead = settingData.cardRead
-	toggle = settingData.toggle
-	sector = settingData.sector
-  if #cardRead == 1 then
-    if cardRead[1].call == "checkstaff" then
-      print("STAFF ONLY")
-      print("")
-    else
-      local cardRead2 = 0
-      for i=1,#varSettings.calls,1 do
-        if varSettings.calls[i] == cardRead[1].call then
-          cardRead2 = i
-          break
-        end
-      end
-      if cardRead2 ~= 0 then
-        print("Checking: " .. varSettings.var[cardRead2])
-        if varSettings.type[cardRead2] == "string" or varSettings.type[cardRead2] == "-string" then
-          print("Must be exactly " .. cardRead[1].param)
-        elseif varSettings.type[cardRead2] == "int" then
-          if varSettings.above[cardRead2] == true then
-            print("Level " .. tostring(cardRead[1].param) .. " or above required")
-          else
-            print("Level " .. tostring(cardRead[1].param) .. " exactly required")
-          end
-        elseif varSettings.type[cardRead2] == "-int" then
-          print("Must be group " .. varSettings.data[cardRead2][cardRead[1].param] .. " to enter")
-        elseif varSettings.type[cardRead2] == "bool" then
-          print("Must have pass to enter")
-        end
-      else
-        print("Code is either broken or config not set up right")
-        os.exit()
-      end
-    end
-  else
-      print("Multi-Pass Single Door")
-      print("Length: " .. #cardRead)
-  end
-else
-  print("Multi-Door Control terminal")
+if query.data.sectorStatus == nil then
+  enableSectors = false
 end
+sectorfresh(query.data.sectorStatus)
+
+print("Security Door Control terminal")
 print("---------------------------------------------------------------------------")
 
 event.listen("modem_message", update)
@@ -573,70 +476,72 @@ while true do
   if osVersion then colorLink(address,2) end
   local isOk = "ok"
   local keyed = nil
-  if extraConfig.type == "multi" then
-    for key, valuedd in pairs(settingData) do
-      if(valuedd.reader == address) then
+  for key, valuedd in pairs(settingData) do
+    for i=1,#valuedd.reader,1 do
+      if(valuedd.reader[i] == address) then
         keyed = key
+        break
       end
     end
-    isOk = "incorrect magreader"
-    if(keyed ~= nil)then
-      redColor = settingData[keyed].redColor
-      delay = settingData[keyed].delay
-      cardRead = settingData[keyed].cardRead
-      doorType = settingData[keyed].doorType
-      doorAddress = settingData[keyed].doorAddress
-      toggle = settingData[keyed].toggle
-      sector = settingData[keyed].sector
-      isOk = "ok"
-    else
-      print("MAG READER IS NOT SET UP! PLEASE FIX")
-      if crypt(str, extraConfig.cryptKey, true) ~= adminCard then
-        if osVersion then colorLink(address,{{["color"]=3,["delay"]=3}},0) end
-        os.exit()
-      end
-      end
+    if keyed ~= nil then
+      break
+    end
+  end
+  isOk = "incorrect magreader"
+  if(keyed ~= nil)then
+    redColor = settingData[keyed].redColor
+    redSide = settingData[keyed].redSide
+    delay = settingData[keyed].delay
+    cardRead = settingData[keyed].cardRead
+    doorType = settingData[keyed].doorType
+    doorAddress = settingData[keyed].doorAddress
+    toggle = settingData[keyed].toggle
+    sector = settingData[keyed].sector
+    isOk = "ok"
+  else
+    print("MAG READER IS NOT SET UP! PLEASE FIX")
+    if crypt(str, extraConfig.cryptKey, true) ~= adminCard then
+      if osVersion then colorLink(address,{{["color"]=3,["delay"]=3}},0) end
+      os.exit()
+    end
   end
   local data = crypt(str, extraConfig.cryptKey, true)
   if ev then
     if (data == adminCard) then
       term.write("Admin card swiped. Sending diagnostics\n")
       modem.open(diagPort)
-      local diagData = extraConfig.type == "multi" and deepcopy(settingData[keyed]) or deepcopy(settingData)
+      local diagData = deepcopy(settingData[keyed])
       if diagData == nil then
         diagData = {}
       end
       diagData["status"] = isOk
-      diagData["type"] = extraConfig.type
       diagData["version"] = doorVersion
-      diagData["key"] = extraConfig.type == "multi" and keyed or nil
-      diagData["num"] = 2
-      diagData["entireDoor"] = extraConfig.type == "multi" and deepcopy(settingData) or nil
+      diagData["key"] = keyed or nil
+      diagData["num"] = 3
+      diagData["entireDoor"] = deepcopy(settingData)
       local counter = 0
-      if extraConfig.type == "multi" then
-        for index in pairs(settingData) do
-          counter = counter + 1
-        end
-        diagData["entries"] = counter
+      for index in pairs(settingData) do
+        counter = counter + 1
       end
+      diagData["entries"] = counter
       data = ser.serialize(diagData)
       send(diagPort,false, "diag", data)
       if osVersion then
-        colorLink(address,{{["color"]=1,["delay"]=0.3},{["color"]=2,["delay"]=0.3},{["color"]=4,["delay"]=0.3},{["color"]=0,["delay"]=0}})
+        colorLink(settingData[keyed].reader,{{["color"]=1,["delay"]=0.3},{["color"]=2,["delay"]=0.3},{["color"]=4,["delay"]=0.3},{["color"]=0,["delay"]=0}})
       end
     else
-      if keyed == nil and extraConfig.type == "multi" then
+      if keyed == nil then
         os.exit()
       end
       local tmpTable = ser.unserialize(data)
       if tmpTable == nil then
         term.write("Card failed to read. it may not have been written to right or cryptkey may be incorrect.")
-        if osVersion then colorLink(address,{{["color"]=3,["delay"]=3},{["color"]=0,["delay"]=1}}) end
+        if osVersion then colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=3},{["color"]=0,["delay"]=1}}) end
         os.exit()
       end
       term.write(tmpTable["name"] .. ":")
       tmpTable["type"] = extraConfig.type
-      tmpTable["key"] = extraConfig.type == "multi" and keyed or nil
+      tmpTable["key"] = keyed
       tmpTable["sector"] = sector
       data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
       send(modemPort,true, "checkRules", data)
@@ -646,15 +551,11 @@ while true do
         if data == "true" then
           term.write("Access granted\n")
           computer.beep()
-          if extraConfig.type == "single" then
-            openDoor(delay,redColor,true,toggle,doorType,redSide,address)
-          else
-            thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide,address)
-          end
+          thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide,settingData[keyed].reader)
         elseif data == "false" then
           term.write("Access denied\n")
           if osVersion then
-            colorLink(address,{{["color"]=1,["delay"]=1},{["color"]=0,["delay"]=0}})
+            colorLink(settingData[keyed].reader,{{["color"]=1,["delay"]=1},{["color"]=0,["delay"]=0}})
           end
           computer.beep()
           computer.beep()
@@ -662,7 +563,7 @@ while true do
           if bypassallowed then
             term.write("Bypass succeeded: lockdown lifted\n")
             if osVersion then
-              colorLink(address,{{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+              colorLink(settingData[keyed].reader,{{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
             end
             data = crypt(tmpTable.sector,extraConfig.cryptKey)
             send(modemPort,true, "doorsecupdate", data)
@@ -677,7 +578,7 @@ while true do
             end)
             term.write("Requesting bypass\n")
             if osVersion then
-              colorLink(address,{{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+              colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
             end
           end
         else
@@ -686,7 +587,7 @@ while true do
       else
         term.write("server timeout\n")
         if osVersion then
-          colorLink(address,{{["color"]=5,["delay"]=1},{["color"]=0,["delay"]=0}})
+          colorLink(settingData[keyed].reader,{{["color"]=5,["delay"]=1},{["color"]=0,["delay"]=0}})
         end
       end
     end
