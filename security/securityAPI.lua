@@ -352,7 +352,7 @@ end
   function security.getVar(str,var,loc)
     local data = crypt(str,extraConfig.cryptKey,true)
     data = ser.unserialize(data)
-    if type(var) == "boolean" then
+    if type(var) == "boolean" or var == nil then
       var = settingData.cardRead[1].call
       for i=1,#query.data.passSettings.calls, 1 do
         if var == query.data.passSettings.calls[i] then
@@ -380,7 +380,7 @@ end
   function security.setVar(str,var,it,loc)
     local data = crypt(str,extraConfig.cryptKey,true)
     data = ser.unserialize(data)
-    if type(var) == "boolean" then
+    if type(var) == "boolean" or var == nil then
       var = settingData.cardRead[1].call
       for i=1,#query.data.passSettings.calls, 1 do
         if var == query.data.passSettings.calls[i] then
