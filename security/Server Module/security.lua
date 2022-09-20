@@ -173,11 +173,11 @@ function module.init(setit ,doors, serverCommands) --Called when server is first
     userTable = setit
     doorTable = doors
     server = serverCommands
-    if module.debug then print("Received Stuff for passes!") end
+    if module.debug then server.print("Received Stuff for passes!") end
 end
 
 function module.setup() --Called when userlist is updated or server is first started
-    if module.debug then print("Received Stuff for passes!") end
+    if module.debug then server.print("Received Stuff for passes!") end
 end
 
 function module.message(command,datar,from) --Called when a command goes past all default commands and into modules.

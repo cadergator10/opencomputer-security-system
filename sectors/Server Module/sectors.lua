@@ -22,11 +22,11 @@ function module.init(setit ,doors, serverCommands) --Called when server is first
   userTable = setit
   doorTable = doors
   server = serverCommands
-  if module.debug then print("Received " .. #userTable.sectors .. " Sectors\n") end
+  if module.debug then server.print("Received " .. #userTable.sectors .. " Sectors\n") end
 end
 
 function module.setup() --Called when userlist is updated or server is first started
-  if module.debug then print("Received " .. #userTable.sectors .. " Sectors\n") end
+  if module.debug then server.print("Received " .. #userTable.sectors .. " Sectors\n") end
   for key,_ in pairs(userTable.sectorStatus) do
     local good = false
     for i=1,#userTable.sectors,1 do
