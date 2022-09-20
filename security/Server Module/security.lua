@@ -241,7 +241,7 @@ function module.message(command,datar,from) --Called when a command goes past al
                 if type(userTable.passes[counter][data.var]) == type(data.data) then
                     userTable.passes[counter][data.var] = data.data
                 end
-                return true,nil,false,true,server.crypt("true")
+                return true,nil,true,true,server.crypt("true")
             else
                 counter = counter + 1
             end
@@ -295,7 +295,10 @@ function module.message(command,datar,from) --Called when a command goes past al
 end
 function module.piggyback(command,data) --Called after a command is passed. Passed to all modules which return nothing.
     if command == "setdevice" then
-        server.send(true,server.crypt(ser.serialize({["settings"]=userTable.passSettings,["sectors"]=userTable.sectors})))
+        data = ser.unserialize(data)
+        if data.type == "doorsystem" or data.type == "customdoor" then
+            server.send(true,server.crypt(ser.serialize({["settings"]=userTable.passSettings,["sectors"]=userTable.sectors})))
+        end
     end
     return
 end
