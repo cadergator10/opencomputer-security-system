@@ -299,6 +299,27 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
     end
 end
 
+local function scanner(multi,grab)
+    if multi then
+        local wait = true
+        local distable = {}
+        while wait do
+            e, text = event.pullMultiple("tablet_use","touch")
+            computer.beep()
+            if e == "touch" then
+                return distable
+                wait = false
+            else
+                table.insert(distable,text.analyzed[1].address)
+            end
+        end
+    else
+        _, text = event.pull("tablet_use")
+        computer.beep()
+        return text.analyzed[1].address
+    end
+end
+
   --------Program Function
 
 local function accsetup()
@@ -330,9 +351,7 @@ local function accsetup()
                 computer.beep()
             elseif msg == "analyzer" then
                 print("Scan the device with your tablet")
-                _, text = event.pull("tablet_use")
-                computer.beep()
-                sendit(from,port,false,text.analyzed[1].address)
+                sendit(from,port,false,scanner(false,nil))
             elseif msg == "advanalyzer" then
                 local wait = true
                 local distable = {}
@@ -507,6 +526,7 @@ end
 
 local function doorediting()
     term.clear()
+    local canScan = component.isAvailable("barcode_reader")
     setGui(1,"Scan the door you would like to edit")
     setGui(2,"If the door is a multidoor, you can edit all doors connected")
     if modem.isOpen(diagPort) == false then
@@ -675,11 +695,16 @@ local function doorediting()
                     editTable[pageNum].redSide = 0
                     flush()
                     setGui(22,"What is the address for the doorcontrol/rolldoor block?")
-                    setGui(23,"Enter uuid as text")
-                    term.setCursor(1,24)
-                    term.clearLine()
-                    text = term.read()
-                    editTable[pageNum].doorAddress = text:sub(1,-2)
+                    if canScan then
+                        setGui(23,"Scan doorcontrol/rolldoor controller with tablet")
+                        text = scanner(false)
+                    else
+                        setGui(23,"Enter uuid as text")
+                        term.setCursor(1,24)
+                        term.clearLine()
+                        text = term.read():sub(1,-2)
+                    end
+                    editTable[pageNum].doorAddress = text
                 end
             elseif p1 == 3 then
                 flush()
@@ -883,16 +908,21 @@ local function doorediting()
                 local wait = true
                 local distable = {}
                 setGui(22,"What is the address for the magreaders?")
-                setGui(23,"Enter uuid as text. Press enter with nothing in it to stop")
-                while wait do
-                    term.setCursor(1,24)
-                    term.clearLine()
-                    text = term.read()
-                    text = text:sub(1,-2)
-                    if text == "" then
-                        wait = false
-                    else
-                        table.insert(distable,text)
+                if canScan then
+                    setGui(23,"Scan all the magreaders you want to add. Click screen to stop")
+                    distable = scanner(true)
+                else
+                    setGui(23,"Enter uuid as text. Press enter with nothing in it to stop")
+                    while wait do
+                        term.setCursor(1,24)
+                        term.clearLine()
+                        text = term.read()
+                        text = text:sub(1,-2)
+                        if text == "" then
+                            wait = false
+                        else
+                            table.insert(distable,text)
+                        end
                     end
                 end
                 editTable[pageNum].reader = distable

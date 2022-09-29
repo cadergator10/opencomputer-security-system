@@ -16,7 +16,7 @@ local diagPort = 180
 local program = "ctrl.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
-local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/security/doorControl.lua"
+local doorCode = "https://rawgithubusercontent.com/cadergator10/opencomputer-security-system/main/security/doorControl.lua"
 --local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
 
 local settingData = {}
