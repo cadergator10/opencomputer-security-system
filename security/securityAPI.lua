@@ -326,7 +326,7 @@ end
     end
   end
 
-  function security.checkPass(str,loc) --FIXME: Find out why this all is breaking the server
+  function security.checkPass(str,loc)
     local data = crypt(str,extraConfig.cryptKey,true)
     local tmpTable = ser.unserialize(data)
     tmpTable["type"] = "customdoor"

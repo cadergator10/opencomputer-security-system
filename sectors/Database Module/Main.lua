@@ -45,7 +45,7 @@ module.onTouch = function()
     return false
   end
 
-  local function refreshInput() --TEST: Make sure this works after changing up.
+  local function refreshInput()
     local uuid = userPassSelfSelector.selectedItem - 1
     if uuid ~= 0 then
       if userTable.passSettings.type[uuid] == "string" or userTable.passSettings.type[uuid] == "-string" or userTable.passSettings.type[uuid] == "int" then
