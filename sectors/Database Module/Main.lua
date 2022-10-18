@@ -279,7 +279,7 @@ module.onTouch = function()
   for i=1,#userTable.passSettings.var,1 do
     userPassSelfSelector:addItem(userTable.passSettings.label[i]).onTouch = refreshInput
   end
-  userPassSelfSelector.disabled = canPerm --TODO: Check if combo boxes can be disabled like this or not
+  userPassSelfSelector.disabled = canPerm
   window:addChild(GUI.label(85,22,1,1,style.passNameLabel,"Change Input: "))
   userPassDataSelector = window:addChild(GUI.input(100,22,30,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
   userPassDataSelector.disabled = true
@@ -295,13 +295,13 @@ module.onTouch = function()
   for i=1,5,1 do
     userPassPrioritySelector:addItem(tostring(i))
   end
-  sectorPassNew = window:addChild(GUI.button(85,33,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
+  sectorPassNew = window:addChild(GUI.button(85,33,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
   sectorPassNew.onTouch = createSectorPass
   sectorPassNew.disabled = true
-  sectorPassRemove = window:addChild(GUI.button(100,33,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
+  sectorPassRemove = window:addChild(GUI.button(100,33,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
   sectorPassRemove.onTouch = deleteSectorPass
   sectorPassRemove.disabled = true
-  sectorPassEdit = window:addChild(GUI.button(115,33,16,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.editvar))
+  sectorPassEdit = window:addChild(GUI.button(115,33,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.editvar))
   sectorPassEdit.onTouch = editSectorPass
   sectorPassEdit.disabled = true
   --List Buttons Setup
