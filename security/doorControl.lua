@@ -1,6 +1,6 @@
 --Experimental, combined door control with ability to be a multi or single door.
 
-local doorVersion = "2.5.0"
+local doorVersion = "3.0.1"
 local testR = true
 local saveRefresh = true
 

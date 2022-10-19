@@ -25,9 +25,9 @@ local doorTypeTypes = {"Door Control","Redstone dust","Bundled Cable","Rolldoor"
 local redSideTypes = {"bottom","top","back","front","right","left"}
 local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}
 local forceOpenTypes = {"False","True"}
-local passTypes = {["string"]="Inputtable String",["-string"]="Hidden String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
+local passTypes = {["string"]="Regular String",["-string"]="Multi String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"3.0.0"}
+local supportedVersions = {"3.0.0","3.0.1"}
 
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
 

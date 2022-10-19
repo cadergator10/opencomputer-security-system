@@ -364,7 +364,7 @@ local function runInstall()
     else
         loopArray["sector"] = false
     end
-    tmpTable[j] = loopArray --Error
+    tmpTable[j] = loopArray
     end
     text = sendMsg("All done with installer!","Would you like to start the computer now?","1 for yes, 2 for no",1)
     editorSettings.start = false

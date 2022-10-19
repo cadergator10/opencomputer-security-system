@@ -18,7 +18,7 @@ local workspace, window, loc, database, style, permissions = table.unpack({...})
 module.name = "Security"
 module.table = {"passes","passSettings"}
 module.debug = false
-module.version = "3.0.0"
+module.version = "3.0.1"
 module.id = 1111
 
 module.init = function(usTable)

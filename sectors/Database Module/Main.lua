@@ -9,7 +9,7 @@ local workspace, window, loc, database, style = table.unpack({...})
 module.name = "Sectors"
 module.table = {"sectors"}
 module.debug = false
-module.version = "3.0.0"
+module.version = "3.0.1"
 module.id = 1112
 
 module.init = function(usTable)

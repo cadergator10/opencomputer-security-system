@@ -11,7 +11,7 @@ local workspace, window, loc, database, style, permissions = table.unpack({...})
 module.name = "Door Setup" --The name that shows up on the module's button.
 module.table = {} --Set to the keys you want pulled from the userlist on the server
 module.debug = false --The database will set to true if debug mode on database is enabled. If you want to enable certain functions in debug mode.
-module.version = "" --Version of the module. If different from version on global module file, it will alert database.
+module.version = "1.0.0" --Version of the module. If different from version on global module file, it will alert database.
 module.id = 1113 --id of module according to modules.txt global file.
 
 module.init = function(usTable) --Set userTable to what's received. Runs only once at the beginning
@@ -532,8 +532,10 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     tmpTable[i].sector = seem(false,doors[i].sector)
                     tmpTable[i].cardRead = seem(false,#doors[i].cardRead.normal == 0 and -1 or doors[i].cardRead.normal)
                 end
+                local meep = loadTable(aRD .. "dbsettings.txt")
+                tmpTable["config"]={["port"]=meep.port,["cryptKey"]=meep.cryptKey}
                 roller:roll()
-                local mep = fs.open(doorPathSelector.path .. "doorSettings.txt","w")
+                local mep = fs.open(doorPathSelector.path .. "finishSettings.txt","w")
                 mep:write(ser.serialize(tmpTable))
                 mep:close()
                 roller:roll()
