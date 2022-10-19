@@ -33,6 +33,8 @@ end
     }
 ]]
 
+--Issues: export door incorrectly named: only 4 changes visible above passes: combo boxes are not disabled but 1: line 94 error with index: all add buttons are incorrectly named and placed but 1: security system has hello button
+
 module.onTouch = function() --Runs when the module's button is clicked. Set up the workspace here.
     local doorList, listPageLabel, listUpButton, listDownButton, doorName, doorType, doorDelay, doorToggle, doorSector
     local doorPassList, listPageLabel2, listUpButton2, listDownButton2, doorPassSelf, doorPassData, doorPassAddSelector, doorPassCreate, doorPassDelete, doorPassEdit, doorPassType, doorPassAddHave
