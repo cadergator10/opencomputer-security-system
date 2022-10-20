@@ -138,7 +138,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 if doors[i] == nil then
 
                 else
-                    doorList:addItem(doors[i].name).onTouch = doorListCallback()
+                    doorList:addItem(doors[i].name).onTouch = doorListCallback
                 end
             end
             if (previousPage == listPageNumber) then
