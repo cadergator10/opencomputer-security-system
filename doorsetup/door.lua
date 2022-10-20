@@ -69,10 +69,10 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     local function doorListCallback()
         local selected = pageMult * listPageNumber + doorList.selectedItem
         if editPage == 1 then
-            doorName = doors[selected].name
-            doorType.selectedItem = doors[selected].doorType + 2
-            doorDelay.text = doors[selected].delay == -1 and "" or tostring(doors[selected].delay)
-            doorToggle.selectedItem = doors[selected].toggle + 2
+            doorName.text, doorName.disabled = doors[selected].name, false
+            doorType.selectedItem, doorType.disabled = doors[selected].doorType + 2, false
+            doorDelay.text, doorDelay.disabled = doors[selected].delay == -1 and "" or tostring(doors[selected].delay), false
+            doorToggle.selectedItem, doorToggle.disabled = doors[selected].toggle + 2, false
             if userTable.sector then
                 if doors[selected].sector == -1 then
                     doorSector.selectedItem = 1
@@ -86,6 +86,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                         end
                     end
                 end
+                doorSector.disabled = false
             end
             --doorPassSelf, doorPassData, doorPassAddSelector, doorPassCreate, doorPassDelete, doorPassEdit, doorPassType, doorPassAddHave, doorPassAddAdd, doorPassAddDel
             local selectedId = doorPassList.selectedItem
@@ -296,8 +297,8 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if editPage == 1 then
             doorList = varEditWindow:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
             
-            varEditWindow:addChild(GUI.panel(42,20,37,14,style.listPanel))
-            doorPassList = varEditWindow:addChild(GUI.list(43, 21, 35, 12, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+            varEditWindow:addChild(GUI.panel(42,21,37,14,style.listPanel))
+            doorPassList = varEditWindow:addChild(GUI.list(43, 22, 35, 12, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
             
 
             listPageLabel = varEditWindow:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
@@ -319,15 +320,19 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             newDoor.onTouch = addDoorCall
             delDoor = window:addChild(GUI.button(100,12,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "del door"))
             delDoor.onTouch = removeDoorCall
-            exportDoor = window:addChild(GUI.button(115,12,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "new door"))
+            delDoor.disabled = true
+            exportDoor = window:addChild(GUI.button(115,12,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "export door"))
             exportDoor.onTouch = exportDoorCall
+            exportDoor.disabled = true
             doorType = varEditWindow:addChild(GUI.comboBox(64,14,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+            doorType.disabled = true
             doorType:addItem("Unidentified").onTouch = setDoorType
             doorType:addItem("Door Control").onTouch = setDoorType
             doorType:addItem("Redstone").onTouch = setDoorType
             doorType:addItem("Bundled Redstone").onTouch = setDoorType
             doorType:addItem("RollDoor Control").onTouch = setDoorType
             doorToggle = varEditWindow:addChild(GUI.comboBox(64,16,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+            doorToggle.disabled = true
             doorToggle:addItem("Unidentified").onTouch = setDoorToggle
             doorToggle:addItem("Delay").onTouch = setDoorToggle
             doorToggle:addItem("Toggle").onTouch = setDoorToggle
@@ -336,6 +341,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorDelay.onTouch = setDoorDelay
             if userTable.sectors then
                 doorSector = varEditWindow:addChild(GUI.comboBox(64,20,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+                doorSector.disabled = true
                 doorSector:addItem("Unidentified").onTouch = setDoorSector
                 doorSector:addItem("No Sector").onTouch = setDoorSector
                 for i=1,#userTable.sectors,1 do
@@ -356,6 +362,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             refreshInput()
             window:addChild(GUI.label(85,25,1,1,style.passNameLabel,"Change Type : "))
             doorPassType = varEditWindow:addChild(GUI.comboBox(100,25,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+            doorPassType.disabled = true
             doorPassType:addItem("Supreme")
             doorPassType:addItem("Base")
             doorPassType:addItem("Add")
@@ -366,7 +373,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorPassAddSelector.disabled = true
             doorPassAddHave = varEditWindow:addChild(GUI.comboBox(85,27,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             doorPassAddHave.disabled = true
-            doorPassAddAdd = window:addChild(GUI.button(85,29,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "add pass"))
+            doorPassAddAdd = window:addChild(GUI.button(85,28,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "add pass"))
             doorPassAddAdd.onTouch = function()
                 local moveMe = doorPassAddSelector:getItem(doorPassAddSelector.selectedItem)
                 local newMe = doorPassAddHave:addItem(moveMe.savedData.name)
@@ -378,7 +385,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 doorPassAddDel.disabled = false
             end
             doorPassAddAdd.disabled = true
-            doorPassAddDel = window:addChild(GUI.button(85,29,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "remove pass"))
+            doorPassAddDel = window:addChild(GUI.button(85,28,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "remove pass"))
             doorPassAddDel.onTouch = function()
                 local moveMe = doorPassAddHave:getItem(doorPassAddHave.selectedItem)
                 local newMe = doorPassAddSelector:addItem(moveMe.savedData.name)
@@ -390,7 +397,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 doorPassAddAdd.disabled = false
             end
             doorPassAddDel.disabled = true
-            doorPassCreate = window:addChild(GUI.button(85,29,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
+            doorPassCreate = window:addChild(GUI.button(85,30,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
             doorPassCreate.onTouch = function()
                 local passFunc = function(type,num,selected)
                     local newRules = {["uuid"]=uuid.next(),["request"]=typeArray[type],["data"]=type == 2 and {} or false}
@@ -430,7 +437,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 doorListCallback()
             end
             doorPassCreate.disabled = true
-            doorPassDelete = window:addChild(GUI.button(100,27,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
+            doorPassDelete = window:addChild(GUI.button(100,30,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
             doorPassDelete.onTouch = function()
                 local selected = pageMult * listPageNumber + doorList.selectedItem
                 local otSel = pageMultPass * listPageNumberPass + doorPassList.selectedItem
@@ -450,7 +457,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 table.remove(doors[selected].cardRead.normal,otSel)
             end
             doorPassDelete.disabled = true
-            doorPassEdit = window:addChild(GUI.button(115,27,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
+            doorPassEdit = window:addChild(GUI.button(115,30,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.editvar))
             doorPassEdit.onTouch = function()
                 local selected = pageMult * listPageNumber + doorList.selectedItem
                 local otSel = pageMultPass * listPageNumberPass + doorPassList.selectedItem
@@ -501,8 +508,6 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 end
             end
             doorPassEdit.disabled = true
-            
-
         elseif editPage == 2 then
             doorPathSelector = varEditWindow:addChild(GUI.filesystemChooser(30, 10, 30, 3, 0xE1E1E1, 0x888888, 0x3C3C3C, 0x888888, nil, "Open", "Cancel", "Choose", "/",GUI.IO_MODE_DIRECTORY))
             doorPathSelector.onSubmit = function()
