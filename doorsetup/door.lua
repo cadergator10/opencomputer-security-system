@@ -514,7 +514,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     doorPassAddDel.disabled = true
                     for i=1,#old.data,1 do
                         for j=1,doorPassAddSelector:count(),1 do
-                            if doorPassAddSelector:getItem(j).savedData.call == old.data[i] then
+                            if doorPassAddSelector:getItem(j).savedData.call == old.data[i] then --FIXME: Does not add ANY passes over to the have when editing
                                 local moveMe = doorPassAddSelector:getItem(j)
                                 local newMe = doorPassAddHave:addItem(moveMe.savedData.name)
                                 newMe.savedData = moveMe.savedData
@@ -523,6 +523,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                                     doorPassAddAdd.disabled = true
                                 end
                                 doorPassAddDel.disabled = false
+                                break
                             end
                         end
                     end
