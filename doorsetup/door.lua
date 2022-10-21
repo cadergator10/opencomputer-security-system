@@ -116,9 +116,9 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
 
                 else
                     local thisType = grabName("type",doors[selected].cardRead.normal[i].call)
-                    local next = doors[selected].cardRead.normal[i].request == "add" and (" | " .. #doors[selected].cardRead.normal[i].data) or ""
+                    local next = doors[selected].cardRead.normal[i].request == "base" and (" | " .. #doors[selected].cardRead.normal[i].data) or ""
                     local peep = doorPassList:addItem(grabName("label",doors[selected].cardRead.normal[i].call) .. " | " .. (thisType == "bool" and "0" or thisType == "-int" and grabName("data",doors[selected].cardRead.normal[i].call)[doors[selected].cardRead.normal[i].param] or tostring(doors[selected].cardRead.normal[i].param)) .. " | " .. doors[selected].cardRead.normal[i].request .. next)
-                    peep.savedData = doors[selected.cardRead.normal[i]]
+                    peep.savedData = doors[selected].cardRead.normal[i]
                 end
             end
             if (previousPagePass == listPageNumberPass) then
@@ -138,6 +138,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorPassAddHave:clear()
             doorPassAddAdd.disabled = true
             for key,value in pairs(doors[selected].cardRead.add) do
+                local thisType = grabName("type",value.call)
                 doorPassAddAdd.disabled = false
                 local disName = grabName("label",value.call) .. " | " .. (thisType == "bool" and "0" or thisType == "-int" and grabName("data",value.call)[value.param] or tostring(value.param))
                 local mep = doorPassAddSelector:addItem(disName)
@@ -240,10 +241,12 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
           end
         end
       end
-    
+
+    local psCall
+
     local function exportDoorCall()
         editPage = 2
-        pageSetup()
+        psCall()
     end
 
     local function addDoorCall()
@@ -387,9 +390,9 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorPassType:addItem("Reject")
             local typeArray = {"supreme","base","add","reject"}
             window:addChild(GUI.label(85,27,1,1,style.passNameLabel,"Manage Add Passes on door"))
-            doorPassAddSelector = varEditWindow:addChild(GUI.comboBox(110,29,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+            doorPassAddSelector = varEditWindow:addChild(GUI.comboBox(85,29,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             doorPassAddSelector.disabled = true
-            doorPassAddHave = varEditWindow:addChild(GUI.comboBox(85,29,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+            doorPassAddHave = varEditWindow:addChild(GUI.comboBox(110,29,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             doorPassAddHave.disabled = true
             doorPassAddAdd = window:addChild(GUI.button(85,30,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "add pass"))
             doorPassAddAdd.onTouch = function()
@@ -397,19 +400,19 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 local newMe = doorPassAddHave:addItem(moveMe.savedData.name)
                 newMe.savedData = moveMe.savedData
                 doorPassAddSelector:removeItem(doorPassAddSelector.selectedItem)
-                if #doorPassAddSelector.children == 0 then
+                if doorPassAddSelector:count() == 0 then --ERROR
                     doorPassAddAdd.disabled = true
                 end
                 doorPassAddDel.disabled = false
             end
             doorPassAddAdd.disabled = true
-            doorPassAddDel = window:addChild(GUI.button(100,30,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "remove pass"))
+            doorPassAddDel = window:addChild(GUI.button(115,30,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "remove pass"))
             doorPassAddDel.onTouch = function()
                 local moveMe = doorPassAddHave:getItem(doorPassAddHave.selectedItem)
                 local newMe = doorPassAddSelector:addItem(moveMe.savedData.name)
                 newMe.savedData = moveMe.savedData
                 doorPassAddHave:removeItem(doorPassAddHave.selectedItem)
-                if #doorPassAddHave.children == 0 then
+                if doorPassAddHave:count() == 0 then
                     doorPassAddDel.disabled = true
                 end
                 doorPassAddAdd.disabled = false
@@ -473,6 +476,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     doors[selected].cardRead.add[doors[selected].cardRead.normal[otSel].uuid] = nil
                 end
                 table.remove(doors[selected].cardRead.normal,otSel)
+                doorListCallback()
             end
             doorPassDelete.disabled = true
             doorPassEdit = window:addChild(GUI.button(115,32,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.editvar))
@@ -506,7 +510,6 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     doorPassData.text = old.param
                 end
                 doorPassType.selectedItem = old.request == "supreme" and 1 or old.request == "base" and 2 or old.request == "add" and 3 or old.request == "reject" and 4
-                doorListCallback()
                 if old.request == "base" then
                     doorPassAddDel.disabled = true
                     for i=1,#old.data,1 do
@@ -516,7 +519,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                                 local newMe = doorPassAddHave:addItem(moveMe.savedData.name)
                                 newMe.savedData = moveMe.savedData
                                 doorPassAddSelector:removeItem(j)
-                                if #doorPassAddSelector.children == 0 then
+                                if doorPassAddSelector:count() == 0 then
                                     doorPassAddAdd.disabled = true
                                 end
                                 doorPassAddDel.disabled = false
@@ -524,6 +527,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                         end
                     end
                 end
+                doorListCallback()
             end
             doorPassEdit.disabled = true
         elseif editPage == 2 then
@@ -588,6 +592,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     end
     
     varEditWindow = window:addChild(GUI.container(1,1,window.width,window.height))
+    psCall = pageSetup
     pageSetup()
 end
 
