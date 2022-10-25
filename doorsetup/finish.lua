@@ -17,7 +17,7 @@ local diagPort = 180
 local program = "ctrl.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
-local doorCode = "https://rawgithubusercontent.com/cadergator10/opencomputer-security-system/main/security/doorControl.lua"
+local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/security/doorControl.lua"
 
 local settingData = {}
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
@@ -204,7 +204,7 @@ if tonumber(text) == 1 then
 else
     print("normal setup initiating")
 end
-editorSettings.type == "doorsystem"
+editorSettings.type = "doorsystem"
 os.execute("wget -f " .. doorCode .. " " .. program)
 editorSettings.x = tonumber(sendMsg("Would you like to use the simple pass setup or new advanced one?","1 for simple, 2 for advanced",1))
 
@@ -224,12 +224,12 @@ for i=1,#finishTable,1 do
     sendMsg(3)
     local j
     if editorSettings.single == false then
-        sendMsg("Door # " .. i .. " out of " .. #finishTable .. " is being edited:")
+        sendMsg("Door # " .. i .. " out of " .. #finishTable .. " is being edited: " .. finishTable[i].name.data)
         local keepLoop = true
         while keepLoop do
             j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
             keepLoop = false
-            for key,value in pairs(tmpTable) do
+            for key,value in pairs(settingData) do
                 if key == j then
                     keepLoop = true
                 end
@@ -448,7 +448,7 @@ for i=1,#finishTable,1 do
         loopArray["sector"] = false
     end
     --End of Loop
-    settingTable[j] = loopArray
+    settingData[j] = loopArray
 end
 
 text = sendMsg("All done with installer!","Would you like to start the computer now?","1 for yes, 2 for no",1)

@@ -54,7 +54,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     local listPageNumber = 0
     local previousPage = 0
 
-    local pageMultPass = 4
+    local pageMultPass = 3
     local listPageNumberPass = 0
     local previousPagePass = 0
     local prevPass = "string"
@@ -76,9 +76,19 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     end
 
     local function grabName(where,call)
-        for i=1,#userTable.passSettings.calls,1 do
-            if userTable.passSettings.calls[i] == call then
-                return userTable.passSettings[where][i] or nil, i
+        if call ~= "checkstaff" then
+            for i=1,#userTable.passSettings.calls,1 do
+                if userTable.passSettings.calls[i] == call then
+                    return userTable.passSettings[where][i] or nil, i
+                end
+            end
+        else --type, label, and data
+            if where == "type" then
+                return "bool", 0
+            elseif where == "label" then
+                return "Staff", 0
+            elseif where == "data" then
+                return false, 0
             end
         end
         return nil
@@ -126,6 +136,8 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             else
                 previousPagePass = listPageNumberPass
             end
+            listPageLabel.text = tostring(listPageNumber + 1)
+            listPageLabel2.text = tostring(listPageNumberPass + 1)
             doorPassSelf.disabled = false
             doorPassData.disabled = doorPassSelf.selectedItem == 1 and true or userTable.passSettings.type[doorPassSelf.selectedItem - 1] == "bool" and true or false
             doorPassCreate.disabled = false
@@ -146,6 +158,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             end
             doorPassAddDel.disabled = true
         end
+        workspace:draw()
     end
 
     local function updateList()
@@ -252,6 +265,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     local function addDoorCall()
         local tmpTable = {["name"]="new",["toggle"]=-1,["delay"]=-1,["doorType"]=-1,["sector"]=-1,["cardRead"]={["normal"]={},["add"]={}}}
         table.insert(doors,tmpTable)
+        exportDoor.disabled = false
         updateList()
     end
     local function removeDoorCall()
@@ -272,6 +286,10 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if userTable.sectors then
             doorSector.disabled = true
             doorSector.selectedItem = 1
+        end
+        delDoor.disabled = true
+        if #doors == 0 then
+            exportDoor.disabled = true
         end
     end
 
@@ -318,8 +336,8 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if editPage == 1 then
             doorList = varEditWindow:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
             
-            varEditWindow:addChild(GUI.panel(42,21,37,14,style.listPanel))
-            doorPassList = varEditWindow:addChild(GUI.list(43, 22, 35, 12, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+            varEditWindow:addChild(GUI.panel(42,21,37,11,style.listPanel))
+            doorPassList = varEditWindow:addChild(GUI.list(43, 22, 35, 9, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
             
 
             listPageLabel = varEditWindow:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
@@ -532,7 +550,8 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             end
             doorPassEdit.disabled = true
         elseif editPage == 2 then
-            doorPathSelector = varEditWindow:addChild(GUI.filesystemChooser(30, 10, 30, 3, 0xE1E1E1, 0x888888, 0x3C3C3C, 0x888888, nil, "Open", "Cancel", "Choose", "/",GUI.IO_MODE_DIRECTORY))
+            doorPathSelector = varEditWindow:addChild(GUI.filesystemChooser(30, 10, 30, 3, 0xE1E1E1, 0x888888, 0x3C3C3C, 0x888888, nil, "Open", "Cancel", "Choose", "/"))
+            doorPathSelector:setMode(GUI.IO_MODE_SAVE, GUI.IO_MODE_DIRECTORY)
             doorPathSelector.onSubmit = function()
                 finishPath.disabled = false
             end
@@ -570,7 +589,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 mep:close()
                 roller:roll()
                 mep = fs.open(fs.path(system.getCurrentScript()) .. "Modules/DoorSetup/finish.lua","r")
-                local nw = fs.open(doorPathSelector.path .. "finish.lua")
+                local nw = fs.open(doorPathSelector.path .. "finish.lua","w")
                 nw:write(mep:readAll())
                 nw:close()
                 mep:close()
