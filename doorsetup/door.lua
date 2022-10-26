@@ -99,7 +99,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if editPage == 1 then
             doorName.text, doorName.disabled = doors[selected].name, false
             doorType.selectedItem, doorType.disabled = doors[selected].doorType + 2, false
-            doorDelay.text, doorDelay.disabled = doors[selected].delay == -1 and "" or tostring(doors[selected].delay), false
+            doorDelay.text, doorDelay.disabled = doors[selected].delay == -1 and "" or tostring(doors[selected].delay), doors[selected].toggle == -1 and true or doors[selected].toggle == 1 and true or false
             doorToggle.selectedItem, doorToggle.disabled = doors[selected].toggle + 2, false
             if userTable.sector then
                 if doors[selected].sector == -1 then
@@ -160,7 +160,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     doorPassAddAdd.disabled = false
                     local disName = grabName("label",value.call) .. " | " .. (thisType == "bool" and "0" or thisType == "-int" and grabName("data",value.call)[value.param] or tostring(value.param))
                     local mep = doorPassAddSelector:addItem(disName)
-                    mep.savedData = {["name"]=disName,["call"]=value.call}
+                    mep.savedData = {["name"]=disName,["call"]=value.uuid}
                 end
                 doorPassAddDel.disabled = true
             end
@@ -314,6 +314,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     local function setDoorToggle()
         local selected = pageMult * listPageNumber + doorList.selectedItem
         doors[selected].toggle = doorToggle.selectedItem - 2
+        doors[selected].delay = -1
         updateList()
         doorListCallback()
     end
@@ -325,7 +326,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     end
     local function setDoorDelay()
         local selected = pageMult * listPageNumber + doorList.selectedItem
-        doors[selected].delay = doorDelay.text ~= "" and tonumber(doorDelay.text) or -1
+        doors[selected].delay = doorDelay.text == "" and -1 or tonumber(doorDelay.text) or -1
         updateList()
         doorListCallback()
     end
@@ -346,6 +347,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     local function pageSetup()
         varEditWindow:removeChildren()
         if editPage == 1 then
+            varEditWindow:addChild(GUI.panel(1,1,37,33,style.listPanel))
             doorList = varEditWindow:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
             
             varEditWindow:addChild(GUI.panel(42,21,37,11,style.listPanel))
@@ -389,7 +391,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorToggle:addItem("Toggle").onTouch = setDoorToggle
             doorDelay = varEditWindow:addChild(GUI.input(64,18,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "input number"))
             doorDelay.disabled = true
-            doorDelay.onTouch = setDoorDelay
+            doorDelay.onInputFinished = setDoorDelay
             if userTable.sectors then
                 doorSector = varEditWindow:addChild(GUI.comboBox(64,20,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
                 doorSector.disabled = true
@@ -429,6 +431,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 local moveMe = doorPassAddSelector:getItem(doorPassAddSelector.selectedItem)
                 local newMe = doorPassAddHave:addItem(moveMe.savedData.name)
                 newMe.savedData = moveMe.savedData
+                if debug then GUI.alert("savedData: " .. ser.serialize(newMe.savedData))
                 doorPassAddSelector:removeItem(doorPassAddSelector.selectedItem)
                 if doorPassAddSelector:count() == 0 then --ERROR
                     doorPassAddAdd.disabled = true
@@ -446,7 +449,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     doorPassAddDel.disabled = true
                 end
                 doorPassAddAdd.disabled = false
-            end
+            end --TODO: Almost everything seems fine. A panel is needed behind the 1st list and some issues with delay (mostly) Next: some hardcore testing. Base passes still don't work with the add passes :(
             doorPassAddDel.disabled = true
             doorPassCreate = window:addChild(GUI.button(85,32,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
             doorPassCreate.onTouch = function()
@@ -568,7 +571,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorPathSelector.onSubmit = function()
                 finishPath.disabled = false
             end
-            finishPath = varEditWindow:addChild(GUI.button(30,12,14,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "Finish"))
+            finishPath = varEditWindow:addChild(GUI.button(30,14,14,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "Finish"))
             finishPath.disabled = true
             finishPath.onTouch = function()
                 roller.active = true
@@ -609,12 +612,12 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 roller.active = false
                 GUI.alert("Finished exporting door settings and program to selected drive. You can now close out.")
             end
-            cancelPath = varEditWindow:addChild(GUI.button(45,12,14,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "Cancel"))
+            cancelPath = varEditWindow:addChild(GUI.button(45,14,14,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "Cancel"))
             cancelPath.onTouch = function()
                 editPage = 1
                 pageSetup()
             end
-            roller = varEditWindow:addChild(GUI.progressIndicator(30,14,0x3C3C3C, 0x00B640, 0x99FF80))
+            roller = varEditWindow:addChild(GUI.progressIndicator(30,16,0x3C3C3C, 0x00B640, 0x99FF80))
             roller.active = false
         end
     end

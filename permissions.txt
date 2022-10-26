@@ -14,7 +14,7 @@ security.(any var added by user)
 
 dev.* (all developer module features)
 dev.usermanagement (manage users and passes such.)
-dev.systemmanagement (manage modules)
+dev.systemmanagement (manage modules and settings)
 
 Any permission written with a ~ before it will be disabled for that user
 (in case you want someone to, say, do all security functions except write a card, do ~security.writecard and security.*)
