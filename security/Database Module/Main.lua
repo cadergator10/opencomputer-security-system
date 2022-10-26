@@ -161,6 +161,9 @@ module.onTouch = function()
   local function updateList()
     local selectedId = userList.selectedItem
     userList:removeChildren()
+    if pageMult * listPageNumber <= #userTable.passes and listPageNumber ~= 0 then
+      listPageNumber = listPageNumber - 1
+    end
     local temp = pageMult * listPageNumber
     for i = temp + 1, temp + pageMult, 1 do
       if (userTable.passes[i] == nil) then
@@ -175,6 +178,8 @@ module.onTouch = function()
     else
       previousPage = listPageNumber
     end
+    listDownButton.disabled = listPageNumber == 0
+    listUpButton.disabled = #userTable.passes <= temp + pageMult
     database.update({"passes","passSettings"})
   end
 

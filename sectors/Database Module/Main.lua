@@ -94,12 +94,17 @@ module.onTouch = function()
     userPassTypeSelector.selectedItem = sectorpass.lock
     refreshInput(uuid)
   end]]
- --TODO: Update all lists to move back a page if nothing on page
+
   local function sectorListCallback()
     local selectedId = pageMult * listPageNumber + sectorList.selectedItem
     sectorNameInput.text = userTable.sectors[selectedId].name
     sectorPassList:removeChildren()
+    if pageMultPass * listPageNumberPass <= #userTable.sectors[selectedId].pass and listPageNumberPass ~= 0 then
+      listPageNumberPass = listPageNumberPass - 1
+    end
     local temp = pageMultPass * listPageNumberPass
+    sectorPassListDown.disabled = listPageNumberPass == 0
+    sectorPassListUp.disabled = #userTable.sectors[selectedId].pass <= temp + pageMultPass
     sectorPassListNum.text = tostring(listPageNumberPass + 1)
     sectorPassNew.disabled = canPerm
     sectorPassRemove.disabled = canPerm
@@ -130,6 +135,9 @@ module.onTouch = function()
   local function updateSecList()
     local selectedId = sectorList.selectedItem
     sectorList:removeChildren()
+    if pageMult * listPageNumber <= #userTable.sectors and listPageNumber ~= 0 then
+      listPageNumber = listPageNumber - 1
+    end
     local temp = pageMult * listPageNumber
     sectorListNum.text = tostring(listPageNumber + 1)
     for i = temp + 1, temp + pageMult, 1 do
@@ -147,6 +155,8 @@ module.onTouch = function()
       sectorListCallback()
       previousPage = listPageNumber
     end
+    sectorListDown.disabled = listPageNumber == 0
+    sectorListUp.disabled = #userTable.sectors <= temp + pageMult
     database.update()
     workspace:draw()
   end
