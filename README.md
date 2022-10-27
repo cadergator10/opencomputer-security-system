@@ -74,11 +74,11 @@ Changelog:
    <li>2.3.2 Remote Control update: Diagnostic tablet can now remote control doors! Either toggle a door open/closed or open with a delay. Server must be updated to version 2.3.2, but doors may not have to be updated (still recommended) 7/12</li>
    <li>2.4.0 Sector Update: Replaced the useless forceOpen and bypassLock settings with the new sectors system. You can create however many sectors you like in the mineOS database and set doors to that sector. Then, with the new sectorcontrol program, you can control sectors with redstone, locking them down or locking them open. Certain passes can also be set to open locked down doors or just bypass the lockdown! This also comes with the range extender program for doorcontrols and modules system to build in your own programs to be part of the server. Server also got a GUI upgrade and autoinstaller can install servers and modules. 7/26</li>
    <li>3.0.0 Servertine split: Split up the security system with the server and database. They are now modules. 9/16</li>
+   <li>3.0.1 Door Editor: Edit door settings with this handy module and save it to an external drive! Now easilly set up doors to an extent BEFORE putting it in the computer! 10/27</li>
 </ul>
 
 Queued updates:
 <ol>
-   <li>3.0.1: Make diagnostic tablet able to scan devices in runtime editing and attempt to break down other unnecessary limits around the systems to allow for more user friendliness.</li>
    <li>3.0.2: Refine the variable editing by ditching the popup that comes up and using the database screen to make it look nicer.</li>
 </ol>
 
