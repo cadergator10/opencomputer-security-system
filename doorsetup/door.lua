@@ -119,7 +119,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             --doorPassSelf, doorPassData, doorPassAddSelector, doorPassCreate, doorPassDelete, doorPassEdit, doorPassType, doorPassAddHave, doorPassAddAdd, doorPassAddDel
             local selectedId = doorPassList.selectedItem
             doorPassList:removeChildren()
-            if pageMultPass * listPageNumberPass <= #doors[selected].cardRead.normal and listPageNumberPass ~= 0 then
+            if pageMultPass * listPageNumberPass + pageMultPass <= #doors[selected].cardRead.normal and listPageNumberPass ~= 0 then
                 listPageNumberPass = listPageNumberPass - 1
               end
             local temp = pageMultPass * listPageNumberPass
@@ -137,6 +137,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             if (previousPagePass == listPageNumberPass) then
                 doorPassList.selectedItem = selectedId
             else
+                doorPassList.selectedItem = 1
                 previousPagePass = listPageNumberPass
             end
             listPageLabel.text = tostring(listPageNumber + 1)
@@ -151,6 +152,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorPassType.disabled = false
             doorPassAddSelector.disabled = false
             doorPassAddHave.disabled = false
+            delDoor.disabled = false
             if bypassAdd == true then
                 doorPassAddSelector:clear()
                 doorPassAddHave:clear()
@@ -172,7 +174,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if editPage == 1 then
             local selectedId = doorList.selectedItem
             doorList:removeChildren()
-            if pageMult * listPageNumber <= #doors and listPageNumber ~= 0 then
+            if pageMult * listPageNumber + pageMult <= #doors and listPageNumber ~= 0 then
                 listPageNumber = listPageNumber - 1
             end
             local temp = pageMult * listPageNumber
@@ -186,6 +188,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             if (previousPage == listPageNumber) then
                 doorList.selectedItem = selectedId
             else
+                doorList.selectedItem = 1
                 previousPage = listPageNumber
             end
             if pageMult * listPageNumber + pageMult < #doors then
@@ -250,30 +253,32 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
           updateList()
           doorListCallback()
         end
-        if button.isPos then
-          if button.isListNum == 1 then
-            if listPageNumber < #doors/pageMult - 1 then
-              listPageNumber = listPageNumber + 1
-              canFresh()
+        if #doors ~= 0 then
+            if button.isPos then
+                if button.isListNum == 1 then
+                    if listPageNumber < #doors/pageMult - 1 then
+                        listPageNumber = listPageNumber + 1
+                        canFresh()
+                    end
+                else
+                    if #doors[pageMult * listPageNumber + doorList.selectedItem].cardRead.normal ~= 0 and listPageNumberPass < #doors[pageMult * listPageNumber + doorList.selectedItem].cardRead.normal/pageMultPass - 1 then
+                        listPageNumberPass = listPageNumberPass + 1
+                        canFresh()
+                    end
+                end
+            else
+                if button.isListNum == 1 then
+                    if listPageNumber > 0 then
+                        listPageNumber = listPageNumber - 1
+                        canFresh()
+                    end
+                else
+                    if listPageNumberPass > 0 then
+                        listPageNumberPass = listPageNumberPass - 1
+                        canFresh()
+                    end
+                end
             end
-          else
-            if doors[pageMult * listPageNumber + doorList.selectedItem].cardRead ~= -1 and listPageNumberPass < #doors[pageMult * listPageNumber + doorList.selectedItem].cardRead/pageMultPass - 1 then
-              listPageNumberPass = listPageNumberPass + 1
-              canFresh()
-            end
-          end
-        else
-          if button.isListNum == 1 then
-            if listPageNumber > 0 then
-              listPageNumber = listPageNumber - 1
-              canFresh()
-            end
-          else
-            if listPageNumberPass > 0 then
-              listPageNumberPass = listPageNumberPass - 1
-              canFresh()
-            end
-          end
         end
       end
 
@@ -306,6 +311,17 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         doorDelay.disabled = true
         listUpButton2.disabled = true
         listDownButton2.disabled = true
+        doorPassSelf.disabled = true
+        doorPassData.disabled = true
+        doorPassCreate.disabled = true
+        doorPassDelete.disabled = true
+        doorPassEdit.disabled = true
+        doorPassType.disabled = true
+        doorPassAddAdd.disabled = true
+        doorPassAddDel.disabled = true
+        doorPassEdit.disabled = true
+        doorPassAddSelector.disabled = false
+        doorPassAddHave.disabled = false
         if userTable.sectors then
             doorSector.disabled = true
             doorSector.selectedItem = 1

@@ -103,6 +103,10 @@ module.onTouch = function()
       listPageNumberPass = listPageNumberPass - 1
     end
     local temp = pageMultPass * listPageNumberPass
+    if previousPagePass ~= listPageNumberPass then
+      sectorPassList.selectedItem = 1
+      previousPagePass = listPageNumberPass
+    end
     sectorPassListDown.disabled = listPageNumberPass == 0
     sectorPassListUp.disabled = #userTable.sectors[selectedId].pass <= temp + pageMultPass
     sectorPassListNum.text = tostring(listPageNumberPass + 1)
@@ -151,6 +155,7 @@ module.onTouch = function()
     if (previousPage == listPageNumber) then
       sectorList.selectedItem = selectedId
     else
+      sectorList.selectedItem = 1
       listPageNumberPass = 0
       sectorListCallback()
       previousPage = listPageNumber

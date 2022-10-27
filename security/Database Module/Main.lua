@@ -176,6 +176,7 @@ module.onTouch = function()
     if (previousPage == listPageNumber) then
       userList.selectedItem = selectedId
     else
+      userList.selectedItem = 1
       previousPage = listPageNumber
     end
     listDownButton.disabled = listPageNumber == 0
