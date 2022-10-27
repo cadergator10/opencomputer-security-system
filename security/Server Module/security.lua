@@ -13,7 +13,7 @@ module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules"}
 module.skipcrypt = {"autoInstallerQuery","rcdoors"}
 module.table = {["passes"]={},["passSettings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
 module.debug = false
-module.version = "3.0.0"
+module.version = "3.0.1"
 module.id = 1111
 
 local function getPassID(command,rules)

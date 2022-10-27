@@ -1,6 +1,6 @@
 --Experimental, combined door control with ability to be a multi or single door.
 
-local doorVersion = "2.5.0"
+local doorVersion = "3.0.1"
 local testR = true
 local saveRefresh = true
 
@@ -171,21 +171,13 @@ end
   local function openDoor(delayH, redColorH, doorAddressH, toggleH, doorTypeH, redSideH,key)
     if(toggleH == 0) then
       if osVersion then colorLink(key,4) end
-      if(doorTypeH == 0 or doorTypeH == 3)then
-        if doorAddressH ~= true then
-          component.proxy(doorAddressH).open()
-          os.sleep(delayH)
-          component.proxy(doorAddressH).close()
-        else
-          if doorTypeH == 0 then
-            component.os_doorcontroller.open()
-            os.sleep(delayH)
-            component.os_doorcontroller.close()
-          else
-            component.os_rolldoorcontroller.open()
-            os.sleep(delayH)
-            component.os_rolldoorcontroller.close()
-          end
+      if(doorTypeH == 3)then
+        for _,value in pairs(doorAddressH) do
+          component.proxy(value).open()
+        end
+        os.sleep(delayH)
+        for _,value in pairs(doorAddressH) do
+          component.proxy(value).close()
         end
       elseif(doorTypeH == 1)then
         component.redstone.setOutput(redSideH,15)
@@ -201,15 +193,9 @@ end
       if osVersion then colorLink(key,0) end
     else
       if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}}) end
-      if(doorTypeH == 0 or doorTypeH == 3)then
-        if doorAddressH ~= true then
-          component.proxy(doorAddressH).toggle()
-        else
-          if doorTypeH == 0 then
-            component.os_doorcontroller.toggle()
-          else
-            component.os_rolldoorcontroller.toggle()
-          end
+      if(doorTypeH == 3)then
+        for _,value in pairs(doorAddressH) do
+          component.proxy(value).toggle()
         end
       elseif(doorTypeH == 1)then
         if(component.redstone.getOutput(redSideH) == 0) then
@@ -236,8 +222,10 @@ end
           for key,value2 in pairs(data) do
             if key == value.sector then
               if value2 == 1 then
-                if value.doorType == 0 or value.doorType == 3 then
-                  component.proxy(value.doorAddress).close()
+                if value.doorType == 3 then
+                  for _,value2 in pairs(value.doorAddress) do
+                    component.proxy(value2).close()
+                  end
                 elseif value.doorType == 2 then
                   component.redstone.setBundledOutput(2, { [value.redColor] = 0 } )
                 end
@@ -249,8 +237,10 @@ end
                   colorLink(value.reader,1,1)
                 end
               elseif value2 == 3 then
-                if value.doorType == 0 or value.doorType == 3 then
-                  component.proxy(value.doorAddress).open()
+                if value.doorType == 3 then
+                  for _,value2 in pairs(value.doorAddress) do
+                    component.proxy(value2).open()
+                  end
                 elseif value.doorType == 2 then
                   component.redstone.setBundledOutput(2, { [value.redColor] = 255 } )
                 end
@@ -329,7 +319,9 @@ end
               end
             else
               for i=1,10,1 do
-                component.proxy(data.doorAddress).toggle()
+                for _,value in pairs(data.doorAddress) do
+                  component.proxy(value).toggle()
+                end
                 os.sleep(0.5)
               end
             end
@@ -421,6 +413,14 @@ if e ~= nil then
     saveTable(settingData,"doorSettings.txt")
     extraConfig.type = "doorsystem"
     saveTable(extraConfig,"extraConfig.txt")
+  end
+  for key,_ in pairs(settingData) do
+    if type(settingData[key].doorAddress) == "string" then
+      settingData[key].doorAddress = {settingData[key].doorAddress}
+    end
+    if settingData[key].doorType = 0 then
+      settingData[key].doorType = 3
+    end
   end
 end
 checkBool = nil
