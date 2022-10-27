@@ -188,8 +188,18 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             else
                 previousPage = listPageNumber
             end
+            if pageMult * listPageNumber + pageMult < #doors then
+                listUpButton.disabled = false
+            else
+                listUpButton.disabled = true
+            end
+            if listPageNumber == 0 then
+                listDownButton.disabled = true
+            end
             listDownButton.disabled = listPageNumber == 0
             listUpButton.disabled = #doors <= temp + pageMult
+            listUpButton2.disabled = true
+            listDownButton2.disabled = true
         elseif editPage == 2 then
 
         end
@@ -286,7 +296,6 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if #doors < pageMult * listPageNumber + 1 and listPageNumber ~= 0 then
             listPageNumber = listPageNumber - 1
         end
-        updateList()
         doorName.text = ""
         doorName.disabled = true
         doorToggle.disabled = true
@@ -295,6 +304,8 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         doorType.selectedItem = 1
         doorDelay.text = ""
         doorDelay.disabled = true
+        listUpButton2.disabled = true
+        listDownButton2.disabled = true
         if userTable.sectors then
             doorSector.disabled = true
             doorSector.selectedItem = 1
@@ -303,6 +314,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if #doors == 0 then
             exportDoor.disabled = true
         end
+        updateList()
     end
 
     local function setDoorType()
@@ -360,10 +372,10 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             listDownButton = varEditWindow:addChild(GUI.button(12,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
             listDownButton.onTouch, listDownButton.isPos, listDownButton.isListNum = pageCallback,false,1
 
-            listPageLabel2 = varEditWindow:addChild(GUI.label(43,33,3,3,style.listPageLabel,tostring(listPageNumberPass + 1)))
-            listUpButton2 = varEditWindow:addChild(GUI.button(51,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
+            listPageLabel2 = varEditWindow:addChild(GUI.label(43,31,3,3,style.listPageLabel,tostring(listPageNumberPass + 1)))
+            listUpButton2 = varEditWindow:addChild(GUI.button(51,31,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
             listUpButton2.onTouch, listUpButton2.isPos, listUpButton2.isListNum = pageCallback,true,2
-            listDownButton2 = varEditWindow:addChild(GUI.button(55,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
+            listDownButton2 = varEditWindow:addChild(GUI.button(55,31,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
             listDownButton2.onTouch, listDownButton2.isPos, listDownButton2.isListNum = pageCallback,false,2
 
             doorName = varEditWindow:addChild(GUI.input(64,12,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
