@@ -17,7 +17,7 @@ module.version = "1.0.0" --Version of the module. If different from version on g
 module.id = 1113 --id of module according to modules.txt global file.
 
 module.init = function(usTable) --Set userTable to what's received. Runs only once at the beginning
-  userTable = usTable
+    userTable = usTable
 end
 
 --[[
@@ -98,7 +98,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         local selected = pageMult * listPageNumber + doorList.selectedItem
         if editPage == 1 then
             doorName.text, doorName.disabled = doors[selected].name, false
-            doorType.selectedItem, doorType.disabled = doors[selected].doorType + 2, false
+            doorType.selectedItem, doorType.disabled = doors[selected].doorType == -1 and 1 or doors[selected].doorType + 1, false
             doorDelay.text, doorDelay.disabled = doors[selected].delay == -1 and "" or tostring(doors[selected].delay), doors[selected].toggle == -1 and true or doors[selected].toggle == 1 and true or false
             doorToggle.selectedItem, doorToggle.disabled = doors[selected].toggle + 2, false
             if userTable.sector then
@@ -121,7 +121,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorPassList:removeChildren()
             if pageMultPass * listPageNumberPass + pageMultPass <= #doors[selected].cardRead.normal and listPageNumberPass ~= 0 then
                 listPageNumberPass = listPageNumberPass - 1
-              end
+            end
             local temp = pageMultPass * listPageNumberPass
             local otSel = temp + doorPassList.selectedItem
             for i = temp + 1, temp + pageMultPass, 1 do
@@ -153,7 +153,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorPassAddSelector.disabled = false
             doorPassAddHave.disabled = false
             delDoor.disabled = false
-            if bypassAdd == true then
+            if bypassAdd ~= true then
                 doorPassAddSelector:clear()
                 doorPassAddHave:clear()
                 doorPassAddAdd.disabled = true
@@ -213,8 +213,8 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if uuid ~= 0 then
             if userTable.passSettings.type[uuid] == "string" or userTable.passSettings.type[uuid] == "-string" or userTable.passSettings.type[uuid] == "int" then
                 if prevPass == "-int" then
-                  doorPassData:remove()
-                  doorPassData = window:addChild(GUI.input(100,23,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
+                    doorPassData:remove()
+                    doorPassData = window:addChild(GUI.input(100,23,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.inputtext))
                 end
                 doorPassData.text = ""
                 doorPassData.disabled = false
@@ -250,8 +250,8 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
 
     local function pageCallback(workspace,button)
         local function canFresh()
-          updateList()
-          doorListCallback()
+            updateList()
+            doorListCallback()
         end
         if #doors ~= 0 then
             if button.isPos then
@@ -280,7 +280,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 end
             end
         end
-      end
+    end
 
     local psCall
 
@@ -335,7 +335,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
 
     local function setDoorType()
         local selected = pageMult * listPageNumber + doorList.selectedItem
-        doors[selected].doorType = doorType.selectedItem - 2
+        doors[selected].doorType = doorType.selectedItem == 1 and -1 or doorType.selectedItem - 1
         updateList()
         doorListCallback()
     end
@@ -377,10 +377,10 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if editPage == 1 then
             varEditWindow:addChild(GUI.panel(1,1,37,33,style.listPanel))
             doorList = varEditWindow:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
-            
+
             varEditWindow:addChild(GUI.panel(42,21,37,11,style.listPanel))
             doorPassList = varEditWindow:addChild(GUI.list(43, 22, 35, 9, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
-            
+
 
             listPageLabel = varEditWindow:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
             listUpButton = varEditWindow:addChild(GUI.button(8,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
@@ -408,10 +408,9 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorType = varEditWindow:addChild(GUI.comboBox(64,14,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             doorType.disabled = true
             doorType:addItem("Unidentified").onTouch = setDoorType
-            doorType:addItem("Door Control").onTouch = setDoorType
             doorType:addItem("Redstone").onTouch = setDoorType
             doorType:addItem("Bundled Redstone").onTouch = setDoorType
-            doorType:addItem("RollDoor Control").onTouch = setDoorType
+            doorType:addItem("Door/RollDoor").onTouch = setDoorType
             doorToggle = varEditWindow:addChild(GUI.comboBox(64,16,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             doorToggle.disabled = true
             doorToggle:addItem("Unidentified").onTouch = setDoorToggle
@@ -595,7 +594,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorPassEdit.disabled = true
         elseif editPage == 2 then
             doorPathSelector = varEditWindow:addChild(GUI.filesystemChooser(30, 10, 30, 3, 0xE1E1E1, 0x888888, 0x3C3C3C, 0x888888, nil, "Open", "Cancel", "Choose", "/"))
-            doorPathSelector:setMode(GUI.IO_MODE_SAVE, GUI.IO_MODE_DIRECTORY)
+            doorPathSelector:setMode(GUI.IO_MODE_BOTH, GUI.IO_MODE_DIRECTORY)
             doorPathSelector.onSubmit = function()
                 finishPath.disabled = false
             end
@@ -654,14 +653,14 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         window:addChild(GUI.label(2,16,3,3,style.passNameLabel,"You do not have permissions to do this"))
         return
     end
-    
+
     varEditWindow = window:addChild(GUI.container(1,1,window.width,window.height))
     psCall = pageSetup
     pageSetup()
 end
 
 module.close = function()
-  return {} --Return table of what you want the database to auto save (if enabled) of the keys used by this module
+    return {} --Return table of what you want the database to auto save (if enabled) of the keys used by this module
 end
 
 return module
