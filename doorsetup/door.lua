@@ -155,7 +155,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 doorPassAddSelector:clear()
                 doorPassAddHave:clear()
                 doorPassAddAdd.disabled = true
-                for key,value in pairs(doors[selected].cardRead.add) dov
+                for key,value in pairs(doors[selected].cardRead.add) do
                     local thisType = grabName("type",value.call)
                     doorPassAddAdd.disabled = false
                     local disName = grabName("label",value.call) .. " | " .. (thisType == "bool" and "0" or thisType == "-int" and grabName("data",value.call)[value.param] or tostring(value.param))
@@ -431,7 +431,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 local moveMe = doorPassAddSelector:getItem(doorPassAddSelector.selectedItem)
                 local newMe = doorPassAddHave:addItem(moveMe.savedData.name)
                 newMe.savedData = moveMe.savedData
-                if debug then GUI.alert("savedData: " .. ser.serialize(newMe.savedData))
+                if module.debug then GUI.alert("savedData: " .. ser.serialize(newMe.savedData)) end
                 doorPassAddSelector:removeItem(doorPassAddSelector.selectedItem)
                 if doorPassAddSelector:count() == 0 then --ERROR
                     doorPassAddAdd.disabled = true
