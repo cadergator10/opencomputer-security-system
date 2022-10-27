@@ -18,7 +18,7 @@ local workspace, window, loc, database, style, permissions = table.unpack({...})
 module.name = "Security"
 module.table = {"passes","passSettings"}
 module.debug = false
-module.version = "3.0.1"
+module.version = "3.0.0"
 module.id = 1111
 
 module.init = function(usTable)
@@ -161,9 +161,6 @@ module.onTouch = function()
   local function updateList()
     local selectedId = userList.selectedItem
     userList:removeChildren()
-    if pageMult * listPageNumber <= #userTable.passes and listPageNumber ~= 0 then
-      listPageNumber = listPageNumber - 1
-    end
     local temp = pageMult * listPageNumber
     for i = temp + 1, temp + pageMult, 1 do
       if (userTable.passes[i] == nil) then
@@ -176,11 +173,8 @@ module.onTouch = function()
     if (previousPage == listPageNumber) then
       userList.selectedItem = selectedId
     else
-      userList.selectedItem = 1
       previousPage = listPageNumber
     end
-    listDownButton.disabled = listPageNumber == 0
-    listUpButton.disabled = #userTable.passes <= temp + pageMult
     database.update({"passes","passSettings"})
   end
 
@@ -274,7 +268,7 @@ module.onTouch = function()
   local function deleteUserCallback()
     local selected = pageMult * listPageNumber + userList.selectedItem
     table.remove(userTable.passes,selected)
-    if #userTable.passes < pageMult * listPageNumber + 1 and listPageNumber ~= 0 then
+    if #userTable.Passes < pageMult * listPageNumber + 1 and listPageNumber ~= 0 then
       listPageNumber = listPageNumber - 1
     end
     updateList()

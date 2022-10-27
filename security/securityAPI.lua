@@ -1,4 +1,4 @@
-local version = "3.0.1"
+local version = "3.0.0"
 --testR = true
 
 local security = {}
@@ -326,7 +326,7 @@ end
     end
   end
 
-  function security.checkPass(str,loc)
+  function security.checkPass(str,loc) --FIXME: Find out why this all is breaking the server
     local data = crypt(str,extraConfig.cryptKey,true)
     local tmpTable = ser.unserialize(data)
     tmpTable["type"] = "customdoor"
