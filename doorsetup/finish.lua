@@ -250,7 +250,7 @@ for i=1,#finishTable,1 do
     if finishTable[i].doorType.finished == true then
         loopArray["doorType"] = finishTable[i].doorType.data
     else
-        text = sendMsg("Door Type? 0= doorcontrol. 1=redstone. 2=bundled. 3=rolldoor. NUMBER ONLY",1)
+        text = sendMsg("Door Type? 1=redstone. 2=bundled. 3=door/rolldoor. NUMBER ONLY",1)
         loopArray["doorType"] = tonumber(text)
     end
     if loopArray.doorType == 2 then
@@ -275,7 +275,7 @@ for i=1,#finishTable,1 do
         loopArray["redSide"] = 0
         sendMsg("no need to input anything for redColor. The setting doesn't require it :)","no need to input anything for redSide. The setting doesn't require it :)")
         if editorSettings.single == false then
-            text = sendMsg("What is the address for the doorcontrol/rolldoor block?", editorSettings.scanner and "Scan the block with tablet" or "Enter uuid as text",editorSettings.scanner and 2 or 1)
+            text = sendMsg("What is the address for the doorcontrol/rolldoor block?", editorSettings.scanner and "Scan the block with tablet" or "Enter uuid as text",5)
             loopArray["doorAddress"] = text
         else
             for key,_ in pairs(component.list(loopArray.doorType == 3 and "os_rolldoorcontrol" or "os_doorcontrol")) do

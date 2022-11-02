@@ -418,7 +418,7 @@ if e ~= nil then
     if type(settingData[key].doorAddress) == "string" then
       settingData[key].doorAddress = {settingData[key].doorAddress}
     end
-    if settingData[key].doorType = 0 then
+    if settingData[key].doorType == 0 then
       settingData[key].doorType = 3
     end
   end

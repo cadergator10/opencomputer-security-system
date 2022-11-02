@@ -334,6 +334,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
 end
 
 local function scanner(multi,grab)
+    local e, text
     if multi then
         local wait = true
         local distable = {}
@@ -342,7 +343,6 @@ local function scanner(multi,grab)
             computer.beep()
             if e == "touch" then
                 return distable
-                wait = false
             else
                 table.insert(distable,text.analyzed[1].address)
             end

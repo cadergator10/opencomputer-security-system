@@ -215,7 +215,7 @@ local function runInstall()
             loopArray["redSide"] = 0
             sendMsg("no need to input anything for redColor. The setting doesn't require it :)","no need to input anything for redSide. The setting doesn't require it :)")
             if editorSettings.single == false then
-                text = sendMsg("What is the address for the door/rolldoor controller blocks?", editorSettings.scanner and "Scan the block with tablet" or "Enter uuid as text",editorSettings.scanner and 5 or 1)
+                text = sendMsg("What is the address for the door/rolldoor controller blocks?", editorSettings.scanner and "Scan the blocks with tablet then click screen when done" or "Enter uuids as text then enter with no text and enter",5)
                 loopArray["doorAddress"] = text
             else
                 loopArray["doorAddress"] = {}
