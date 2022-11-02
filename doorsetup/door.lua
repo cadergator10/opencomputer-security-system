@@ -102,6 +102,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorDelay.text, doorDelay.disabled = doors[selected].delay == -1 and "" or tostring(doors[selected].delay), doors[selected].toggle == -1 and true or doors[selected].toggle == 1 and true or false
             doorToggle.selectedItem, doorToggle.disabled = doors[selected].toggle + 2, false
             if userTable.sector then
+                doorSector.disabled = false
                 if doors[selected].sector == -1 then
                     doorSector.selectedItem = 1
                 elseif doors[selected].sector == false then
