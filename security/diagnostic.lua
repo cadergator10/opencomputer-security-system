@@ -552,6 +552,10 @@ local function diagnostics()
         local diagInfo = ser.unserialize(msg)
         num = num + 1
         if diagt ~= nil then
+            if diagt:status() == "dead" then
+                print("There was an exception in the diagnostic thread on that last door: please report to github")
+                os.exit()
+            end
             diagt:kill()
         end
         diagt = thread.create(diagThr,num,diagInfo)

@@ -256,7 +256,7 @@ for i=1,#finishTable,1 do
     if loopArray.doorType == 2 then
         text = sendMsg("What color. Use the Color API wiki on the opencomputers wiki, and enter the NUMBER",1)
         loopArray["redColor"] = tonumber(text)
-        loopArray["doorAddress"] = ""
+        loopArray["doorAddress"] = {}
         text = sendMsg("What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY",1)
         loopArray["redSide"] = tonumber(text)
         if editorSettings.single == false then
@@ -264,7 +264,7 @@ for i=1,#finishTable,1 do
         end
     elseif loopArray.doorType == 1 then
         loopArray["redColor"] = 0
-        loopArray["doorAddress"] = ""
+        loopArray["doorAddress"] = {}
         text = sendMsg("No need for redColor! The settings you inputted before don't require it :)","What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY",1)
         loopArray["redSide"] = tonumber(text)
         if editorSettings.single == false then
@@ -274,13 +274,14 @@ for i=1,#finishTable,1 do
         loopArray["redColor"] = 0
         loopArray["redSide"] = 0
         sendMsg("no need to input anything for redColor. The setting doesn't require it :)","no need to input anything for redSide. The setting doesn't require it :)")
+        loopArray["doorAddress"] = {}
         if editorSettings.single == false then
-            text = sendMsg("What is the address for the doorcontrol/rolldoor block?", editorSettings.scanner and "Scan the block with tablet" or "Enter uuid as text",5)
+            text = sendMsg("What is the address for the doorcontrol/rolldoor block?", editorSettings.scanner and "Scan the blocks with tablet" or "Enter uuids as text",5)
             loopArray["doorAddress"] = text
         else
-            for key,_ in pairs(component.list(loopArray.doorType == 3 and "os_rolldoorcontrol" or "os_doorcontrol")) do
-                loopArray["doorAddress"] = key
-                break
+            loopArray["doorAddress"] = {}
+            for key,_ in pairs(component.list("os_rolldoorcontrol","os_doorcontrol")) do
+                table.insert(loopArray["doorAddress"],key)
             end
         end
     end
