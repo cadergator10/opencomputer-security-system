@@ -108,7 +108,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 elseif doors[selected].sector == false then
                     doorSector.selectedItem = 2
                 else
-                    for i=1,#userTable.sector,1 do
+                    for i=1,#userTable.sectors,1 do
                         if userTable.sectors[i].uuid == doors[selected].sector then
                             doorSector.selectedItem = i + 2
                             break
