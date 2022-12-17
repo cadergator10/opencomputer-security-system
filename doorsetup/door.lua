@@ -101,7 +101,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             doorType.selectedItem, doorType.disabled = doors[selected].doorType == -1 and 1 or doors[selected].doorType + 1, false
             doorDelay.text, doorDelay.disabled = doors[selected].delay == -1 and "" or tostring(doors[selected].delay), doors[selected].toggle == -1 and true or doors[selected].toggle == 1 and true or false
             doorToggle.selectedItem, doorToggle.disabled = doors[selected].toggle + 2, false
-            if userTable.sector then
+            if userTable.sectors then
                 doorSector.disabled = false
                 if doors[selected].sector == -1 then
                     doorSector.selectedItem = 1
@@ -109,7 +109,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     doorSector.selectedItem = 2
                 else
                     for i=1,#userTable.sector,1 do
-                        if userTable.sector[i].uuid == doors[selected].sector then
+                        if userTable.sectors[i].uuid == doors[selected].sector then
                             doorSector.selectedItem = i + 2
                             break
                         end
