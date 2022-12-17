@@ -280,7 +280,7 @@ for i=1,#finishTable,1 do
             loopArray["doorAddress"] = text
         else
             loopArray["doorAddress"] = {}
-            for key,_ in pairs(component.list("os_rolldoorcontrol","os_doorcontrol")) do
+            for key,_ in pairs(component.list("os_rolldoorcontroller","os_doorcontroller")) do
                 table.insert(loopArray["doorAddress"],key)
             end
         end

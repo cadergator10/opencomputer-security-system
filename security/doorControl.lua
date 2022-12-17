@@ -447,10 +447,10 @@ if osVersion then
   end
   thread.create(colorupdate)
 end
-for key,_ in pairs(component.list("os_doorcontrol")) do
+for key,_ in pairs(component.list("os_doorcontroller")) do
   component.proxy(key).close()
 end
-for key,_ in pairs(component.list("os_rolldoorcontrol")) do
+for key,_ in pairs(component.list("os_rolldoorcontroller")) do
   component.proxy(key).close()
 end
 if query.data.sectorStatus == nil then
