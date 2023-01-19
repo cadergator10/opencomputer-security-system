@@ -99,7 +99,7 @@ module.onTouch = function()
     local selectedId = pageMult * listPageNumber + sectorList.selectedItem
     sectorNameInput.text = userTable.sectors[selectedId].name
     sectorPassList:removeChildren()
-    if pageMultPass * listPageNumberPass <= #userTable.sectors[selectedId].pass and listPageNumberPass ~= 0 then
+    if (pageMultPass * listPageNumberPass) + 1 >= #userTable.sectors[selectedId].pass and listPageNumberPass ~= 0 then
       listPageNumberPass = listPageNumberPass - 1
     end
     local temp = pageMultPass * listPageNumberPass
@@ -139,7 +139,7 @@ module.onTouch = function()
   local function updateSecList()
     local selectedId = sectorList.selectedItem
     sectorList:removeChildren()
-    if pageMult * listPageNumber <= #userTable.sectors and listPageNumber ~= 0 then
+    if (pageMult * listPageNumber) + 1 >= #userTable.sectors and listPageNumber ~= 0 then
       listPageNumber = listPageNumber - 1
     end
     local temp = pageMult * listPageNumber
