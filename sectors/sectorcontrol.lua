@@ -193,7 +193,7 @@ local function arrangeSectors(query)
     local save = false
     for i=1,math.ceil(amt/8),1 do
         sector[i] = {}
-        for j=i,4,1 do
+        for j=1,4,1 do
             if query[count] ~= nil then
                 sector[i][j] = deepcopy(query[count])
                 if sectorSettings[query[count].uuid] == nil then
@@ -324,7 +324,7 @@ end)]]
 
 local editmode = false
 
-pageChange("both",1,#sector, sectorGui, editmode)
+pageChange("setup",1,#sector, sectorGui, editmode)
 
 while true do
     local ev,num,side,key,value,command,msg = event.pullMultiple("modem_message","redstone_changed","key_down")
@@ -334,7 +334,7 @@ while true do
                 query = ser.unserialize(msg).sectors
                 sectorStatus = ser.unserialize(msg).sectorStatus
                 arrangeSectors(query)
-                pageChange("both",1,#sector, sectorGui, editmode)
+                pageChange("setup",1,#sector, sectorGui, editmode)
             end
         elseif ev == "key_down" then
             if editmode == false then
