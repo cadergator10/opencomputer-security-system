@@ -222,7 +222,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             elseif userTable.passSettings.type[uuid] == "-int" then
                 if prevPass ~= "-int" then
                     doorPassData:remove()
-                    doorPassData = window:addChild(GUI.comboBox(100,23,30,3, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
+                    doorPassData = window:addChild(GUI.comboBox(100,23,30,1, style.sectorComboBack,style.sectorComboText,style.sectorComboArrowBack,style.sectorComboArrowText))
                 else
                     doorPassData:clear()
                 end
@@ -489,7 +489,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     else
                         newRules["tempint"] = selected
                         newRules["call"] = userTable.passSettings.calls[selected]
-                        if userTable.passSettings.type[selected] == "string" or userTable.passSettings.type == "-string" then
+                        if userTable.passSettings.type[selected] == "string" or userTable.passSettings.type[selected] == "-string" then
                             newRules["param"] = doorPassData.text
                         elseif userTable.passSettings.type[selected] == "bool" then
                             newRules["param"] = 0

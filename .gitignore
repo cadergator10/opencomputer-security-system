@@ -1,2 +1,11 @@
 .idea/
 
+.vs/VSWorkspaceState.json
+.vs/slnx.sqlite
+.vs/opencomputer-security-system/v17/.wsuo
+*.sqlite
+*.vsidx
+*.sqlite
+.vs/slnx.sqlite
+.vs/opencomputer-security-system/v17/.wsuo
+.vs/opencomputer-security-system/FileContentIndex/9d9cebae-4c71-423c-bb87-e5d813dec504.vsidx
