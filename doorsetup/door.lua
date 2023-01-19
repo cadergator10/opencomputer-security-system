@@ -120,7 +120,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             --doorPassSelf, doorPassData, doorPassAddSelector, doorPassCreate, doorPassDelete, doorPassEdit, doorPassType, doorPassAddHave, doorPassAddAdd, doorPassAddDel
             local selectedId = doorPassList.selectedItem
             doorPassList:removeChildren()
-            if (pageMultPass * listPageNumberPass) + 1 >= #doors[selected].cardRead.normal and listPageNumberPass ~= 0 then
+            if (pageMultPass * listPageNumberPass) + 1 > #doors[selected].cardRead.normal and listPageNumberPass ~= 0 then
                 listPageNumberPass = listPageNumberPass - 1
             end
             local temp = pageMultPass * listPageNumberPass
@@ -175,7 +175,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if editPage == 1 then
             local selectedId = doorList.selectedItem
             doorList:removeChildren()
-            if (pageMult * listPageNumber) + 1 >= #doors and listPageNumber ~= 0 then
+            if (pageMult * listPageNumber) + 1 > #doors and listPageNumber ~= 0 then
                 listPageNumber = listPageNumber - 1
             end
             local temp = pageMult * listPageNumber

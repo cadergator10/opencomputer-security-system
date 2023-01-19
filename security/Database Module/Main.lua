@@ -161,7 +161,7 @@ module.onTouch = function()
   local function updateList()
     local selectedId = userList.selectedItem
     userList:removeChildren()
-    if (pageMult * listPageNumber) + 1 >= #userTable.passes and listPageNumber ~= 0 then
+    if (pageMult * listPageNumber) + 1 > #userTable.passes and listPageNumber ~= 0 then
       listPageNumber = listPageNumber - 1
     end
     local temp = pageMult * listPageNumber
