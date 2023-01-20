@@ -48,7 +48,10 @@ function module.setup() --Called when userlist is updated or server is first sta
 end
 
 function module.message(command,datar) --Called when a command goes past all default commands and into modules.
-  local data = ser.unserialize(datar)
+  local data
+  if datar ~= nil then
+    data = ser.unserialize(datar)
+  end
   if command == "sectorupdate" then
     userTable.sectorStatus = data
     return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector data changed",["color"]=nil,["line"]=false}},true,false,"checkSector",ser.serialize(data)

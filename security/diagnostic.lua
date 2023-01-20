@@ -542,7 +542,7 @@ end
 local function diagnostics()
     term.clear()
     local num = 0
-    diagt = thread.create(diagThr,num)
+    print("Scan a door to start")
     while true do
         if modem.isOpen(diagPort) == false then
             modem.open(diagPort)
