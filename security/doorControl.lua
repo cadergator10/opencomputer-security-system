@@ -144,6 +144,7 @@ end
         elseif value.new ~= value.old then
           if value.new == -1 then
             value.new = value.check
+          end
           component.proxy(key).setLightState(value.new)
           readerLights[key].old = readerLights[key].new
         end
