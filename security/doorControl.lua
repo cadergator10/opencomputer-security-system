@@ -121,7 +121,7 @@ local function modemadd()
 end
 
   local function colorupdate() --A seperate thread that reads a table of readers and can control their lights.
-    while true do
+    while true do --FIXME: Fix delay doors in lockdown mode losing their red light
       for key,value in pairs(readerLights) do
         if type(value.new) == "table" then
           if #value.new == 0 then
@@ -142,6 +142,8 @@ end
             end
           end
         elseif value.new ~= value.old then
+          if value.new == -1 then
+            value.new = value.check
           component.proxy(key).setLightState(value.new)
           readerLights[key].old = readerLights[key].new
         end
@@ -190,7 +192,7 @@ end
       else
         os.sleep(1)
       end
-      if osVersion then colorLink(key,0) end
+      if osVersion then colorLink(key,-1) end
     else
       if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}}) end
       if(doorTypeH == 3)then
@@ -308,7 +310,7 @@ end
                 os.sleep(0.3)
               end
             end
-            colorLink(data.reader,0)
+            colorLink(data.reader,-1)
           else
             if data.doorType == 2 then
               for i=1,5,1 do
@@ -442,7 +444,7 @@ if osVersion then
   readerLights = {}
   for key,_ in pairs(component.list("os_magreader")) do
     component.proxy(key).swipeIndicator(false)
-    colorLink(key,0)
+    colorLink(key,-1)
     readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
   end
   thread.create(colorupdate)
