@@ -316,6 +316,7 @@ if tonumber(text:sub(1,-2)) == "true" then
     autoUpdateData = true
 else
     autoUpdateData = false
+end
 term.clear()
 
 -- end of modification
