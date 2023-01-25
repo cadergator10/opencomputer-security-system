@@ -310,9 +310,9 @@ end
 
 -- start of modification
 
-print("Do you want auto update data(no need to pulse update server)? true of false")
+print("Do you want auto update data(no need to pulse update server)? 0 of 1")
 local text = term.read()
-if tonumber(text:sub(1,-2)) == "true" then
+if tonumber(text:sub(1,-2)) == 1 then
     autoUpdateData = true
 else
     autoUpdateData = false
