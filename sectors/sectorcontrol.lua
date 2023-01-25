@@ -146,7 +146,7 @@ end
 local red = component.redstone.getBundledInput
 local b = red()
 
-local function = autoUpdate()
+local function autoUpdate()
     for i,v in pairs(b) do
         for i2,v2 in pairs(v) do
             if v2 ~= b[i][i2] then
