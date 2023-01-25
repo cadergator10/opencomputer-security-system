@@ -141,6 +141,24 @@ local function pageChange(dir,pos,length,call,...)
     call(...)
 end
 
+-- start of modification
+
+local red = component.redstone.getBundledInput
+local b = red()
+
+local checkBundle = function()
+    for i,v in pairs(b) do
+        for i2,v2 in pairs(v) do
+            if v2 ~= b[i][i2] then
+                return true
+            end
+            b = red()
+        end
+    end
+end
+
+-- end of modification
+
 --------Called Functions
 
 local function colorSearch(color,side)
@@ -290,6 +308,18 @@ else
     term.clear()
 end
 
+-- start of modification
+
+print("Do you want auto update data(no need to pulse update server)? true of false")
+local text = term.read()
+if tonumber(text:sub(1,-2)) == "true" then
+    autoUpdateData = true
+else
+    autoUpdateData = false
+term.clear()
+
+-- end of modification
+
 print("Sending query to server...")
 modem.open(modemPort)
 modem.broadcast(modemPort,"getquery",ser.serialize({"sectors","sectorStatus","&&&crypt"}))
@@ -423,14 +453,22 @@ while true do
                     end
                 end
             end
-            if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
-                if updatePulse == false then
-                    updatePulse = true
+            -- start modification
+            if autoUpdateData then
+                if checkBundle() then
                     modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
                 end
             else
-                updatePulse = false
+                if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
+                    if updatePulse == false then
+                        updatePulse = true
+                        modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
+                    end
+                else
+                    updatePulse = false
+                end
             end
+            -- end of modification
         end
     else
         os.sleep(1)
