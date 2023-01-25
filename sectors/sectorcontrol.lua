@@ -146,7 +146,7 @@ end
 local red = component.redstone.getBundledInput
 local b = red()
 
-local checkBundle = function()
+local function = autoUpdate()
     for i,v in pairs(b) do
         for i2,v2 in pairs(v) do
             if v2 ~= b[i][i2] then
@@ -455,8 +455,8 @@ while true do
                 end
             end
             -- start modification
-            if autoUpdateData then
-                if checkBundle() then
+            if autoUpdateData == true then
+                if autoUpdate() == true then
                     modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
                 end
             else
