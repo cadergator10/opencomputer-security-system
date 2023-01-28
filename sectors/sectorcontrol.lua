@@ -1,4 +1,4 @@
-local version = "2.4.0"
+local version = "3.0.1"
 
 local sector = {}
 local sectorStatus = {}
@@ -141,23 +141,7 @@ local function pageChange(dir,pos,length,call,...)
     call(...)
 end
 
--- start of modification
-
-local red = component.redstone.getBundledInput
-local b = red()
-
-local function autoUpdate()
-    for i,v in pairs(b) do
-        for i2,v2 in pairs(v) do
-            if v2 ~= b[i][i2] then
-                return true
-            end
-            b = red()
-        end
-    end
-end
-
--- end of modification
+-- removed AutoUpdate function due to being unnecessary to the checking of if a change was detected
 
 --------Called Functions
 
@@ -310,7 +294,7 @@ end
 
 -- start of modification
 
-print("Do you want auto update data(no need to pulse update server)? 0 or 1")
+print("Do you want auto update data(no need to pulse update server)? 0 for no or 1 for yes")
 local text = term.read()
 if tonumber(text:sub(1,-2)) == 1 then
     autoUpdateData = true
@@ -441,7 +425,9 @@ while true do
             end
         elseif ev == "redstone_changed" then
             local red = redstone.getBundledInput()
+            local officialChange = false --If the change in redstone is something saved to redstonelinks.txtr
             for i=1,#query,1 do
+                local current = sectorStatus[query[i].uuid]
                 sectorStatus[query[i].uuid] = 1
                 if sectorSettings[query[i].uuid].open.side ~= -1 and sectorSettings[query[i].uuid].open.color ~= -1 then
                     if red[sectorSettings[query[i].uuid].open.side][sectorSettings[query[i].uuid].open.color] > 0 then
@@ -453,12 +439,13 @@ while true do
                         sectorStatus[query[i].uuid] = 2
                     end
                 end
+                if sectorStatus[query[i].uuid] ~= current then --a change was detected
+                    officialChange = true
+                end
             end
             -- start modification
-            if autoUpdateData == true then
-                if autoUpdate() == true then
-                    modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
-                end
+            if autoUpdateData and officialChange then
+                modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
             else
                 if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
                     if updatePulse == false then
