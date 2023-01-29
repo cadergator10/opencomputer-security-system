@@ -1,4 +1,4 @@
-local version = "2.4.0"
+local version = "3.0.1"
 
 local sector = {}
 local sectorStatus = {}
@@ -140,6 +140,8 @@ local function pageChange(dir,pos,length,call,...)
     end
     call(...)
 end
+
+-- removed AutoUpdate function due to being unnecessary to the checking of if a change was detected
 
 --------Called Functions
 
@@ -290,6 +292,19 @@ else
     term.clear()
 end
 
+-- start of modification
+
+print("Do you want auto update data(no need to pulse update server)? 0 for no or 1 for yes")
+local text = term.read()
+if tonumber(text:sub(1,-2)) == 1 then
+    autoUpdateData = true
+else
+    autoUpdateData = false
+end
+term.clear()
+
+-- end of modification
+
 print("Sending query to server...")
 modem.open(modemPort)
 modem.broadcast(modemPort,"getquery",ser.serialize({"sectors","sectorStatus","&&&crypt"}))
@@ -410,7 +425,9 @@ while true do
             end
         elseif ev == "redstone_changed" then
             local red = redstone.getBundledInput()
+            local officialChange = false --If the change in redstone is something saved to redstonelinks.txtr
             for i=1,#query,1 do
+                local current = sectorStatus[query[i].uuid]
                 sectorStatus[query[i].uuid] = 1
                 if sectorSettings[query[i].uuid].open.side ~= -1 and sectorSettings[query[i].uuid].open.color ~= -1 then
                     if red[sectorSettings[query[i].uuid].open.side][sectorSettings[query[i].uuid].open.color] > 0 then
@@ -422,15 +439,24 @@ while true do
                         sectorStatus[query[i].uuid] = 2
                     end
                 end
-            end
-            if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
-                if updatePulse == false then
-                    updatePulse = true
-                    modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
+                if sectorStatus[query[i].uuid] ~= current then --a change was detected
+                    officialChange = true
                 end
-            else
-                updatePulse = false
             end
+            -- start modification
+            if autoUpdateData and officialChange then
+                modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
+            else
+                if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
+                    if updatePulse == false then
+                        updatePulse = true
+                        modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
+                    end
+                else
+                    updatePulse = false
+                end
+            end
+            -- end of modification
         end
     else
         os.sleep(1)
