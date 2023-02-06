@@ -84,7 +84,15 @@ Queued updates:
 
 Future updates:
 <ol>
-   <li>Undecided</li>
+   <li>See Below</li>
+</ol>
+
+I have a few things I want to add sometime in the future, or just stuff I want to do in general that may or may not happen
+<ol>
+   <li>Create a webserver to handle creation, deletion, and updating modules for Servertine (similar to MineOS but its all done on a website rather than the appstore)
+   <li>Add keypad, RFID reader, and Biometric reader support</li>
+   <li>Move the database off of MineOS and back to OpenOS, but with the same GUI system (if possible make it an OS rather than a program you run)</li>
+   <li>There's more but I cant think of it</li>
 </ol>
 
 Important information:
