@@ -241,7 +241,7 @@ end
             else
               newRules["tempint"] = tonumber(text)
               newRules["call"] = query.data.passSettings.calls[tonumber(text)]
-              if query.data.passSettings.type[tonumber(text)] == "string" or query.data.passSettings.type == "-string" then
+              if query.data.passSettings.type[tonumber(text)] == "string" or query.data.passSettings.type[tonumber(text)] == "-string" then
                 print("What is the string you would like to read? Enter text.")
                 text = term.read()
                 newRules["param"] = text:sub(1,-2)
