@@ -143,14 +143,12 @@ module.onTouch = function()
             guiCalls[i][1]:addItem(userTable.passes[selectedId][userTable.passSettings.var[i]][j])
           end
         end
-      elseif userTable.passSettings.type[i] == "int" or userTable.passSettings.type[i] == "-int" then
-        if userTable.passSettings.type[i] == "-int" then
-          guiCalls[i][3].text = tostring(guiCalls[i][4][userTable.passes[selectedId][userTable.passSettings.var[i]]] or "none")
-        else
-          guiCalls[i][3].text = tostring(userTable.passes[selectedId][userTable.passSettings.var[i]])
-        end
+      elseif userTable.passSettings.type[i] == "int" then
+        guiCalls[i][3].text = tostring(userTable.passes[selectedId][userTable.passSettings.var[i]])
         guiCalls[i][1].disabled = pees
         guiCalls[i][2].disabled = pees
+      elseif userTable.passSettings.type[i] == "-int" then
+        guiCalls[i][1].selectedItem = userTable.passes[selectedId][userTable.passSettings.var[i]] < guiCalls[i][1]:count() and userTable.passes[selectedId][userTable.passSettings.var[i]] + 1 or 0
       else
         GUI.alert("Potential error in line 157 in function userListCallback()")
       end
@@ -220,15 +218,7 @@ module.onTouch = function()
           end
         end
       elseif userTable.passSettings.type[callbackInt] == "-int" then
-        if isPos == true then
-          if userTable.passes[selected][userTable.passSettings.var[callbackInt]] < #userTable.passSettings.data[callbackInt] then
-            userTable.passes[selected][userTable.passSettings.var[callbackInt]] = userTable.passes[selected][userTable.passSettings.var[callbackInt]] + 1
-          end
-        else
-          if userTable.passes[selected][userTable.passSettings.var[callbackInt]] > 0 then
-            userTable.passes[selected][userTable.passSettings.var[callbackInt]] = userTable.passes[selected][userTable.passSettings.var[callbackInt]] - 1
-          end
-        end
+        userTable.passes[selected][userTable.passSettings.var[callbackInt]] = guiCalls[buttonInt][1].selectedItem - 1
       else
         GUI.alert(loc.buttoncallbackalert .. buttonInt)
         return
@@ -306,14 +296,12 @@ module.onTouch = function()
           guiCalls[i][1].disabled = true
           guiCalls[i][1]:clear()
         end
-      elseif tmp == "int" or tmp == "-int" then
-        if tmp == "-int" then
-          guiCalls[i][3].text = "NAN"
-        else
-          guiCalls[i][3].text = "#"
-        end
+      elseif tmp == "int" then
+        guiCalls[i][3].text = "#"
         guiCalls[i][1].disabled = true
         guiCalls[i][2].disabled = true
+      elseif tmp == "-int" then
+        guiCalls[i][1].selected = 1
       end
     end
     cardBlockedYesButton.disabled = true
@@ -564,20 +552,11 @@ module.onTouch = function()
         guiCalls[i][1].disabled = true
         guiCalls[i][2].disabled = true
       elseif userTable.passSettings.type[i] == "-int" then
-        guiCalls[i][3] = varEditWindow:addChild(GUI.label(72,labelSpot,3,3,style.passIntLabel,"NAN"))
-        guiCalls[i][1] = varEditWindow:addChild(GUI.button(64,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
-        guiCalls[i][1].buttonInt = i
-        guiCalls[i][1].callbackInt = i + #baseVariables
-        guiCalls[i][1].isPos = true
-        guiCalls[i][1].onTouch = buttonCallback
-        guiCalls[i][2] = varEditWindow:addChild(GUI.button(68,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "-"))
-        guiCalls[i][2].buttonInt = i
-        guiCalls[i][2].callbackInt = i + #baseVariables
-        guiCalls[i][2].isPos = false
-        guiCalls[i][2].onTouch = buttonCallback
-        guiCalls[i][4] = userTable.passSettings.data[i]
+        guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,30,1, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+        for _,vas in pairs(userTable.passSettings.data[i]) do
+          guiCalls[i][1]:addItem(vas).onTouch = buttonCallback
+        end
         guiCalls[i][1].disabled = true
-        guiCalls[i][2].disabled = true
       elseif userTable.passSettings.type[i] == "bool" then
         guiCalls[i][1] = varEditWindow:addChild(GUI.button(64,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
         guiCalls[i][1].buttonInt = i

@@ -1,0 +1,15 @@
+Instructions on what I gotta check out and maybe add
+
+Definitely Servertine (this):
+1. Save changes done on DoorSetup to prevent data loss upon leaving the module
+2. DoorSetup allow runtime door editing on currently running doors. (maybe an added perk of choosing door systems through naming multidoors)
+3. Text Box for level in security module (no +- buttons alone, quick change)
+5. SectorControl module for Servertine (an optional manual changing utility)
+6. CryptKey ALL THE FEATURES I CAN to prevent security holes
+7. Possible KeyPad, RFID Reader, and Biometric Reader.
+8. Database remote control module
+9. Make SectorControl utilize runtime changes (3 wires per sector: 1 to turn off lockdown, another to enable, and another to lock open)
+
+
+done
+groups (-int) get dropdown rather than int changer with +- (DONE)
