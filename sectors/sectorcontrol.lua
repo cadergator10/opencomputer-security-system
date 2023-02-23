@@ -1,4 +1,4 @@
-local version = "3.0.1"
+local version = "4.0.0"
 
 local sector = {}
 local sectorStatus = {}
@@ -175,7 +175,7 @@ local function redlinkcheck(color,side)
                 sectorSettings[key].color = -1
                 sectorSettings[key].side = -1
             end
-        else
+        elseif key ~= "cryptKey" --We don't want cryptKey being used
             if value.open.color == color and value.open.side == side then
                 sectorSettings[key].open.color = -1
                 sectorSettings[key].open.side = -1
@@ -208,7 +208,7 @@ local function arrangeSectors(query)
     end
     for key,value in pairs(sectorSettings) do
         local here = false
-        if key == "default" then
+        if key == "default" or key == "cryptKey" then
             here = true
         else
             for i=1,#query,1 do
@@ -274,7 +274,8 @@ local fill = io.open("redstonelinks.txt", "r")
 if fill~=nil then
     io.close(fill)
 else
-    saveTable({["default"]={["side"]=2,["color"]=0}},"redstonelinks.txt")
+    saveTable({["default"]={["side"]=2,["color"]=0},["cryptKey"]={1,2,3,4,5}},"redstonelinks.txt")
+    print("Crypt key is set to default (1,2,3,4,5)")
 end
 
 sectorSettings = loadTable("redstonelinks.txt")
