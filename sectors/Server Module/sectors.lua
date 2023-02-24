@@ -11,11 +11,11 @@ local uuid = require("uuid")
 module = {}
 module.name = "sectors"
 module.commands = {"sectorupdate","doorsector","doorsecupdate"}
-module.skipcrypt = {"sectorupdate"}
+module.skipcrypt = {}
 module.table = {["sectors"] = {{["name"]="Placeholder Sector",["uuid"]=uuid.next(),["type"]=1,["pass"]={}}}}
 module.table.sectorStatus = {[module.table.sectors[1].uuid]=1}
 module.debug = false
-module.version = "3.0.1"
+module.version = "4.0.0"
 module.id = 1112
 
 function module.init(setit ,doors, serverCommands) --Called when server is first started. Passes userTable and doorTable.

@@ -28,7 +28,7 @@ local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","
 local forceOpenTypes = {"False","True"}
 local passTypes = {["string"]="Regular String",["-string"]="Multi String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"3.0.0","3.0.1"}
+local supportedVersions = {"3.0.0","3.0.1","4.0.0"}
 
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
 
@@ -1040,6 +1040,7 @@ local function remotecontrol()
         print("No query received. Server might be offline")
         os.exit()
     end
+    msg = crypt(msg,config.cryptKey,true)
     local tempPasses = ser.unserialize(msg)
     local passTable = {}
     for key,value in pairs(tempPasses) do

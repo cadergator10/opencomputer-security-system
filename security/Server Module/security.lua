@@ -10,10 +10,10 @@ local ser = require("serialization")
 module = {}
 module.name = "passes"
 module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules"}
-module.skipcrypt = {"autoInstallerQuery","rcdoors"}
+module.skipcrypt = {}
 module.table = {["passes"]={},["passSettings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
 module.debug = false
-module.version = "3.0.1"
+module.version = "4.0.0"
 module.id = 1111
 
 local function getPassID(command,rules)
@@ -201,7 +201,7 @@ function module.message(command,datar,from) --Called when a command goes past al
             end
             table.insert(sendTable,{["id"]=value.id,["type"]=value.type,["data"]=datar})
         end
-        return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Sending remote control table",["color"]=0xFFFFFF}},false,true,ser.serialize(sendTable)
+        return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Sending remote control table",["color"]=0xFFFFFF}},false,true,server.crypt(ser.serialize(sendTable))
     elseif command == "checkLinked" then
         local cu, isBlocked, thisName = checkLink(data)
         local dis = {}

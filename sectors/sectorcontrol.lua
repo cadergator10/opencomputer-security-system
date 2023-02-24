@@ -175,7 +175,7 @@ local function redlinkcheck(color,side)
                 sectorSettings[key].color = -1
                 sectorSettings[key].side = -1
             end
-        elseif key ~= "cryptKey" --We don't want cryptKey being used
+        elseif key ~= "cryptKey" and key ~= "port" --We don't want cryptKey or port being used
             if value.open.color == color and value.open.side == side then
                 sectorSettings[key].open.color = -1
                 sectorSettings[key].open.side = -1
@@ -208,7 +208,7 @@ local function arrangeSectors(query)
     end
     for key,value in pairs(sectorSettings) do
         local here = false
-        if key == "default" or key == "cryptKey" then
+        if key == "default" or key == "cryptKey" or key == "port" then
             here = true
         else
             for i=1,#query,1 do
@@ -274,24 +274,45 @@ local fill = io.open("redstonelinks.txt", "r")
 if fill~=nil then
     io.close(fill)
 else
-    saveTable({["default"]={["side"]=2,["color"]=0},["cryptKey"]={1,2,3,4,5}},"redstonelinks.txt")
+    modem.open(syncPort)
+    modem.broadcast(syncPort,"syncport")
+    local e,_,_,_,_,msg = event.pull(1,"modem_message")
+    modem.close(syncPort)
+    if e then
+        modemPort = tonumber(msg)
+    else
+        print("What port is the server running off of?")
+        local text = term.read()
+        modemPort = tonumber(text:sub(1,-2))
+        term.clear()
+    end
+
+    saveTable({["default"]={["side"]=2,["color"]=0},["cryptKey"]={1,2,3,4,5}},["port"]=modemPort,"redstonelinks.txt")
     print("Crypt key is set to default (1,2,3,4,5)")
 end
 
 sectorSettings = loadTable("redstonelinks.txt")
 
-modem.open(syncPort)
-modem.broadcast(syncPort,"syncport")
-local e,_,_,_,_,msg = event.pull(1,"modem_message")
-modem.close(syncPort)
-if e then
-    modemPort = tonumber(msg)
-else
-    print("What port is the server running off of?")
-    local text = term.read()
-    modemPort = tonumber(text:sub(1,-2))
-    term.clear()
+if sectorSettings.cryptKey == nil then
+    sectorSettings.cryptKey = {1,2,3,4,5}
+    print("Crypt key is set to default (1,2,3,4,5)")
+    modem.open(syncPort)
+    modem.broadcast(syncPort,"syncport")
+    local e,_,_,_,_,msg = event.pull(1,"modem_message")
+    modem.close(syncPort)
+    if e then
+        modemPort = tonumber(msg)
+    else
+        print("What port is the server running off of?")
+        local text = term.read()
+        modemPort = tonumber(text:sub(1,-2))
+        term.clear()
+    end
+    sectorSettings.port = modemPort
+    saveTable(sectorSettings,"redstonelinks.txt")
 end
+
+modemPort = sectorSettings.port
 
 -- start of modification
 
@@ -308,7 +329,7 @@ term.clear()
 
 print("Sending query to server...")
 modem.open(modemPort)
-modem.broadcast(modemPort,"getquery",ser.serialize({"sectors","sectorStatus","&&&crypt"}))
+modem.broadcast(modemPort,"getquery",ser.serialize({"sectors","sectorStatus"}))
 e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then
@@ -316,6 +337,7 @@ if e == nil then
     os.exit()
 else
     print("Query received")
+    msg = crypt(msg,sectorSettings.cryptKey,true)
     query = ser.unserialize(msg).data.sectors
     sectorStatus = ser.unserialize(msg).data.sectorStatus
 end
@@ -446,12 +468,12 @@ while true do
             end
             -- start modification
             if autoUpdateData and officialChange then
-                modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
+                modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize(sectorStatus),sectorSettings.cryptKey))
             else
                 if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
                     if updatePulse == false then
                         updatePulse = true
-                        modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
+                        modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize(sectorStatus),sectorSettings.cryptKey))
                     end
                 else
                     updatePulse = false

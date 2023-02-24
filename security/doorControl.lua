@@ -1,6 +1,6 @@
 --Experimental, combined door control with ability to be a multi or single door.
 
-local doorVersion = "3.0.1"
+local doorVersion = "4.0.0"
 local testR = true
 local saveRefresh = true
 
@@ -375,8 +375,9 @@ if magReader.swipeIndicator ~= nil then
 end
 
 local checkBool = false
-send(modemPort,true,"getquery",ser.serialize({"passSettings","sectorStatus","&&&crypt"}))
+send(modemPort,true,"getquery",ser.serialize({"passSettings","sectorStatus"}))
 local e,_,_,_,_,query = event.pull(3,"modem_message")
+query = crypt(query,extraConfig.cryptKey,true)
 query = ser.unserialize(query)
 if e ~= nil then
   if extraConfig.type == "single" then
