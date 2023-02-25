@@ -554,7 +554,7 @@ module.onTouch = function()
         guiCalls[i][3] = varEditWindow:addChild(GUI.input(72,labelSpot,10,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "#", loc.inputtext))
         guiCalls[i][3].callbackInt = i + #baseVariables
         guiCalls[i][3].buttonInt = i
-        guiCalls[i][3].onTouch = buttonCallback
+        guiCalls[i][3].onInputFinished = buttonCallback
         guiCalls[i][1] = varEditWindow:addChild(GUI.button(64,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
         guiCalls[i][1].buttonInt = i
         guiCalls[i][1].callbackInt = i + #baseVariables
@@ -572,20 +572,24 @@ module.onTouch = function()
         guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,30,1, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
         --[[local cur = guiCalls[i][1]:addItem("none")
         cur.callbackInt = i + #baseVariables
+        cur.buttonInt = i
         cur.onTouch = buttonCallback
         for _,vas in pairs(userTable.passSettings.data[i]) do
           cur = guiCalls[i][1]:addItem(vas)
           cur.callbackInt = i + #baseVariables
+          cur.buttonInt = i
           cur.onTouch = buttonCallback
         end]]
         local cur = guiCalls[i][1]:addItem("none")
         cur.callbackInt = i + #baseVariables
+        cur.buttonInt = i
         cur.onTouch = function()
           buttonCallback(nil,cur)
         end
         for _,vas in pairs(userTable.passSettings.data[i]) do
           cur = guiCalls[i][1]:addItem(vas)
           cur.callbackInt = i + #baseVariables
+          cur.buttonInt = i
           cur.onTouch = function()
             buttonCallback(nil,cur)
           end
