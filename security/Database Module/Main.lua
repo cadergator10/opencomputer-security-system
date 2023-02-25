@@ -18,8 +18,7 @@ local workspace, window, loc, database, style, permissions = table.unpack({...})
 module.name = "Security"
 module.table = {"passes","passSettings"}
 module.debug = false
-module.version = "4.0.0"
-module.id = 1111
+module.config = {}
 
 module.init = function(usTable)
   userTable = usTable
@@ -193,9 +192,12 @@ module.onTouch = function()
   end
 
   local function buttonCallback(workspace, button)
-    local buttonInt = button.buttonInt
-    local callbackInt = button.callbackInt
-    local isPos = button.isPos
+    local buttonInt, callbackInt, isPos
+    if button ~= nil then
+      buttonInt = button.buttonInt
+      callbackInt = button.callbackInt
+      isPos = button.isPos
+    end
     local selected = pageMult * listPageNumber + userList.selectedItem
     if callbackInt > #baseVariables then
       callbackInt = callbackInt - #baseVariables
@@ -568,9 +570,25 @@ module.onTouch = function()
         guiCalls[i][3].disabled = true
       elseif userTable.passSettings.type[i] == "-int" then
         guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,30,1, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
-        guiCalls[i][1]:addItem("none").onTouch = buttonCallback
+        --[[local cur = guiCalls[i][1]:addItem("none")
+        cur.callbackInt = i + #baseVariables
+        cur.onTouch = buttonCallback
         for _,vas in pairs(userTable.passSettings.data[i]) do
-          guiCalls[i][1]:addItem(vas).onTouch = buttonCallback
+          cur = guiCalls[i][1]:addItem(vas)
+          cur.callbackInt = i + #baseVariables
+          cur.onTouch = buttonCallback
+        end]]
+        local cur = guiCalls[i][1]:addItem("none")
+        cur.callbackInt = i + #baseVariables
+        cur.onTouch = function()
+          buttonCallback(nil,cur)
+        end
+        for _,vas in pairs(userTable.passSettings.data[i]) do
+          cur = guiCalls[i][1]:addItem(vas)
+          cur.callbackInt = i + #baseVariables
+          cur.onTouch = function()
+            buttonCallback(nil,cur)
+          end
         end
         guiCalls[i][1].disabled = true
       elseif userTable.passSettings.type[i] == "bool" then
