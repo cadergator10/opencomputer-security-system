@@ -28,6 +28,8 @@ local lengthNum = 0
 local pageNum = 1
 local listNum = 1
 
+local autoUpdateData
+
 local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}
 local redSideTypes = {"bottom","top","back","front","right","left"}
 
@@ -175,7 +177,7 @@ local function redlinkcheck(color,side)
                 sectorSettings[key].color = -1
                 sectorSettings[key].side = -1
             end
-        elseif key ~= "cryptKey" and key ~= "port" --We don't want cryptKey or port being used
+        elseif key ~= "cryptKey" and key ~= "port" then --We don't want cryptKey or port being used
             if value.open.color == color and value.open.side == side then
                 sectorSettings[key].open.color = -1
                 sectorSettings[key].open.side = -1
@@ -287,7 +289,7 @@ else
         term.clear()
     end
 
-    saveTable({["default"]={["side"]=2,["color"]=0},["cryptKey"]={1,2,3,4,5}},["port"]=modemPort,"redstonelinks.txt")
+    saveTable({["default"]={["side"]=2,["color"]=0},["cryptKey"]={1,2,3,4,5},["port"]=modemPort,"redstonelinks.txt"})
     print("Crypt key is set to default (1,2,3,4,5)")
 end
 
@@ -330,7 +332,7 @@ term.clear()
 print("Sending query to server...")
 modem.open(modemPort)
 modem.broadcast(modemPort,"getquery",ser.serialize({"sectors","sectorStatus"}))
-e,_,_,_,_,msg = event.pull(3,"modem_message")
+local e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then
     print("No query received. Assuming old server system is in place and will not work")
