@@ -18,7 +18,7 @@ local workspace, window, loc, database, style, permissions = table.unpack({...})
 module.name = "Security"
 module.table = {"passes","passSettings"}
 module.debug = false
-module.config = {}
+module.config = {["secAPI"] = {["label"] = "Security API",["type"]="bool",["default"]=true,["server"]=true}}
 
 module.init = function(usTable)
   userTable = usTable

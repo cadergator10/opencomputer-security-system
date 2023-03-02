@@ -224,27 +224,35 @@ function module.message(command,datar,from) --Called when a command goes past al
             return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Checking if device is linked to a user: ",["color"]=0xFFFF80},{["text"]=" tablet not linked",["color"]=0x990000,["line"]=true}},false,true,data
         end--IMPORTANT: Hello
     elseif command == "getvar" then
-        local worked = false
-        for _, value in pairs(userTable.passes) do
-            if value.uuid == data.uuid then
-                worked = true
-                local mee = type(value[data.var]) == "table" and ser.serialize(value[data.var]) or value[data.var]
-                return true,nil,false,true,server.crypt(mee)
+        if (server.configCheck("secAPI")) then
+            local worked = false
+            for _, value in pairs(userTable.passes) do
+                if value.uuid == data.uuid then
+                    worked = true
+                    local mee = type(value[data.var]) == "table" and ser.serialize(value[data.var]) or value[data.var]
+                    return true,nil,false,true,server.crypt(mee)
+                end
             end
+        else
+            return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="SecAPI getvar requested when disabled by database",["color"]=0xFF0000}}, false, true, server.crypt({})
         end
     elseif command == "setvar" then
-        local worked = false
-        local counter = 1
-        for _, value in pairs(userTable.passes) do
-            if value.uuid == data.uuid then
-                worked = true
-                if type(userTable.passes[counter][data.var]) == type(data.data) then
-                    userTable.passes[counter][data.var] = data.data
+        if (server.configCheck("secAPI")) then
+            local worked = false
+            local counter = 1
+            for _, value in pairs(userTable.passes) do
+                if value.uuid == data.uuid then
+                    worked = true
+                    if type(userTable.passes[counter][data.var]) == type(data.data) then
+                        userTable.passes[counter][data.var] = data.data
+                    end
+                    return true,nil,true,true,server.crypt("true")
+                else
+                    counter = counter + 1
                 end
-                return true,nil,true,true,server.crypt("true")
-            else
-                counter = counter + 1
             end
+        else
+            return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="SecAPI getvar requested when disabled by database",["color"]=0xFF0000}}, false, true, server.crypt({})
         end
     elseif command == "checkRules" then
         local currentDoor = getDoorInfo(data.type,from,data.key)
