@@ -45,7 +45,10 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
 
     local finishLink = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/doorsetup/finish.lua"
 
-    local doors = {}
+    local doors = database.dataBackup("doorCreation") --TODO: Make sure this is correct thing
+    if (doors == nil) then
+        doors = {}
+    end
 
     local editPage = 1
 
@@ -206,6 +209,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         elseif editPage == 2 then
 
         end
+        database.dataBackup("doorCreation",doors) --TODO: Make sure this is correct thing
     end
 
     local function refreshInput()
