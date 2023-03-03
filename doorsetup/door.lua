@@ -631,7 +631,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 mep:write(ser.serialize(tmpTable))
                 mep:close()
                 roller:roll()
-                mep = fs.open(fs.path(system.getCurrentScript()) .. "Modules/DoorSetup/finish.lua","r")
+                mep = fs.open(fs.path(system.getCurrentScript()) .. "Modules/modid" .. tostring(module.id) .. "/finish.lua","r")
                 local nw = fs.open(doorPathSelector.path .. "finish.lua","w")
                 nw:write(mep:readAll())
                 nw:close()
