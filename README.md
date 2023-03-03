@@ -18,6 +18,7 @@ Featuring...
 If you have used this before, you may be wondering, "what's servertine?" I split up the server and database from the security system and am making them into a new project called "Servertine", which is a powerful system you can create powerful modules for and easilly connect to them using the servertine API. They also support other features like the range extender. The reason being for this is an API I can easilly build more programs off of and ease of updating the existing passes system. The move to a modular system brings no drawbacks to the system as well.
 
 <a href="https://github.com/cadergator10/Opencomputers-serpentine">Download servertine here</a>
+<a href="https://discord.gg/wfqFsqpKvW">Join the Servertine discord</a>
 
 I will be making a full video tutorial series soon. <a href="https://www.youtube.com/channel/UCC492g_YuYcWKRIeQD3kqdQ">Channel is here</a>
 
