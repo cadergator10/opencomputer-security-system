@@ -28,8 +28,6 @@ local lengthNum = 0
 local pageNum = 1
 local listNum = 1
 
-local autoUpdateData
-
 local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}
 local redSideTypes = {"bottom","top","back","front","right","left"}
 
@@ -431,39 +429,43 @@ while true do
                 end
             end
         elseif ev == "redstone_changed" then
-            local red = redstone.getBundledInput() --TODO: See if redstone_changed can return the side and color
-            local officialChange = false --If the change in redstone is something saved to redstonelinks.txtr
-            for i=1,#query,1 do
-                local current = sectorStatus[query[i].uuid]
-                sectorStatus[query[i].uuid] = 1
-                if sectorSettings[query[i].uuid].open.side ~= -1 and sectorSettings[query[i].uuid].open.color ~= -1 then
-                    if red[sectorSettings[query[i].uuid].open.side][sectorSettings[query[i].uuid].open.color] > 0 then
-                        sectorStatus[query[i].uuid] = 3
+            local officialChange = {false} --If the change in redstone is something saved to redstonelinks.txtr
+            if key == 0 and value > 0 then
+                for i=1,#query,1 do
+                    local current = sectorStatus[query[i].uuid]
+                    sectorStatus[query[i].uuid] = 1
+                    if sectorSettings[query[i].uuid].open.side == side and sectorSettings[query[i].uuid].open.color == command then
+                        officialChange[1] = true
+                        officialChange[2] = query[i].uuid
+                        officialChange[3] = side
+                        officialChange[4] = command
+                        officialChange[5] = 3
+                        break
                     end
-                end
-                if sectorSettings[query[i].uuid].lock.side ~= -1 and sectorSettings[query[i].uuid].lock.color ~= -1 then
-                    if red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
-                        sectorStatus[query[i].uuid] = 2
+                    if sectorSettings[query[i].uuid].lock.side == side and sectorSettings[query[i].uuid].lock.color == command then
+                        officialChange[1] = true
+                        officialChange[2] = query[i].uuid
+                        officialChange[3] = side
+                        officialChange[4] = command
+                        officialChange[5] = 2
+                        break
                     end
-                end
-                if sectorStatus[query[i].uuid] ~= current then --a change was detected
-                    officialChange = true
+                    if sectorSettings[query[i].uuid].disable.side == side and sectorSettings[query[i].uuid].disable.color == command then
+                        officialChange[1] = true
+                        officialChange[2] = query[i].uuid
+                        officialChange[3] = side
+                        officialChange[4] = command
+                        officialChange[5] = 1
+                        break
+                    end
+                    --[[if sectorStatus[query[i].uuid] ~= current then --a change was detected
+                        officialChange = true
+                    end]]
                 end
             end
-            -- start modification
-            if autoUpdateData and officialChange then
-                modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize(sectorStatus),sectorSettings.cryptKey))
-            else
-                if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
-                    if updatePulse == false then
-                        updatePulse = true
-                        modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize(sectorStatus),sectorSettings.cryptKey))
-                    end
-                else
-                    updatePulse = false
-                end
+            if officialChange then
+                modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({officialChange[2],officialChange[5]}),sectorSettings.cryptKey))
             end
-            -- end of modification
         end
     else
         os.sleep(1)
