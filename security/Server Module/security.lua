@@ -7,7 +7,7 @@ local component = require("component")
 local modem = component.modem
 local ser = require("serialization")
 
-module = {}
+local module = {}
 module.name = "passes"
 module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules","linkMCID"}
 module.skipcrypt = {}

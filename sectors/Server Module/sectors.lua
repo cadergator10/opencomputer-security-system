@@ -8,7 +8,7 @@ local modem = component.modem
 local ser = require("serialization")
 local uuid = require("uuid")
 
-module = {}
+local module = {}
 module.name = "sectors"
 module.commands = {"sectorupdate","doorsector","doorsecupdate"}
 module.skipcrypt = {}
