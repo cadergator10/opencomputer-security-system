@@ -407,8 +407,6 @@ while true do
                             sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].open.color = color
                             sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].open.side = side
                         end
-                    else
-
                     end
                     saveTable(sectorSettings,"redstonelinks.txt")
                     pageChange("hor",pageNum,#sector, sectorGui, editmode)
@@ -432,8 +430,6 @@ while true do
             local officialChange = {false} --If the change in redstone is something saved to redstonelinks.txtr
             if key == 0 and value > 0 then
                 for i=1,#query,1 do
-                    local current = sectorStatus[query[i].uuid]
-                    sectorStatus[query[i].uuid] = 1
                     if sectorSettings[query[i].uuid].open.side == side and sectorSettings[query[i].uuid].open.color == command then
                         officialChange[1] = true
                         officialChange[2] = query[i].uuid
