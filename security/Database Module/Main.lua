@@ -416,7 +416,7 @@ module.onTouch = function()
       local e, _, _, msg = event.pull(10)
       container:remove()
       if e == "bioReader" then
-        userTable.passes[selected].mcid = data
+        userTable.passes[selected].mcid = msg
         GUI.alert(loc.linksuccess)
       else
         userTable.passes[selected].mcid = "nil"
