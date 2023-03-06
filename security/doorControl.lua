@@ -380,52 +380,25 @@ local e,_,_,_,_,query = event.pull(3,"modem_message")
 query = crypt(query,extraConfig.cryptKey,true)
 query = ser.unserialize(query)
 if e ~= nil then
-  if extraConfig.type == "single" then
-    if settingData.forceOpen ~= nil then
-      settingData.forceOpen = nil
-      settingData.bypassLock = nil
-      settingData.sector = false
-    end
-    local temp = {}
-    temp["aaaa"] = deepcopy(settingData)
-    if temp.aaaa.doorType == 0 then
-      temp.aaaa.doorAddress = component.os_doorcontrol.address
-    elseif temp.aaaa.doorType == 3 then
-      temp.aaaa.doorAddress = component.os_rolldoorcontrol.address
-    else
-      temp.aaaa.doorAddress = ""
-    end
-    temp.aaaa.reader = {}
-    for key,_ in pairs(component.list("os_magreader")) do
-      table.insert(temp.aaaa.reader,key)
-    end
-    saveTable(temp,"doorSettings.txt")
-    settingData = temp
-    extraConfig.type = "doorsystem"
-    saveTable(extraConfig,"extraConfig.txt")
-  elseif extraConfig.type == "multi" then
-    for key, value in pairs(settingData) do
-      if value.forceOpen ~= nil then
-        checkBool = true
-        settingData[key].forceOpen = nil
-        settingData[key].bypassLock = nil
-        settingData[key].sector = false
-      end
-      settingData[key].redSide = 2
-      settingData[key].reader = {settingData[key].reader}
-    end
-    saveTable(settingData,"doorSettings.txt")
-    extraConfig.type = "doorsystem"
-    saveTable(extraConfig,"extraConfig.txt")
-  end
   for key,_ in pairs(settingData) do
     if type(settingData[key].doorAddress) == "string" then
       settingData[key].doorAddress = {settingData[key].doorAddress}
+      checkBool = true
     end
     if settingData[key].doorType == 0 then
       settingData[key].doorType = 3
+      checkBool = true
+    end
+    if type(settingData[key].reader[1]) == "string" then
+      for _, value in pairs(settingData[key].reader) do
+        value = {["type"]="swipe",["uuid"]=value}
+      end
+      checkBool = true
     end
   end
+end
+if checkBook then
+  saveTable(settingData,"doorSettings.txt")
 end
 checkBool = nil
 
@@ -476,13 +449,15 @@ modem.open(diagPort)
 local bypassallowed = false
 
 while true do
-  local ev, address, user, str, uuid, data = event.pull("magData")
-  if osVersion then colorLink(address,2) end
+  local ev, address, user, str, uuid, data = event.pullMultiple("magData","bioReader","rfidSuccess")
+  if ev == "magData" then
+    if osVersion then colorLink(address,2) end
+  end
   local isOk = "ok"
   local keyed = nil
   for key, valuedd in pairs(settingData) do
     for i=1,#valuedd.reader,1 do
-      if(valuedd.reader[i] == address) then
+      if(valuedd.reader[i]["uuid"] == address) then
         keyed = key
         break
       end
@@ -509,7 +484,12 @@ while true do
       os.exit()
     end
   end
-  local data = crypt(str, extraConfig.cryptKey, true)
+  local data
+  if ev == "bioReader" then
+    data = str
+  else
+    data = crypt(str, extraConfig.cryptKey, true)
+  end
   if ev then
     if (data == adminCard) then
       term.write("Admin card swiped. Sending diagnostics\n")
@@ -537,13 +517,19 @@ while true do
       if keyed == nil then
         os.exit()
       end
-      local tmpTable = ser.unserialize(data)
-      if tmpTable == nil then
-        term.write("Card failed to read. it may not have been written to right or cryptkey may be incorrect.")
-        if osVersion then colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=3},{["color"]=0,["delay"]=1}}) end
-        os.exit()
+      local tmpTable
+      if ev ~= "bioReader" then
+        tmpTable = ser.unserialize(data)
+        if tmpTable == nil then
+          term.write("Card failed to read. it may not have been written to right or cryptkey may be incorrect.")
+          if osVersion then colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=3},{["color"]=0,["delay"]=1}}) end
+          os.exit()
+        end
+        term.write(tmpTable["name"] .. ":")
+      else
+        tmpTable = {["isBio"] = true,["uuid"] = str}
+        term.write("UUID " .. str .. ":")
       end
-      term.write(tmpTable["name"] .. ":")
       tmpTable["type"] = extraConfig.type
       tmpTable["key"] = keyed
       tmpTable["sector"] = sector

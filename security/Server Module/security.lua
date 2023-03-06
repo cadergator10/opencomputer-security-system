@@ -161,9 +161,18 @@ local function getDoorInfo(type,id,key)
 end
 
 local function checkLink(user)
-    for key, value in pairs(userTable.passes) do
+    for _, value in pairs(userTable.passes) do
         if value.link == user then
             return true, not value.blocked, value.name
+        end
+    end
+    return false
+end
+
+local function checkMCID(id)
+    for _, value in pairs(userTable.passes) do
+        if value.mcid == value then
+            return true, value.uuid
         end
     end
     return false
@@ -282,6 +291,14 @@ function module.message(command,datar,from) --Called when a command goes past al
     elseif command == "checkRules" then
         local currentDoor = getDoorInfo(data.type,from,data.key)
         local enter = true
+        if data.isBio then
+            local e,good = checkMCID(data.uuid)
+            if e then
+                data.uuid = good
+            else
+                return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="",["color"]=0x994049}},false,true,server.crypt("false")
+            end
+        end
         if data.sector ~= false then
             local a,c,_,_,b = server.modulemsg("doorsector",ser.serialize(data))
             if a then
