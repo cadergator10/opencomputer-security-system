@@ -223,7 +223,7 @@ module.onTouch = function()
         elseif isPos == nil then
           theNum = tonumber(guiCalls[buttonInt][3].text)
           if theNum and theNum >= 0 and theNum <= 100 then
-x            userTable.passes[selected][userTable.passSettings.var[callbackInt]] = theNum
+            userTable.passes[selected][userTable.passSettings.var[callbackInt]] = theNum
           else
             guiCalls[buttonInt][3].text = tostring(userTable.passes[selected][userTable.passSettings.var[callbackInt]])
           end
