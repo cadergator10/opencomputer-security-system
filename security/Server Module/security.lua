@@ -9,7 +9,7 @@ local ser = require("serialization")
 
 module = {}
 module.name = "passes"
-module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules"}
+module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules","linkMCID"}
 module.skipcrypt = {}
 module.table = {["passes"]={},["passSettings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
 module.debug = false
@@ -174,6 +174,11 @@ function module.init(setit ,doors, serverCommands) --Called when server is first
     doorTable = doors
     server = serverCommands
     if module.debug then server.print("Received Stuff for passes!") end
+    if userTable.passes[1] ~= nil and userTable.passes[1].mcid == nil then --make sure old systems migrate successfully
+        for _,value in pairs(userTable.passes) do
+            value.mcid = "nil"
+        end
+    end
 end
 
 function module.setup() --Called when userlist is updated or server is first started
@@ -253,6 +258,26 @@ function module.message(command,datar,from) --Called when a command goes past al
             end
         else
             return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="SecAPI getvar requested when disabled by database",["color"]=0xFF0000}}, false, true, server.crypt({})
+        end
+    elseif command == "linkMCID" then
+        if (server.configCheck("quickMCLink")) then
+            local worked = false
+            local counter = 1
+            for _, value in pairs(userTable.passes) do
+                if value.uuid == data.uuid then
+                    worked = true
+                    if value.mcid == "nil" then
+                        value.mcid = data.mcid
+                        return true, nil, true, true, server.crypt("true")
+                    else
+                        return true, nil, false, true, server.crypt("false")
+                    end
+                else
+                    counter = counter + 1
+                end
+            end
+        else
+            return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Quick Linking MCID's has been disabled by database",["color"]=0xFF0000}}, false, true, server.crypt("false")
         end
     elseif command == "checkRules" then
         local currentDoor = getDoorInfo(data.type,from,data.key)

@@ -5,6 +5,7 @@ local GUI = require("GUI")
 local uuid = require("uuid")
 local event = require("event")
 local modem = component.modem
+local scanner
 local writer
 
 local handler
@@ -18,7 +19,7 @@ local workspace, window, loc, database, style, permissions = table.unpack({...})
 module.name = "Security"
 module.table = {"passes","passSettings"}
 module.debug = false
-module.config = {["secAPI"] = {["label"] = "Security API",["type"]="bool",["default"]=true,["server"]=true}}
+module.config = {["secAPI"] = {["label"] = "Security API",["type"]="bool",["default"]=true,["server"]=true},["quickMCLink"] = {["label"] = "Allow quikidlink?",["type"]="bool",["default"]=false,["server"]=true}}
 
 module.init = function(usTable)
   userTable = usTable
@@ -29,6 +30,9 @@ if component.isAvailable("os_cardwriter") then
 else
   GUI.alert(loc.cardwriteralert)
   return
+end
+if component.isAvailable("os_biometric") then
+  scanner = component.os_biometric
 end
 
 local function split(s, delimiter)
@@ -44,12 +48,10 @@ module.onTouch = function()
   local cardStatusLabel, userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
   local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
   local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2
+  local userMCIDLabel, userMCIDButton, userMCIDClear
 
   local baseVariables = {"name","uuid","date","link","blocked","staff"} --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
   local guiCalls = {}
-
-  ----------- Site 91 specific configuration (to avoid breaking commercial systems, don't enable)
-  local enableLinking = false
   -----------
 
   local adminCard = "admincard"
@@ -88,10 +90,13 @@ module.onTouch = function()
     local selectedId = pageMult * listPageNumber + userList.selectedItem
     userNameText.text = userTable.passes[selectedId].name
     userUUIDLabel.text = "UUID      : " .. userTable.passes[selectedId].uuid
-    if enableLinking == true then
+      --Linking and user id
       linkUserLabel.text = "LINK      : " .. userTable.passes[selectedId].link
       linkUserButton.disabled = database.checkPerms("security",{"passediting","varmanagement","link"},true)
-    end
+      userMCIDLabel.text = "MC ID     : " .. userTable.passes[selectedId].mcid
+      userMCIDButton.disabled = database.checkPerms("security",{"passediting","varmanagement","mcid"},true)
+      userMCIDClear.disabled = database.checkPerms("security",{"passediting","varmanagement","mcid"},true)
+      --end of linking and user id
     if userTable.passes[selectedId].blocked == true then
       cardBlockedYesButton.pressed = true
     else
@@ -256,7 +261,7 @@ module.onTouch = function()
   end
 
   local function newUserCallback() --Issue with -strings
-    local tmpTable = {["name"] = "new", ["blocked"] = false, ["staff"] = false, ["uuid"] = uuid.next(), ["link"] = "nil"}
+    local tmpTable = {["name"] = "new", ["blocked"] = false, ["staff"] = false, ["uuid"] = uuid.next(), ["link"] = "nil", ["mcid"] = "nil"}
     for i=1,#userTable.passSettings.var,1 do
       if userTable.passSettings.type[i] == "string" then
         tmpTable[userTable.passSettings.var[i]] = "none"
@@ -318,7 +323,9 @@ module.onTouch = function()
       end
     end
     cardBlockedYesButton.disabled = true
-    if enableLinking == true then linkUserButton.disabled = true end
+    linkUserButton.disabled = true
+    userMCIDButton.disabled = true
+    userMCIDClear.disable = true
   end
 
   local function changeUUID()
@@ -398,6 +405,33 @@ module.onTouch = function()
       GUI.alert(loc.linkfail)
     end
     modem.close(dbPort)
+    updateList()
+    userListCallback()
+  end
+
+  local function linkMCIDCallback()
+    if scanner ~= nil then
+      local container = GUI.addBackgroundContainer(workspace, false, true, "Please have the user who you are linking to the card click the Biometric Reader")
+      local selected = pageMult * listPageNumber + userList.selectedItem
+      local e, _, _, msg = event.pull(10)
+      container:remove()
+      if e == "bioReader" then
+        userTable.passes[selected].mcid = data
+        GUI.alert(loc.linksuccess)
+      else
+        userTable.passes[selected].mcid = "nil"
+        GUI.alert(loc.linkfail)
+      end
+      updateList()
+      userListCallback()
+    else
+      GUI.alert("No Biometric Reader is connected to this computer")
+    end
+  end
+
+  local function clearMCIDCallback()
+    local selected = pageMult * listPageNumber + userList.selectedItem
+    userTable.passes[selected].mcid = "nil"
     updateList()
     userListCallback()
   end
@@ -606,13 +640,20 @@ module.onTouch = function()
       labelSpot = labelSpot + 2
     end
 
-    if enableLinking == true then
-      linkUserLabel = varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"LINK      : " .. loc.usernotselected))
-      labelSpot = labelSpot + 2
-      linkUserButton = varEditWindow:addChild(GUI.button(40,labelSpot,16,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.linkdevice))
-      linkUserButton.onTouch = linkUserCallback
-      linkUserButton.disabled = true
-    end
+    linkUserLabel = varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"LINK      : " .. loc.usernotselected))
+    linkUserButton = varEditWindow:addChild(GUI.button(85,labelSpot,16,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.linkdevice))
+    linkUserButton.onTouch = linkUserCallback
+    linkUserButton.disabled = true
+    labelSpot = labelSpot + 2
+
+    userMCIDLabel = varEditWindow:addChild(GUI.label(40,labelSpot,3,3,style.passNameLabel,"MCID      : " .. loc.usernotselected))
+    userMCIDButton = varEditWindow:addChild(GUI.button(85,labelSpot,10,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "link user"))
+    userMCIDButton.onTouch = linkMCIDCallback
+    userMCIDButton.disabled = true
+    userMCIDButton = varEditWindow:addChild(GUI.button(100,labelSpot,10,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "clear"))
+    userMCIDButton.onTouch = clearMCIDCallback
+    userMCIDButton.disabled = true
+    labelSpot = labelSpot + 2
 
     listPageLabel = window:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
     listUpButton = window:addChild(GUI.button(8,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))

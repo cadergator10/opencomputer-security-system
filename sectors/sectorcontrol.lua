@@ -401,7 +401,7 @@ while true do
                         if (listNum)%3 == 1 then
                             sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].disable.color = color
                             sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].disable.side = side
-                        else if (listNum)%3 == 2 then
+                        elseif (listNum)%3 == 2 then
                             sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.color = color
                             sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.side = side
                         else
@@ -416,7 +416,7 @@ while true do
                     if (listNum)%3 == 1 then
                         sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].disable.color = -1
                         sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].disable.side = -1
-                    else if (listNum)%3 == 2 then
+                    elseif (listNum)%3 == 2 then
                         sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.color = -1
                         sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.side = -1
                     else

@@ -5,7 +5,7 @@ Definitely Servertine (this):
 5. SectorControl module for Servertine (an optional manual changing utility)
 7. Possible KeyPad, RFID Reader, and Biometric Reader.
 8. Database remote control module
-9. Make SectorControl utilize runtime changes (3 wires per sector: 1 to turn off lockdown, another to enable, and another to lock open)
+10. Open Linking and User ID string values
 
 
 done
@@ -13,6 +13,7 @@ groups (-int) get dropdown rather than int changer with +- (DONE)
 Text Box for level in security module (no +- buttons alone, quick change) (DONE)
 CryptKey ALL THE FEATURES I CAN to prevent security holes (DONE)
 Save changes done on DoorSetup to prevent data loss upon leaving the module (DONE?)
+Make SectorControl utilize runtime changes (3 wires per sector: 1 to turn off lockdown, another to enable, and another to lock open) (DONE?)
 
 
 remember

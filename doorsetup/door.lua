@@ -661,6 +661,9 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     varEditWindow = window:addChild(GUI.container(1,1,window.width,window.height))
     psCall = pageSetup
     pageSetup()
+    if doors ~= {} then
+        updateList()
+    end
 end
 
 module.close = function()
