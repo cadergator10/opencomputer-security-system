@@ -65,7 +65,7 @@ function module.message(command,datar) --Called when a command goes past all def
     if st then
       userTable.sectorStatus[data[1]] = data[2]
       local me = {"disabled","lockdown","open"}
-      return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector ",["color"]=nil,["line"]=false},{["text"]=name,["color"]=0x00FF00,["line"]=false},{["text"]="Status set to ",["color"]=nil,["line"]=true},{["text"]=me[data[2]],["color"]=nil,["line"]=false}},true,false,"checkSector",ser.serialize(data)
+      return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector ",["color"]=nil,["line"]=false},{["text"]=name,["color"]=0x00FF00,["line"]=false},{["text"]="Status set to ",["color"]=nil,["line"]=true},{["text"]=me[data[2]],["color"]=nil,["line"]=false}},true,false,"checkSector",ser.serialize(userTable.sectorStatus)
     else
 
     end

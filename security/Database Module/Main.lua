@@ -650,9 +650,9 @@ module.onTouch = function()
     userMCIDButton = varEditWindow:addChild(GUI.button(85,labelSpot,10,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "link user"))
     userMCIDButton.onTouch = linkMCIDCallback
     userMCIDButton.disabled = true
-    userMCIDButton = varEditWindow:addChild(GUI.button(100,labelSpot,10,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "clear"))
-    userMCIDButton.onTouch = clearMCIDCallback
-    userMCIDButton.disabled = true
+    userMCIDClear = varEditWindow:addChild(GUI.button(100,labelSpot,10,1, style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, "clear"))
+    userMCIDClear.onTouch = clearMCIDCallback
+    userMCIDClear.disabled = true
     labelSpot = labelSpot + 2
 
     listPageLabel = window:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))

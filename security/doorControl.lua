@@ -457,7 +457,7 @@ while true do
   local keyed = nil
   for key, valuedd in pairs(settingData) do
     for i=1,#valuedd.reader,1 do
-      if(valuedd.reader[i]["uuid"] == address) then
+      if(valuedd.reader[i].uuid == address) then
         keyed = key
         break
       end
