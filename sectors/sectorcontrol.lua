@@ -304,7 +304,8 @@ if sectorSettings.cryptKey == nil then
     end
     sectorSettings.port = modemPort
     saveTable(sectorSettings,"redstonelinks.txt")
-else if sectorSettings.default ~= nil then
+end
+if sectorSettings.default ~= nil then
     sectorSettings.default = nil
     for key, value in pairs(sectorSettings) do
         if key ~= "cryptKey" and key ~= "port" then
@@ -385,7 +386,7 @@ while true do
                     term.clearLine()
                     local side = term.read():sub(1,-2)
                     if tonumber(side) ~= nil then
-                        side = tonumber(side)
+                    side = tonumber(side)
                     end
                     setGui(20,"Which color should be checked?")
                     term.setCursor(1,21)
