@@ -230,7 +230,9 @@ end
                     component.proxy(value2).close()
                   end
                 elseif value.doorType == 2 then
-                  component.redstone.setBundledOutput(2, { [value.redColor] = 0 } )
+                  component.redstone.setBundledOutput(value.redSide, { [value.redColor] = 0 } )
+                elseif value.doorType == 1 then
+                  component.redstone.setOutput(value.redSide,0)
                 end
                 if osVersion then
                   colorLink(value.reader,0,0)
@@ -241,7 +243,9 @@ end
                     component.proxy(value2).close()
                   end
                 elseif value.doorType == 2 then
-                  component.redstone.setBundledOutput(2, { [value.redColor] = 0 } )
+                  component.redstone.setBundledOutput(value.redSide, { [value.redColor] = 0 } )
+                elseif value.doorType == 1 then
+                  component.redstone.setOutput(value.redSide,0)
                 end
                 if osVersion then
                   colorLink(value.reader,1,1)
@@ -252,7 +256,9 @@ end
                     component.proxy(value2).open()
                   end
                 elseif value.doorType == 2 then
-                  component.redstone.setBundledOutput(2, { [value.redColor] = 255 } )
+                  component.redstone.setBundledOutput(value.redSide, { [value.redColor] = 255 } )
+                elseif value.doorType == 1 then
+                  component.redstone.setOutput(value.redSide,15)
                 end
                 if osVersion then
                   colorLink(value.reader,4,4)
