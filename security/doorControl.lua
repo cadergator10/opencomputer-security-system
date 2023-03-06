@@ -236,6 +236,13 @@ end
                   colorLink(value.reader,0,0)
                 end
               elseif value2 == 2 then
+                if value.doorType == 3 then
+                  for _,value2 in pairs(value.doorAddress) do
+                    component.proxy(value2).close()
+                  end
+                elseif value.doorType == 2 then
+                  component.redstone.setBundledOutput(2, { [value.redColor] = 0 } )
+                end
                 if osVersion then
                   colorLink(value.reader,1,1)
                 end
