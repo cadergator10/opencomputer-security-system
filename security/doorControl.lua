@@ -164,7 +164,7 @@ end
     end
     if type(key) == "table" then
       for i=1,#key,1 do
-        chech(key[i])
+        if key[i].type == "swipe" then chech(key[i].uuid) end
       end
     else
       chech(key)
@@ -390,14 +390,14 @@ if e ~= nil then
       checkBool = true
     end
     if type(settingData[key].reader[1]) == "string" then
-      for _, value in pairs(settingData[key].reader) do
-        value = {["type"]="swipe",["uuid"]=value}
+      for key2, value in pairs(settingData[key].reader) do
+        settingData[key].reader[key2] = {["type"]="swipe",["uuid"]=value}
       end
       checkBool = true
     end
   end
 end
-if checkBook then
+if checkBool then
   saveTable(settingData,"doorSettings.txt")
 end
 checkBool = nil
