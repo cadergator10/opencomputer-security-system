@@ -399,14 +399,14 @@ while true do
                     if color ~= -1 and side ~= -1 then
                         redlinkcheck(color,side)
                         if (listNum)%3 == 1 then
-                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].disable.color = color
-                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].disable.side = side
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.color = color
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.side = side
                         elseif (listNum)%3 == 2 then
-                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.color = color
-                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.side = side
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.color = color
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.side = side
                         else
-                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].open.color = color
-                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].open.side = side
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.color = color
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.side = side
                         end
                     end
                     saveTable(sectorSettings,"redstonelinks.txt")
@@ -414,14 +414,14 @@ while true do
                     os.sleep(0.5)
                 elseif char == "back" then
                     if (listNum)%3 == 1 then
-                        sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].disable.color = -1
-                        sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].disable.side = -1
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.color = -1
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.side = -1
                     elseif (listNum)%3 == 2 then
-                        sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.color = -1
-                        sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.side = -1
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.color = -1
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.side = -1
                     else
-                        sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].open.color = -1
-                        sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].open.side = -1
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.color = -1
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.side = -1
                     end
                     pageChange("hor",pageNum,#sector, sectorGui, editmode)
                     os.sleep(0.5)
@@ -460,7 +460,7 @@ while true do
                     end]]
                 end
             end
-            if officialChange then
+            if officialChange[1] then
                 modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({officialChange[2],officialChange[5]}),sectorSettings.cryptKey))
             end
         end
