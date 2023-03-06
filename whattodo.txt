@@ -12,8 +12,8 @@ done
 groups (-int) get dropdown rather than int changer with +- (DONE)
 Text Box for level in security module (no +- buttons alone, quick change) (DONE)
 CryptKey ALL THE FEATURES I CAN to prevent security holes (DONE)
-Save changes done on DoorSetup to prevent data loss upon leaving the module (DONE?)
-Make SectorControl utilize runtime changes (3 wires per sector: 1 to turn off lockdown, another to enable, and another to lock open) (DONE?)
+Save changes done on DoorSetup to prevent data loss upon leaving the module (DONE)
+Make SectorControl utilize runtime changes (3 wires per sector: 1 to turn off lockdown, another to enable, and another to lock open) (DONE)
 
 
 remember
