@@ -499,7 +499,7 @@ while true do
   end
   local data
   if ev == "bioReader" then --TODO: Find all occurances and fix the pull
-    data = str
+    data = user
   else
     data = crypt(str, extraConfig.cryptKey, true)
   end
