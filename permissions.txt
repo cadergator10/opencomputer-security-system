@@ -10,10 +10,11 @@ security.link (link button)
 security.block (block user)
 security.staff (staff pass)
 security.doorsetup (create a door with doorsetup module)
+security.mcid (link and clear a user's minecraft id)
 security.(any var added by user)
 
 dev.* (all developer module features)
-dev.usermanagement (manage users and passes such.)
+dev.usermanagement (manage users and permissions and such.)
 dev.systemmanagement (manage modules and settings)
 
 Any permission written with a ~ before it will be disabled for that user
