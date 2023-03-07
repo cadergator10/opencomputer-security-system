@@ -286,8 +286,12 @@ module.onTouch = function()
           guiCalls[i][1].disabled = true
           guiCalls[i][1]:clear()
         end
-      elseif tmp == "int" then
-        guiCalls[i][3].text = "#"
+      elseif tmp == "int" or tmp == "-int" then
+        if tmp == "-int" then
+          guiCalls[i][3].text = "NAN"
+        else
+          guiCalls[i][3].text = "#"
+        end
         guiCalls[i][1].disabled = true
         guiCalls[i][2].disabled = true
         guiCalls[i][3].disabled = true
