@@ -189,34 +189,20 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
             print("door's key: " .. diagInfo2["key"])
             print("door name: " .. diagInfo2["name"])
             print("door pass amount: " .. #diagInfo2.cardRead)
-            
+
             print("-Component Addresses--")
             if #diagInfo2.reader == 1 then print("Reader Address: " .. diagInfo2["reader"][1].uuid .. " : " .. diagInfo2["reader"][1].type) else print("Reader Amount: " .. #diagInfo2["reader"]) end
-            if versionNum >= 2 then
-                if diagInfo2["doorType"] == 3 then
-                    if #diagInfo2["doorAddress"] == 1 then
-                        print("Controller Address: " .. diagInfo2["doorAddress"][1])
-                    else
-                        print("Controller Amount: " .. #diagInfo2["doorAddress"])
-                    end
+            if diagInfo2["doorType"] == 3 then
+                if #diagInfo2["doorAddress"] == 1 then
+                    print("Controller Address: " .. diagInfo2["doorAddress"][1])
                 else
-                    print("***")
+                    print("Controller Amount: " .. #diagInfo2["doorAddress"])
                 end
             else
-                if diagInfo2["doorType"] == 0 then
-                    print("Doorcontrol Address: " .. diagInfo2["doorAddress"])
-                elseif diagInfo2["doorType"] == 3 then
-                    print("RollDoor Address: " .. diagInfo2["doorAddress"])
-                else
-                    print("***")
-                end
+                print("***")
             end
             print("----Door Functions----")
-            if versionNum >= 2 then
-                print("Door Type: " .. newDoorTypes[diagInfo2.doorType])
-            else
-                print("Door Type: " .. doorTypeTypes[diagInfo2.doorType + 1])
-            end
+            print("Door Type: " .. newDoorTypes[diagInfo2.doorType])
             if diagInfo2.doorType == 2 then
                 print("Redstone output side: " .. diagInfo2.redSide)
                 print("Redstone output color: " .. diagInfo2.redColor)
@@ -274,32 +260,18 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
 
         print("-Component Addresses--")
         if #diagInfo2.reader == 1 then print("Reader Address: " .. diagInfo2["reader"][1].uuid .. " : " .. diagInfo2["reader"][1].type) else print("Reader Amount: " .. #diagInfo2["reader"]) end
-        if versionNum >= 2 then
-            if diagInfo2["doorType"] == 3 then
-                if #diagInfo2["doorAddress"] == 1 then
-                    print("Controller Address: " .. diagInfo2["doorAddress"][1])
-                else
-                    print("Controller Amount: " .. #diagInfo2["doorAddress"])
-                end
+        if diagInfo2["doorType"] == 3 then
+            if #diagInfo2["doorAddress"] == 1 then
+                print("Controller Address: " .. diagInfo2["doorAddress"][1])
             else
-                print("***")
+                print("Controller Amount: " .. #diagInfo2["doorAddress"])
             end
         else
-            if diagInfo2["doorType"] == 0 then
-                print("Doorcontrol Address: " .. diagInfo2["doorAddress"])
-            elseif diagInfo2["doorType"] == 3 then
-                print("RollDoor Address: " .. diagInfo2["doorAddress"])
-            else
-                print("***")
-            end
+            print("***")
         end
         
         print("----Door Functions----")
-        if versionNum >= 2 then
-            print("Door Type: " .. newDoorTypes[diagInfo2.doorType])
-        else
-            print("Door Type: " .. doorTypeTypes[diagInfo2.doorType + 1])
-        end
+        print("Door Type: " .. newDoorTypes[diagInfo2.doorType])
         if diagInfo2.doorType == 2 then
             print("Redstone output side: " .. diagInfo2.redSide)
             print("Redstone output color: " .. diagInfo2.redColor)
@@ -601,26 +573,16 @@ local function doorediting()
             setGui(6,"Notice: magreader swiped isn't linked to any door. If it's supposed to be linked you will have to fix it.")
         end
         setGui(7,"")
-        if versionNum >= 2 then
-            if editTable[pageNum].doorType == 3 then
-                if #editTable[pageNum].doorAddress == 1 then
-                    setGui(16,"Controller Address: " .. editTable[pageNum].doorAddress[1])
-                else
-                    setGui(16,"Controller Amount: " .. #editTable[pageNum].doorAddress)
-                end
-            elseif editTable[pageNum].doorType == 2 then
-                setGui(16,"Bundled redstone color: " .. redColorTypes[editTable[pageNum].redColor + 1] .. " / Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
+        if editTable[pageNum].doorType == 3 then
+            if #editTable[pageNum].doorAddress == 1 then
+                setGui(16,"Controller Address: " .. editTable[pageNum].doorAddress[1])
             else
-                setGui(16,"Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
+                setGui(16,"Controller Amount: " .. #editTable[pageNum].doorAddress)
             end
+        elseif editTable[pageNum].doorType == 2 then
+            setGui(16,"Bundled redstone color: " .. redColorTypes[editTable[pageNum].redColor + 1] .. " / Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
         else
-            if editTable[pageNum].doorType == 0 or editTable[pageNum].doorType == 3 then
-                setGui(16,"Door Address: " .. editTable[pageNum].doorAddress)
-            elseif editTable[pageNum].doorType == 2 then
-                setGui(16,"Bundled redstone color: " .. redColorTypes[editTable[pageNum].redColor + 1] .. " / Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
-            else
-                setGui(16,"Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
-            end
+            setGui(16,"Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
         end
         setGui(17,#editTable[pageNum].reader == 1 and "Reader Address: " .. editTable[pageNum].reader[1].uuid .. " : " .. editTable[pageNum].reader[1].type or "Reader Amount: " .. #editTable[pageNum].reader)
         setGui(8,"1. Change Door Name: " .. editTable[pageNum].name)
@@ -630,11 +592,7 @@ local function doorediting()
         setGui(12,"5. Change passes")
         setGui(13,"6. Change card readers") --LEFTOFF
         setGui(14,"")
-        if versionNum >= 2 then
-            setGui(15,"Door type: " .. newDoorTypes[editTable[pageNum].doorType])
-        else
-            setGui(15,"Door type: " .. doorTypeTypes[editTable[pageNum].doorType + 1])
-        end
+        setGui(15,"Door type: " .. newDoorTypes[editTable[pageNum].doorType])
         setGui(18,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
         local pee = "Error: incorrect uuid"
         if hassector then
@@ -687,7 +645,7 @@ local function doorediting()
                         end
                     end
                 end
-                table.insert(editTable,{["key"]=j,["doorType"]=versionNum == 1 and 0 or 3 ,["redColor"]=0,["redSide"]=0,["reader"]={},["doorAddress"]=versionNum == 1 and "NAN" or {"NAN"},["delay"]=5,["cardRead"]={{["uuid"]=uuid.next(),["call"]="checkstaff",["param"]=0,["request"]="supreme",["data"]=false}},["toggle"]=0,["sector"]=false,["name"]="new door"})
+                table.insert(editTable,{["key"]=j,["doorType"]=3 ,["redColor"]=0,["redSide"]=0,["reader"]={},["doorAddress"]={"NAN"},["delay"]=5,["cardRead"]={{["uuid"]=uuid.next(),["call"]="checkstaff",["param"]=0,["request"]="supreme",["data"]=false}},["toggle"]=0,["sector"]=false,["name"]="new door"})
                 pageChange(pageNum,#editTable,editChange)
             elseif char == "r" then
                 pageChangeAllowed = false
@@ -718,11 +676,7 @@ local function doorediting()
                 text = term.read()
                 editTable[pageNum].name = text:sub(1,-2)
             elseif p1 == 2 then
-                if versionNum >= 2 then
-                    setGui(22,"Door Type? 1= redstone. 2=bundled. 3=door/rolldoor controller. NUMBER ONLY")
-                else
-                    setGui(22,"Door Type? 0= doorcontrol. 1= redstone 2=bundled. 3=rolldoor. NUMBER ONLY")
-                end
+                setGui(22,"Door Type? 1= redstone. 2=bundled. 3=door/rolldoor controller. NUMBER ONLY")
                 term.setCursor(1,24)
                 term.clearLine()
                 text = term.read()
@@ -734,7 +688,7 @@ local function doorediting()
                     term.clearLine()
                     text = term.read()
                     editTable[pageNum].redColor = tonumber(text)
-                    editTable[pageNum].doorAddress = versionNum >= 2 and {""} or ""
+                    editTable[pageNum].doorAddress = {""}
                     flush()
                     setGui(22,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
                     term.setCursor(1,24)
@@ -743,7 +697,7 @@ local function doorediting()
                     editTable[pageNum].redSide = tonumber(text)
                 elseif editTable[pageNum].doorType == 1 then
                     editTable[pageNum].redColor = 0
-                    editTable[pageNum].doorAddress = versionNum >= 2 and {""} or ""
+                    editTable[pageNum].doorAddress = {""}
                     flush()
                     setGui(22,"What side? 0=bottom, 1=top, 2=back, 3=front, 4=right, 5=left. NUMBER ONLY")
                     term.setCursor(1,24)
@@ -754,40 +708,26 @@ local function doorediting()
                     editTable[pageNum].redColor = 0
                     editTable[pageNum].redSide = 0
                     flush()
-                    if versionNum >= 2 then
-                        distable = {}
-                        setGui(22,"What is the address for the doorcontrol/rolldoor blocks?")
-                        if canScan then
-                            setGui(23,"Scan all the controllers you want to add. Click screen to stop")
-                            distable = scanner(true)
-                        else
-                            setGui(23,"Enter uuid as text. Press enter with nothing in it to stop")
-                            while wait do
-                                term.setCursor(1,24)
-                                term.clearLine()
-                                text = term.read()
-                                text = text:sub(1,-2)
-                                if text == "" then
-                                    wait = false
-                                else
-                                    table.insert(distable,text)
-                                end
-                            end
-                        end
-                        editTable[pageNum].doorAddress = distable
+                    local distable = {}
+                    setGui(22,"What is the address for the doorcontrol/rolldoor blocks?")
+                    if canScan then
+                        setGui(23,"Scan all the controllers you want to add. Click screen to stop")
+                        distable = scanner(true)
                     else
-                        setGui(22,"What is the address for the doorcontrol/rolldoor block?")
-                        if canScan then
-                            setGui(23,"Scan doorcontrol/rolldoor controller with tablet")
-                            text = scanner(false)
-                        else
-                            setGui(23,"Enter uuid as text")
+                        setGui(23,"Enter uuid as text. Press enter with nothing in it to stop")
+                        while wait do
                             term.setCursor(1,24)
                             term.clearLine()
-                            text = term.read():sub(1,-2)
+                            text = term.read()
+                            text = text:sub(1,-2)
+                            if text == "" then
+                                wait = false
+                            else
+                                table.insert(distable,text)
+                            end
                         end
-                        editTable[pageNum].doorAddress = text
                     end
+                    editTable[pageNum].doorAddress = distable
                 end
             elseif p1 == 3 then
                 flush()
