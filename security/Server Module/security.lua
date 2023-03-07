@@ -7,13 +7,13 @@ local component = require("component")
 local modem = component.modem
 local ser = require("serialization")
 
-module = {}
+local module = {}
 module.name = "passes"
-module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules"}
-module.skipcrypt = {"autoInstallerQuery","rcdoors"}
+module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules","linkMCID"}
+module.skipcrypt = {}
 module.table = {["passes"]={},["passSettings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
 module.debug = false
-module.version = "3.0.1"
+module.version = "4.0.0"
 module.id = 1111
 
 local function getPassID(command,rules)
@@ -161,9 +161,18 @@ local function getDoorInfo(type,id,key)
 end
 
 local function checkLink(user)
-    for key, value in pairs(userTable.passes) do
+    for _, value in pairs(userTable.passes) do
         if value.link == user then
             return true, not value.blocked, value.name
+        end
+    end
+    return false
+end
+
+local function checkMCID(id)
+    for _, value in pairs(userTable.passes) do
+        if value.mcid == id then
+            return true, value.uuid, value.name
         end
     end
     return false
@@ -174,6 +183,11 @@ function module.init(setit ,doors, serverCommands) --Called when server is first
     doorTable = doors
     server = serverCommands
     if module.debug then server.print("Received Stuff for passes!") end
+    if userTable.passes[1] ~= nil and userTable.passes[1].mcid == nil then --make sure old systems migrate successfully
+        for _,value in pairs(userTable.passes) do
+            value.mcid = "nil"
+        end
+    end
 end
 
 function module.setup() --Called when userlist is updated or server is first started
@@ -201,7 +215,7 @@ function module.message(command,datar,from) --Called when a command goes past al
             end
             table.insert(sendTable,{["id"]=value.id,["type"]=value.type,["data"]=datar})
         end
-        return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Sending remote control table",["color"]=0xFFFFFF}},false,true,ser.serialize(sendTable)
+        return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Sending remote control table",["color"]=0xFFFFFF}},false,true,server.crypt(ser.serialize(sendTable))
     elseif command == "checkLinked" then
         local cu, isBlocked, thisName = checkLink(data)
         local dis = {}
@@ -224,31 +238,68 @@ function module.message(command,datar,from) --Called when a command goes past al
             return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Checking if device is linked to a user: ",["color"]=0xFFFF80},{["text"]=" tablet not linked",["color"]=0x990000,["line"]=true}},false,true,data
         end--IMPORTANT: Hello
     elseif command == "getvar" then
-        local worked = false
-        for _, value in pairs(userTable.passes) do
-            if value.uuid == data.uuid then
-                worked = true
-                local mee = type(value[data.var]) == "table" and ser.serialize(value[data.var]) or value[data.var]
-                return true,nil,false,true,server.crypt(mee)
+        if (server.configCheck("secAPI")) then
+            local worked = false
+            for _, value in pairs(userTable.passes) do
+                if value.uuid == data.uuid then
+                    worked = true
+                    local mee = type(value[data.var]) == "table" and ser.serialize(value[data.var]) or value[data.var]
+                    return true,nil,false,true,server.crypt(mee)
+                end
             end
+        else
+            return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="SecAPI getvar requested when disabled by database",["color"]=0xFF0000}}, false, true, server.crypt({})
         end
     elseif command == "setvar" then
-        local worked = false
-        local counter = 1
-        for _, value in pairs(userTable.passes) do
-            if value.uuid == data.uuid then
-                worked = true
-                if type(userTable.passes[counter][data.var]) == type(data.data) then
-                    userTable.passes[counter][data.var] = data.data
+        if (server.configCheck("secAPI")) then
+            local worked = false
+            local counter = 1
+            for _, value in pairs(userTable.passes) do
+                if value.uuid == data.uuid then
+                    worked = true
+                    if type(userTable.passes[counter][data.var]) == type(data.data) then
+                        userTable.passes[counter][data.var] = data.data
+                    end
+                    return true,nil,true,true,server.crypt("true")
+                else
+                    counter = counter + 1
                 end
-                return true,nil,true,true,server.crypt("true")
-            else
-                counter = counter + 1
             end
+        else
+            return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="SecAPI getvar requested when disabled by database",["color"]=0xFF0000}}, false, true, server.crypt({})
+        end
+    elseif command == "linkMCID" then
+        if (server.configCheck("quickMCLink")) then
+            local worked = false
+            local counter = 1
+            for _, value in pairs(userTable.passes) do
+                if value.uuid == data.uuid then
+                    worked = true
+                    if value.mcid == "nil" then
+                        value.mcid = data.mcid
+                        return true, nil, true, true, server.crypt("true")
+                    else
+                        return true, nil, false, true, server.crypt("false")
+                    end
+                else
+                    counter = counter + 1
+                end
+            end
+        else
+            return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Quick Linking MCID's has been disabled by database",["color"]=0xFF0000}}, false, true, server.crypt("false")
         end
     elseif command == "checkRules" then
         local currentDoor = getDoorInfo(data.type,from,data.key)
         local enter = true
+        if data.isBio then
+            local e,good,nome = checkMCID(data.uuid)
+            if e then
+                data.uuid = good
+                thisUserName = nome
+            else
+                return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="User" .. data.uuid .. " not linked to biometrics",["color"]=0x994049}},false,true,server.crypt("false")
+            end
+        end
         if data.sector ~= false then
             local a,c,_,_,b = server.modulemsg("doorsector",ser.serialize(data))
             if a then

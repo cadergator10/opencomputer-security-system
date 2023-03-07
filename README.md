@@ -76,11 +76,12 @@ Changelog:
    <li>2.4.0 Sector Update: Replaced the useless forceOpen and bypassLock settings with the new sectors system. You can create however many sectors you like in the mineOS database and set doors to that sector. Then, with the new sectorcontrol program, you can control sectors with redstone, locking them down or locking them open. Certain passes can also be set to open locked down doors or just bypass the lockdown! This also comes with the range extender program for doorcontrols and modules system to build in your own programs to be part of the server. Server also got a GUI upgrade and autoinstaller can install servers and modules. 7/26</li>
    <li>3.0.0 Servertine split: Split up the security system with the server and database. They are now modules. 9/16</li>
    <li>3.0.1 Door Editor: Edit door settings with this handy module and save it to an external drive! Now easilly set up doors to an extent BEFORE putting it in the computer! 10/27</li>
+   <li>4.0.0 Servertine movement & QOL: Lots of bug fixes and stuff. Added crypting support to lots of stuff which didn't have it for extra security. Changed groups to use dropdown and ints (level) to have a text box input as well. DoorSetup now saves progress if you leave that module and go back. Major sectorcontrol changes. Added support for Biometric Reader. MOOORE</li>
 </ul>
 
 Queued updates:
 <ol>
-   <li>3.0.2: Refine the variable editing by ditching the popup that comes up and using the database screen to make it look nicer.</li>
+   <li>Future: Refine the variable editing by ditching the popup that comes up and using the database screen to make it look nicer.</li>
 </ol>
 
 Future updates:
@@ -90,12 +91,10 @@ Future updates:
 
 I have a few things I want to add sometime in the future, or just stuff I want to do in general that may or may not happen
 <ol>
-   <li>Create a webserver to handle creation, deletion, and updating modules for Servertine (similar to MineOS but its all done on a website rather than the appstore)
    <li>Add keypad, RFID reader, and Biometric reader support</li>
    <li>Move the database off of MineOS and back to OpenOS, but with the same GUI system (if possible make it an OS rather than a program you run)</li>
    <li>There's more but I cant think of it</li>
 </ol>
 
 Important information:
-   Previous versions have been wiped completely out! The old 1.#.# version is no longer able to be downloaded for less confusion.
    If you have anything you would like to try adding yourself, feel free to add whatever you want to the code and pull request it into the main branch. I can then check if it's a worthwhile update and merge.

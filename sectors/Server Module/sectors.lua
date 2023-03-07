@@ -8,14 +8,14 @@ local modem = component.modem
 local ser = require("serialization")
 local uuid = require("uuid")
 
-module = {}
+local module = {}
 module.name = "sectors"
 module.commands = {"sectorupdate","doorsector","doorsecupdate"}
-module.skipcrypt = {"sectorupdate"}
+module.skipcrypt = {}
 module.table = {["sectors"] = {{["name"]="Placeholder Sector",["uuid"]=uuid.next(),["type"]=1,["pass"]={}}}}
 module.table.sectorStatus = {[module.table.sectors[1].uuid]=1}
 module.debug = false
-module.version = "3.0.1"
+module.version = "4.0.0"
 module.id = 1112
 
 function module.init(setit ,doors, serverCommands) --Called when server is first started. Passes userTable and doorTable.
@@ -53,8 +53,22 @@ function module.message(command,datar) --Called when a command goes past all def
     data = ser.unserialize(datar)
   end
   if command == "sectorupdate" then
-    userTable.sectorStatus = data
-    return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector data changed",["color"]=nil,["line"]=false}},true,false,"checkSector",ser.serialize(data)
+    local st, name = false, "ERROR"
+    if data[2] > 0 and data[2] <= 3 then
+      for _,value in pairs(userTable.sectors) do
+        if value.uuid == data[1] then
+          st = true
+          name = value.name
+        end
+      end
+    end
+    if st then
+      userTable.sectorStatus[data[1]] = data[2]
+      local me = {"disabled","lockdown","open"}
+      return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector ",["color"]=nil,["line"]=false},{["text"]=name,["color"]=0x00FF00,["line"]=false},{["text"]="Status set to ",["color"]=nil,["line"]=true},{["text"]=me[data[2]],["color"]=nil,["line"]=false}},true,false,"checkSector",ser.serialize(userTable.sectorStatus)
+    else
+
+    end
   elseif command == "doorsector" then
     for i=1,#userTable.sectors,1 do
       if userTable.sectors[i].uuid == data.sector then

@@ -13,8 +13,7 @@ local workspace, window, loc, database, style, permissions = table.unpack({...})
 module.name = "Door Setup" --The name that shows up on the module's button.
 module.table = {} --Set to the keys you want pulled from the userlist on the server
 module.debug = false --The database will set to true if debug mode on database is enabled. If you want to enable certain functions in debug mode.
-module.version = "1.0.0" --Version of the module. If different from version on global module file, it will alert database.
-module.id = 1113 --id of module according to modules.txt global file.
+module.config = {}
 
 module.init = function(usTable) --Set userTable to what's received. Runs only once at the beginning
     userTable = usTable
@@ -46,7 +45,10 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
 
     local finishLink = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/doorsetup/finish.lua"
 
-    local doors = {}
+    local doors = database.dataBackup("doorCreation") --TODO: Make sure this is correct thing
+    if (doors == nil) then
+        doors = {}
+    end
 
     local editPage = 1
 
@@ -207,6 +209,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         elseif editPage == 2 then
 
         end
+        database.dataBackup("doorCreation",doors) --TODO: Make sure this is correct thing
     end
 
     local function refreshInput()
@@ -405,7 +408,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             delDoor.disabled = true
             exportDoor = window:addChild(GUI.button(115,12,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "export door"))
             exportDoor.onTouch = exportDoorCall
-            exportDoor.disabled = true
+            exportDoor.disabled = #doors == 0
             doorType = varEditWindow:addChild(GUI.comboBox(64,14,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             doorType.disabled = true
             doorType:addItem("Unidentified").onTouch = setDoorType
@@ -658,6 +661,9 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     varEditWindow = window:addChild(GUI.container(1,1,window.width,window.height))
     psCall = pageSetup
     pageSetup()
+    if doors ~= {} then
+        updateList()
+    end
 end
 
 module.close = function()

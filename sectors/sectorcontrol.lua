@@ -1,4 +1,4 @@
-local version = "3.0.1"
+local version = "4.0.0"
 
 local sector = {}
 local sectorStatus = {}
@@ -170,12 +170,7 @@ end
 
 local function redlinkcheck(color,side)
     for key,value in pairs(sectorSettings) do
-        if key == "default" then
-            if value.color == color and value.side == side then
-                sectorSettings[key].color = -1
-                sectorSettings[key].side = -1
-            end
-        else
+        if key ~= "cryptKey" and key ~= "port" then --We don't want cryptKey or port being used
             if value.open.color == color and value.open.side == side then
                 sectorSettings[key].open.color = -1
                 sectorSettings[key].open.side = -1
@@ -184,22 +179,26 @@ local function redlinkcheck(color,side)
                 sectorSettings[key].lock.side = -1
                 sectorSettings[key].lock.color = -1
             end
+            if value.disable.color == color and value.disable.side == side then
+                sectorSettings[key].disable.side = -1
+                sectorSettings[key].disable.color = -1
+            end
         end
     end
 end
 
 local function arrangeSectors(query)
     sector = {}
-    local amt = (#query) * 2
+    local amt = (#query) * 3
     local count = 1
     local save = false
-    for i=1,math.ceil(amt/8),1 do
+    for i=1,math.ceil(amt/9),1 do
         sector[i] = {}
-        for j=1,4,1 do
+        for j=1,3,1 do
             if query[count] ~= nil then
                 sector[i][j] = deepcopy(query[count])
                 if sectorSettings[query[count].uuid] == nil then
-                    sectorSettings[query[count].uuid] = {["open"]={["side"]=-1,["color"]=-1},["lock"]={["side"]=-1,["color"]=-1}}
+                    sectorSettings[query[count].uuid] = {["open"]={["side"]=-1,["color"]=-1},["lock"]={["side"]=-1,["color"]=-1},["disable"]={["side"]=-1,["color"]=-1}}
                     save = true
                 end
                 count = count + 1
@@ -208,7 +207,7 @@ local function arrangeSectors(query)
     end
     for key,value in pairs(sectorSettings) do
         local here = false
-        if key == "default" then
+        if key == "cryptKey" or key == "port" then
             here = true
         else
             for i=1,#query,1 do
@@ -233,36 +232,31 @@ local function sectorGui(editmode)
     if #sector == 0 then
         setGui(2,"Create a sector to begin")
     else
-        setGui(2,"Page" .. pageNum .. "/" .. #sector)
+        setGui(2,"Page " .. pageNum .. "/" .. #sector)
         setGui(3,"")
         setGui(4,"------------------------------")
         local pre, count = "> ",1
-        if (#sector[pageNum] * 2)+1<listNum then
-            listNum = (#sector[pageNum] * 2)+1
+        if (#sector[pageNum] * 3) < listNum then
+            listNum = (#sector[pageNum] * 3)
         end
         if listNum == count then
             pre = "> "
         else
             pre = "  "
         end
-        setGui(5,sectorSettings.default.side ~= -1 and pre .. "Update the server: " .. redSideTypes[sectorSettings.default.side + 1] .. " : " .. redColorTypes[sectorSettings.default.color + 1] or pre .. "Update the server: unlinked : unlinked")
         for i=1,#sector[pageNum],1 do
-            if listNum == count + 1 then
-                pre = "> "
-            else
-                pre = "  "
+            local secKeys = {["disable"] = "Clear sector ",["lock"] = "Lockdown sector ",["open"] = "Open sector "}
+            for key,value in pairs(secKeys) do
+                if listNum == count then
+                    pre = "> "
+                else
+                    pre = "  "
+                end
+                setGui(count + 4,sectorSettings[sector[pageNum][i].uuid][key].side ~= -1 and pre .. value .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid][key].side + 1]  .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid][key].color + 1] or pre .. value .. sector[pageNum][i].name .. ": " .. "unlinked : unlinked")
+                count = count + 1
             end
-            setGui(count + 5,sectorSettings[sector[pageNum][i].uuid].lock.side ~= -1 and pre .. "Lockdown sector " .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid].lock.side + 1]  .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid].lock.color + 1] or pre .. "Lockdown sector " .. sector[pageNum][i].name .. ": " .. "unlinked : unlinked")
-            count = count + 1
-            if listNum == count + 1 then
-                pre = "> "
-            else
-                pre = "  "
-            end
-            setGui(count + 5,sectorSettings[sector[pageNum][i].uuid].open.side ~= -1 and pre .. "Open sector " .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid].open.side + 1] .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid].open.color + 1] or pre .. "Open sector " .. sector[pageNum][i].name .. ": " .. "unlinked : unlinked")
-            count = count + 1
         end
-        count = count + 5
+        count = count + 4
         setGui(count,"------------------------------")
     end
 end
@@ -274,49 +268,66 @@ local fill = io.open("redstonelinks.txt", "r")
 if fill~=nil then
     io.close(fill)
 else
-    saveTable({["default"]={["side"]=2,["color"]=0}},"redstonelinks.txt")
+    modem.open(syncPort)
+    modem.broadcast(syncPort,"syncport")
+    local e,_,_,_,_,msg = event.pull(1,"modem_message")
+    modem.close(syncPort)
+    if e then
+        modemPort = tonumber(msg)
+    else
+        print("What port is the server running off of?")
+        local text = term.read()
+        modemPort = tonumber(text:sub(1,-2))
+        term.clear()
+    end
+
+    saveTable({["cryptKey"]={1,2,3,4,5},["port"]=modemPort,"redstonelinks.txt"})
+    print("Crypt key is set to default (1,2,3,4,5)")
 end
 
 sectorSettings = loadTable("redstonelinks.txt")
 
-modem.open(syncPort)
-modem.broadcast(syncPort,"syncport")
-local e,_,_,_,_,msg = event.pull(1,"modem_message")
-modem.close(syncPort)
-if e then
-    modemPort = tonumber(msg)
-else
-    print("What port is the server running off of?")
-    local text = term.read()
-    modemPort = tonumber(text:sub(1,-2))
-    term.clear()
+if sectorSettings.cryptKey == nil then
+    sectorSettings.cryptKey = {1,2,3,4,5}
+    print("Crypt key is set to default (1,2,3,4,5)")
+    modem.open(syncPort)
+    modem.broadcast(syncPort,"syncport")
+    local e,_,_,_,_,msg = event.pull(1,"modem_message")
+    modem.close(syncPort)
+    if e then
+        modemPort = tonumber(msg)
+    else
+        print("What port is the server running off of?")
+        local text = term.read()
+        modemPort = tonumber(text:sub(1,-2))
+        term.clear()
+    end
+    sectorSettings.port = modemPort
+    saveTable(sectorSettings,"redstonelinks.txt")
+end
+if sectorSettings.default ~= nil then
+    sectorSettings.default = nil
+    for key, value in pairs(sectorSettings) do
+        if key ~= "cryptKey" and key ~= "port" then
+            value.disable = {["side"]=-1,["color"]=-1}
+        end
+    end
 end
 
--- start of modification
-
-print("Do you want auto update data(no need to pulse update server)? 0 for no or 1 for yes")
-local text = term.read()
-if tonumber(text:sub(1,-2)) == 1 then
-    autoUpdateData = true
-else
-    autoUpdateData = false
-end
-term.clear()
-
--- end of modification
+modemPort = sectorSettings.port
 
 print("Sending query to server...")
 modem.open(modemPort)
-modem.broadcast(modemPort,"getquery",ser.serialize({"sectors","sectorStatus","&&&crypt"}))
-e,_,_,_,_,msg = event.pull(3,"modem_message")
+modem.broadcast(modemPort,"getquery",ser.serialize({"sectors"})) --TODO: Remove all sectorStatus calls
+local e,_,_,_,_,msg = event.pull(3,"modem_message")
 modem.close(modemPort)
 if e == nil then
     print("No query received. Assuming old server system is in place and will not work")
     os.exit()
 else
     print("Query received")
+    msg = crypt(msg,sectorSettings.cryptKey,true)
     query = ser.unserialize(msg).data.sectors
-    sectorStatus = ser.unserialize(msg).data.sectorStatus
 end
 modem.open(modemPort)
 
@@ -347,7 +358,6 @@ while true do
         if ev == "modem_message" then
             if command == "getSectorList" then
                 query = ser.unserialize(msg).sectors
-                sectorStatus = ser.unserialize(msg).sectorStatus
                 arrangeSectors(query)
                 pageChange("setup",1,#sector, sectorGui, editmode)
             end
@@ -376,7 +386,7 @@ while true do
                     term.clearLine()
                     local side = term.read():sub(1,-2)
                     if tonumber(side) ~= nil then
-                        side = tonumber(side)
+                    side = tonumber(side)
                     end
                     setGui(20,"Which color should be checked?")
                     term.setCursor(1,21)
@@ -388,75 +398,71 @@ while true do
                     color, side = colorSearch(color,side)
                     if color ~= -1 and side ~= -1 then
                         redlinkcheck(color,side)
-                        if listNum == 1 then
-                            sectorSettings.default.side = side
-                            sectorSettings.default.color = color
+                        if (listNum)%3 == 1 then
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.color = color
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.side = side
+                        elseif (listNum)%3 == 0 then
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.color = color
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.side = side
                         else
-                            if (listNum - 1)%2 == 1 then
-                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.color = color
-                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].lock.side = side
-                            else
-                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].open.color = color
-                                sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)].uuid].open.side = side
-                            end
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.color = color
+                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.side = side
                         end
-                    else
-
                     end
                     saveTable(sectorSettings,"redstonelinks.txt")
                     pageChange("hor",pageNum,#sector, sectorGui, editmode)
                     os.sleep(0.5)
                 elseif char == "back" then
-                    if listNum == 1 then
-                        sectorSettings.default.side = -1
-                        sectorSettings.default.color = -1
+                    if (listNum)%3 == 1 then
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.color = -1
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.side = -1
+                    elseif (listNum)%3 == 0 then
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.color = -1
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.side = -1
                     else
-                        if (listNum)%2 == 1 then
-                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].lock.color = -1
-                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].lock.side = -1
-                        else
-                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].open.color = -1
-                            sectorSettings[sector[pageNum][math.ceil((listNum - 1)/2)]].open.side = -1
-                        end
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.color = -1
+                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.side = -1
                     end
                     pageChange("hor",pageNum,#sector, sectorGui, editmode)
                     os.sleep(0.5)
                 end
             end
         elseif ev == "redstone_changed" then
-            local red = redstone.getBundledInput()
-            local officialChange = false --If the change in redstone is something saved to redstonelinks.txtr
-            for i=1,#query,1 do
-                local current = sectorStatus[query[i].uuid]
-                sectorStatus[query[i].uuid] = 1
-                if sectorSettings[query[i].uuid].open.side ~= -1 and sectorSettings[query[i].uuid].open.color ~= -1 then
-                    if red[sectorSettings[query[i].uuid].open.side][sectorSettings[query[i].uuid].open.color] > 0 then
-                        sectorStatus[query[i].uuid] = 3
+            local officialChange = {false} --If the change in redstone is something saved to redstonelinks.txtr
+            if key == 0 and value > 0 then
+                for i=1,#query,1 do
+                    if sectorSettings[query[i].uuid].open.side == side and sectorSettings[query[i].uuid].open.color == command then
+                        officialChange[1] = true
+                        officialChange[2] = query[i].uuid
+                        officialChange[3] = side
+                        officialChange[4] = command
+                        officialChange[5] = 3
+                        break
                     end
-                end
-                if sectorSettings[query[i].uuid].lock.side ~= -1 and sectorSettings[query[i].uuid].lock.color ~= -1 then
-                    if red[sectorSettings[query[i].uuid].lock.side][sectorSettings[query[i].uuid].lock.color] > 0 then
-                        sectorStatus[query[i].uuid] = 2
+                    if sectorSettings[query[i].uuid].lock.side == side and sectorSettings[query[i].uuid].lock.color == command then
+                        officialChange[1] = true
+                        officialChange[2] = query[i].uuid
+                        officialChange[3] = side
+                        officialChange[4] = command
+                        officialChange[5] = 2
+                        break
                     end
-                end
-                if sectorStatus[query[i].uuid] ~= current then --a change was detected
-                    officialChange = true
+                    if sectorSettings[query[i].uuid].disable.side == side and sectorSettings[query[i].uuid].disable.color == command then
+                        officialChange[1] = true
+                        officialChange[2] = query[i].uuid
+                        officialChange[3] = side
+                        officialChange[4] = command
+                        officialChange[5] = 1
+                        break
+                    end
+                    --[[if sectorStatus[query[i].uuid] ~= current then --a change was detected
+                        officialChange = true
+                    end]]
                 end
             end
-            -- start modification
-            if autoUpdateData and officialChange then
-                modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
-            else
-                if red[sectorSettings.default.side][sectorSettings.default.color] > 0 then
-                    if updatePulse == false then
-                        updatePulse = true
-                        modem.broadcast(modemPort,"sectorupdate",ser.serialize(sectorStatus))
-                    end
-                else
-                    updatePulse = false
-                end
+            if officialChange[1] then
+                modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({officialChange[2],officialChange[5]}),sectorSettings.cryptKey))
             end
-            -- end of modification
         end
     else
         os.sleep(1)
