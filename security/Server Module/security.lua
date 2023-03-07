@@ -171,7 +171,7 @@ end
 
 local function checkMCID(id)
     for _, value in pairs(userTable.passes) do
-        if value.mcid == value then
+        if value.mcid == id then
             return true, value.uuid
         end
     end
@@ -296,7 +296,7 @@ function module.message(command,datar,from) --Called when a command goes past al
             if e then
                 data.uuid = good
             else
-                return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="",["color"]=0x994049}},false,true,server.crypt("false")
+                return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="User" .. data.uuid .. " not linked to biometrics",["color"]=0x994049}},false,true,server.crypt("false")
             end
         end
         if data.sector ~= false then

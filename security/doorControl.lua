@@ -540,8 +540,8 @@ while true do
         end
         term.write(tmpTable["name"] .. ":")
       else
-        tmpTable = {["isBio"] = true,["uuid"] = str}
-        term.write("UUID " .. str .. ":")
+        tmpTable = {["isBio"] = true,["uuid"] = user}
+        term.write("UUID " .. user .. ":")
       end
       tmpTable["type"] = extraConfig.type
       tmpTable["key"] = keyed
