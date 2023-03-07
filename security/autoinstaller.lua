@@ -180,12 +180,28 @@ local function runInstall()
                 j = editorSettings.key
             end
             text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet." or "Enter the uuid of the device in TEXT. When finished, don't type anything and just press enter",5)
-            loopArray["reader"] = text
+            loopArray["reader"] = {}
+            for _, value in pairs(text) do
+                local thisType = component.type(value)
+                if thisType == "os_magreader" then
+                    table.insert(loopArray["reader"],{["uuid"]=value,["type"]="swipe"})
+                elseif thisType == "os_biometric" then
+                    table.insert(loopArray["reader"],{["uuid"]=value,["type"]="biometric"})
+                elseif thisType == "os_rfidreader" then
+                    table.insert(loopArray["reader"],{["uuid"]=value,["type"]="rfid"})
+                end
+            end
         else
             j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
             local distable = {}
             for key,_ in pairs(component.list("os_magreader")) do
-                table.insert(distable,key)
+                table.insert(distable,{["uuid"]=key,type="swipe"})
+            end
+            for key,_ in pairs(component.list("os_biometric")) do
+                table.insert(distable,{["uuid"]=key,type="biometric"})
+            end
+            for key,_ in pairs(component.list("os_rfidreader")) do
+                table.insert(distable,{["uuid"]=key,type="rfid"})
             end
             loopArray["reader"] = distable
         end

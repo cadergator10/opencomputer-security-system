@@ -28,7 +28,7 @@ local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","
 local forceOpenTypes = {"False","True"}
 local passTypes = {["string"]="Regular String",["-string"]="Multi String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"3.0.0","3.0.1","4.0.0"}
+local supportedVersions = {"4.0.0"}
 
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
 
@@ -191,7 +191,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
             print("door pass amount: " .. #diagInfo2.cardRead)
             
             print("-Component Addresses--")
-            if #diagInfo2.reader == 1 then print("Reader Address: " .. diagInfo2["reader"][1]) else print("Reader Amount: " .. #diagInfo2["reader"]) end
+            if #diagInfo2.reader == 1 then print("Reader Address: " .. diagInfo2["reader"][1].uuid .. " : " .. diagInfo2["reader"][1].type) else print("Reader Amount: " .. #diagInfo2["reader"]) end
             if versionNum >= 2 then
                 if diagInfo2["doorType"] == 3 then
                     if #diagInfo2["doorAddress"] == 1 then
@@ -273,7 +273,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
         print("door pass amount: " .. #diagInfo2.cardRead)
 
         print("-Component Addresses--")
-        if #diagInfo2.reader == 1 then print("Reader Address: " .. diagInfo2["reader"][1]) else print("Reader Amount: " .. #diagInfo2["reader"]) end
+        if #diagInfo2.reader == 1 then print("Reader Address: " .. diagInfo2["reader"][1].uuid .. " : " .. diagInfo2["reader"][1].type) else print("Reader Amount: " .. #diagInfo2["reader"]) end
         if versionNum >= 2 then
             if diagInfo2["doorType"] == 3 then
                 if #diagInfo2["doorAddress"] == 1 then
@@ -622,7 +622,7 @@ local function doorediting()
                 setGui(16,"Red Side: " .. redSideTypes[editTable[pageNum].redSide + 1])
             end
         end
-        setGui(17,#editTable[pageNum].reader == 1 and "Reader Address: " .. editTable[pageNum].reader[1] or "Reader Amount: " .. #editTable[pageNum].reader)
+        setGui(17,#editTable[pageNum].reader == 1 and "Reader Address: " .. editTable[pageNum].reader[1].uuid .. " : " .. editTable[pageNum].reader[1].type or "Reader Amount: " .. #editTable[pageNum].reader)
         setGui(8,"1. Change Door Name: " .. editTable[pageNum].name)
         setGui(9,"2. Change Door type/color/uuid/side")
         setGui(10,"3. Change toggle and delay")
@@ -687,7 +687,7 @@ local function doorediting()
                         end
                     end
                 end
-                table.insert(editTable,{["key"]=j,["doorType"]=versionNum == 1 and 0 or 3 ,["redColor"]=0,["redSide"]=0,["reader"]="NAN",["doorAddress"]=versionNum == 1 and "NAN" or {"NAN"},["delay"]=5,["cardRead"]={{["uuid"]=uuid.next(),["call"]="checkstaff",["param"]=0,["request"]="supreme",["data"]=false}},["toggle"]=0,["sector"]=false,["name"]="new door"})
+                table.insert(editTable,{["key"]=j,["doorType"]=versionNum == 1 and 0 or 3 ,["redColor"]=0,["redSide"]=0,["reader"]={},["doorAddress"]=versionNum == 1 and "NAN" or {"NAN"},["delay"]=5,["cardRead"]={{["uuid"]=uuid.next(),["call"]="checkstaff",["param"]=0,["request"]="supreme",["data"]=false}},["toggle"]=0,["sector"]=false,["name"]="new door"})
                 pageChange(pageNum,#editTable,editChange)
             elseif char == "r" then
                 pageChangeAllowed = false
@@ -990,9 +990,9 @@ local function doorediting()
                 flush()
                 local wait = true
                 local distable = {}
-                setGui(22,"What is the address for the magreaders?")
+                setGui(22,"What is the address for the readers?")
                 if canScan then
-                    setGui(23,"Scan all the magreaders you want to add. Click screen to stop")
+                    setGui(23,"Scan all the readers you want to add. Click screen to stop")
                     distable = scanner(true)
                 else
                     setGui(23,"Enter uuid as text. Press enter with nothing in it to stop")
@@ -1008,7 +1008,17 @@ local function doorediting()
                         end
                     end
                 end
-                editTable[pageNum].reader = distable
+                editTable[pageNum].reader = {}
+                for _, value in pairs(distable) do
+                    local thisType = component.type(value)
+                    if thisType == "os_magreader" then
+                        table.insert(editTable[pageNum].reader,{["uuid"]=value,["type"]="swipe"})
+                    elseif thisType == "os_biometric" then
+                        table.insert(editTable[pageNum].reader,{["uuid"]=value,["type"]="biometric"})
+                    elseif thisType == "os_rfidreader" then
+                        table.insert(editTable[pageNum].reader,{["uuid"]=value,["type"]="rfid"})
+                    end
+                end
             end
             pageChange(pageNum,#editTable,editChange)
             pageChangeAllowed = true
@@ -1201,7 +1211,7 @@ else
         hassector = true
     end
     if settings.num ~= 3 then
-        print("Server is not 3.0.0 or up")
+        print("Server is not Servertine")
         os.exit()
     end
     for _,value in pairs(supportedVersions) do

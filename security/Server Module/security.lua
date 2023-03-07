@@ -172,7 +172,7 @@ end
 local function checkMCID(id)
     for _, value in pairs(userTable.passes) do
         if value.mcid == id then
-            return true, value.uuid
+            return true, value.uuid, value.name
         end
     end
     return false
@@ -292,9 +292,10 @@ function module.message(command,datar,from) --Called when a command goes past al
         local currentDoor = getDoorInfo(data.type,from,data.key)
         local enter = true
         if data.isBio then
-            local e,good = checkMCID(data.uuid)
+            local e,good,nome = checkMCID(data.uuid)
             if e then
                 data.uuid = good
+                thisUserName = nome
             else
                 return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="User" .. data.uuid .. " not linked to biometrics",["color"]=0x994049}},false,true,server.crypt("false")
             end
