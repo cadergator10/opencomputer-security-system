@@ -413,7 +413,7 @@ module.onTouch = function()
     if scanner ~= nil then
       local container = GUI.addBackgroundContainer(workspace, false, true, "Please have the user who you are linking to the card click the Biometric Reader")
       local selected = pageMult * listPageNumber + userList.selectedItem
-      local e, _, _, msg = event.pull(10)
+      local e, _, msg = event.pull(10)
       container:remove()
       if e == "bioReader" then
         userTable.passes[selected].mcid = msg
