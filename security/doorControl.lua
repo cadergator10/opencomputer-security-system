@@ -16,7 +16,17 @@ local delay = 5
 --Which term you want to have the door read.
 local cardRead = {};
 
-local readerLights = {} --Table full of all reader id's, which a thread uses.
+local readerLights = {} --Table full of all reader id's, which a thread uses. {["new"]=0,["old"]=-1,["check"]=0}
+
+local rfidBlock = false
+local rfidReaders = {} --Table full of all RFID Readers id's, which a thread uses. {["uuid"]="reader id",["buffer"]=card buffers,["key"]='door key',["size"]=5,["last"]=whether rfid has opened/closed before}
+local rfidDoorList = {} --keys of doors for rfid
+local rfidBuffer = {} --Buffer for RFID cards detected. [uuid] = {["timer"]=2,["allowed"]=""}
+local rfidInt = 1
+local rfidTimer = 0
+local rfidWait = 2
+
+local doorControls = {} --Test to control doors the same way we do with readerLights. {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
 
 local sector
 
@@ -45,9 +55,11 @@ local link
 local baseVariables = {"name","uuid","date","link","blocked","staff"}
 local varSettings = {}
 local enableSectors = true
- 
+
 local settingData = {}
 local extraConfig = {}
+
+--RFID default delay per scan: 1 second. Can lower, but every tick it should scan
 
 local osVersion = false
 
@@ -120,8 +132,9 @@ local function modemadd()
   end
 end
 
-  local function colorupdate() --A seperate thread that reads a table of readers and can control their lights.
+  local function colorupdate() --A seperate thread that reads a table of readers and can control their lights. ALSO SCANS WITH RFID READER
     while true do --FIXME: Fix delay doors in lockdown mode losing their red light
+      --Change reader lights
       for key,value in pairs(readerLights) do
         if type(value.new) == "table" then
           if #value.new == 0 then
@@ -149,7 +162,59 @@ end
           readerLights[key].old = readerLights[key].new
         end
       end
-      os.sleep(0.05)
+      --rfid stuff
+      if #rfidReaders > 0 and rfidBlock == false then --if rfid is enabled and there are readers
+        if rfidTimer <= 0 then --if delay isn't still going
+
+          local reader = component.proxy(rfidReaders[rfidInt].uuid).scan(rfidReaders[rfidInt].size) --scan and perform checks on new cards found
+          for _,value in pairs(reader) do
+            local data = value.data ~= nil and ser.unserialize(crypt(value.data,extraConfig.cryptKey)) or nil --get data off card
+            if data ~= nil then
+              if rfidReaders[rfidInt].buffer[data.uuid] ~= nil then --if there is data and crypt is correct
+              event.push("rfidSuccess",nil,nil,data) --push to main thread to check if allowed or not
+              local e, status = event.pull("rfidRequest") --receive results
+              rfidReaders[rfidInt].buffer[data.uuid] = {["timer"]=rfidWait,["allowed"]=status} --add new user to buffer
+              else
+                rfidReaders[rfidInt].buffer[data.uuid].timer = rfidWait --Update timer back to max as they are still in range
+              end
+            end
+          end
+
+          local doorList = {} --This part goes through all readers listed and checks users in buffer if their timers ran out. Also checks if door should be opened or not
+          for i=1, #rfidReaders, 1 do --go through all readers
+            doorList[rfidReaders[i].key] = doorList[rfidReaders[i].key] ~= nil and doorList[rfidReaders[i].key] or false --Set the current key to false
+            for key, value in pairs(rfidReaders[i].buffer) do --go through every card in buffer
+              if value.timer <= 0 and i == rfidInt then --remove cards if they run out of time and the current door that just scanned didn't see them
+                rfidReaders[i].buffer[key] = nil
+              elseif value.allowed = true then
+                doorList[rfidReaders[i].key] = true
+              end
+            end
+          end
+
+          local doorChange = false --If true, it pushes an event causing the doorcontrol thread to perform checks and changes
+          for key,value in pairs(doorList) do --This goes through the list made in the last section to see if any changes were made (need to open or close again)
+            if value ~= rfidDoorList[key] then --there was a change in a door
+              doorChange = true
+              rfidDoorList[key] = value
+              doorControls[key].rfid = value --update actual door table that opens/closes stuff
+            end
+          end
+          if doorChange then event.push("doorChange") end
+
+          if rfidInt >= #rfidReaders then --This checks if its gone through every rfidreader. If it has, wait a second before continuing. Otherwise it increments the rfidint
+            rfidInt = 1
+            rfidTimer = 1
+          else
+            rfidInt = rfidInt + 1
+          end
+        else --rfidTimer is still not at 0, so just decrement and wait
+          rfidTimer = rfidTimer - 0.05
+          os.sleep(0.05)
+        end
+      else --No rfidReaders or it is blocked manually
+        os.sleep(0.05)
+      end
     end
   end
 
@@ -168,6 +233,73 @@ end
       end
     else
       chech(key)
+    end
+  end
+
+  local function doorLink(key, var)
+    if doorControls[key] == nil then
+      doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
+    end
+    if type(var) == "number" then
+      doorControls[key].swipe = var
+    elseif type(doorControls[key].swipe) == "number" or doorControls[key].swipe == false then
+      doorControls[key].swipe = true
+    else
+      doorControls[key].swipe = false
+    end
+    event.push("doorChange")
+  end
+
+  local function doorupdate() --A seperate thread that reads a table of door addresses and redstone stuff and can control them.
+    while true do
+      local shouldContinue = false
+      for key, value in pairs(doorControls) do
+        local isOpen = false
+        if value.lock == 0 then
+          if type(value.swipe) == "number" then
+            shouldContinue = true
+            doorControls[key].swipe = value.swipe - 0.05
+            if value.swipe <= 0 then
+              doorControls[key].swipe = false
+            else
+              isOpen = true
+            end
+          else
+            isOpen = value.swipe
+          end
+          if value.rfid then
+            isOpen = true
+          end
+        elseif value.lock = 2 then
+          isOpen = true
+        end
+        if isOpen ~= value.memory then
+          doorControls[key].memory = isOpen
+          if settingData[key].doorType == 3 then
+            for _, value2 in pairs(settingData[key].doorAddress) do
+              if isOpen then
+                component.proxy(value2).open()
+              else
+                component.proxy(value2).close()
+              end
+            end
+          elseif settingData[key].doorType == 2 then
+            component.redstone.setBundledOutput(settingData[key].redSide, { [settingData[key].redColor] = isOpen and 255 or 0 } )
+          elseif settingData[key].doorType == 1 then
+            component.redstone.setOutput(settingData[key].redSide,isOpen and 15 or 0)
+          end
+          if isOpen then
+            colorLink(settingData[key].reader,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}})
+          else
+            colorLink(key,0)
+          end
+        end
+      end
+      if shouldContinue then
+        os.sleep()
+      else
+        event.pull(5,"doorChange") --to attempt to save system resources: Only runs if 1. Some values in the door system require it to wait a certain amount of time, 2. An event is pushed called doorChange, and 3. The timeout of x seconds is reached (in case it happens to miss a door change, it WILL do it.)
+      end
     end
   end
   
@@ -224,7 +356,17 @@ end
         if value.sector ~= false then
           for key,value2 in pairs(data) do
             if key == value.sector then
-              if value2 == 1 then
+              doorControls[key].lock = value2 - 1
+              if osVersion then
+                if value2 == 1 then
+                  colorLink(value.reader,0,0)
+                elseif value2 == 2 then
+                  colorLink(value.reader,1,1)
+                elseif value2 == 3 then
+                  colorLink(value.reader,4,4)
+                end
+              end
+              --[[if value2 == 1 then
                 if value.doorType == 3 then
                   for _,value2 in pairs(value.doorAddress) do
                     component.proxy(value2).close()
@@ -263,12 +405,13 @@ end
                 if osVersion then
                   colorLink(value.reader,4,4)
                 end
-              end
+              end]]
               break
             end
           end
         end
       end
+      event.push("doorChange")
     end
   end
 
@@ -284,11 +427,14 @@ end
           term.write("\n")
           send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=settingData[data.key].name,["color"]=0xFFFFFF}}))
           if data.type == "base" then
-            thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
+            doorLink(data.key,settingData[data.key].toggle == true and true or settingData[data.key].delay)
+            --thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
           elseif data.type == "toggle" then
-            thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
+            doorLink(data.key,true)
+            --thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 1, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
           elseif data.type == "delay" then
-            thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
+            doorLink(data.key,data.delay)
+            --thread.create(openDoor, data.delay, settingData[data.key].redColor, settingData[data.key].doorAddress, 0, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
           end
         end
       elseif msg == "changeSettings" then
@@ -310,6 +456,11 @@ end
           local got, _, _, _, _, fill = event.pull(2, "modem_message")
           if got then
             varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
+            doorControls = {}
+            for key,_ in pairs(settingData) do
+              doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
+            end
+            sectorfresh(query.data.sectorStatus)
           else
             print("Failed to receive confirmation from server")
             os.exit()
@@ -437,6 +588,9 @@ if osVersion then
   end
   thread.create(colorupdate)
 end
+for key,_ in pairs(settingData) do
+  doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
+end
 for key,_ in pairs(component.list("os_doorcontroller")) do
   component.proxy(key).close()
 end
@@ -462,7 +616,7 @@ modem.open(diagPort)
 local bypassallowed = false
 
 while true do
-  local ev, address, user, str, uuid, data = event.pullMultiple("magData","bioReader","rfidSuccess")
+  local ev, address, user, str, uuid, data = event.pullMultiple("magData","bioReader","rfidSuccess","rfidClear")
   if ev == "magData" then
     if osVersion then colorLink(address,2) end
   end
@@ -554,7 +708,8 @@ while true do
         if data == "true" then
           term.write("Access granted\n")
           computer.beep()
-          thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide,settingData[keyed].reader)
+          doorLink(keyed,toggle == true and true or delay)
+          --thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide,settingData[keyed].reader)
         elseif data == "false" then
           term.write("Access denied\n")
           if osVersion then
