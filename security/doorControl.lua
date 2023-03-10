@@ -186,7 +186,7 @@ end
             for key, value in pairs(rfidReaders[i].buffer) do --go through every card in buffer
               if value.timer <= 0 and i == rfidInt then --remove cards if they run out of time and the current door that just scanned didn't see them
                 rfidReaders[i].buffer[key] = nil
-              elseif value.allowed = true then
+              elseif value.allowed == true then
                 doorList[rfidReaders[i].key] = true
               end
             end
@@ -270,7 +270,7 @@ end
           if value.rfid then
             isOpen = true
           end
-        elseif value.lock = 2 then
+        elseif value.lock == 2 then
           isOpen = true
         end
         if isOpen ~= value.memory then
@@ -291,7 +291,7 @@ end
           if isOpen then
             colorLink(settingData[key].reader,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}})
           else
-            colorLink(key,0)
+            colorLink(settingData[key].reader,0)
           end
         end
       end
@@ -352,11 +352,11 @@ end
 
   local function sectorfresh(data)
     if enableSectors then
-      for _,value in pairs(settingData) do
+      for dk,value in pairs(settingData) do
         if value.sector ~= false then
           for key,value2 in pairs(data) do
             if key == value.sector then
-              doorControls[key].lock = value2 - 1
+              doorControls[dk].lock = value2 - 1
               if osVersion then
                 if value2 == 1 then
                   colorLink(value.reader,0,0)
@@ -460,7 +460,7 @@ end
             for key,_ in pairs(settingData) do
               doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
             end
-            sectorfresh(query.data.sectorStatus)
+            --sectorfresh(query.data.sectorStatus)
           else
             print("Failed to receive confirmation from server")
             os.exit()
@@ -587,6 +587,7 @@ if osVersion then
     readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
   end
   thread.create(colorupdate)
+  thread.create(doorupdate)
 end
 for key,_ in pairs(settingData) do
   doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
