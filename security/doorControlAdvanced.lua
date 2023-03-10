@@ -709,6 +709,7 @@ while true do
       if ev ~= "bioReader" then
         if ev == "rfidSuccess" then
           tmpTable = data
+          tmpTable.isRFID = true
         else
           tmpTable = ser.unserialize(data)
         end

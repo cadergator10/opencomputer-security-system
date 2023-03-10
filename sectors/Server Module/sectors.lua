@@ -10,7 +10,7 @@ local uuid = require("uuid")
 
 local module = {}
 module.name = "sectors"
-module.commands = {"sectorupdate","doorsector","doorsecupdate"}
+module.commands = {"sectorupdate","doorsecupdate"} --removed doorSector so it isn't received from outside of the server via modems
 module.skipcrypt = {}
 module.table = {["sectors"] = {{["name"]="Placeholder Sector",["uuid"]=uuid.next(),["type"]=1,["pass"]={}}}}
 module.table.sectorStatus = {[module.table.sectors[1].uuid]=1}
@@ -102,7 +102,7 @@ function module.message(command,datar) --Called when a command goes past all def
             end
           end
           if user == false then
-            return false, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector check failed: User Not Found",["color"]=nil,["line"]=false}}
+            return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector check failed: User Not Found",["color"]=nil,["line"]=false}}, false, true, "false"
           end
           local printText = "User " .. data.name .. " failed sector check of " .. userTable.sectors[i].name
           for p=1,5,1 do
@@ -147,7 +147,11 @@ function module.message(command,datar) --Called when a command goes past all def
                   if value.lock == 1 then
                     return true,nil,nil,true,"openbypass"
                   else
-                    return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " requested a bypass of " .. userTable.sectors[i].name,["color"]=0xFF0000,["line"]=false}},false,true,"lockbypass"
+                    if data.isRFID then
+                      return true, nil, nil, true, "false"
+                    else
+                      return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " requested a bypass of " .. userTable.sectors[i].name,["color"]=0xFF0000,["line"]=false}},false,true,"lockbypass"
+                    end
                   end
                 end
               end
