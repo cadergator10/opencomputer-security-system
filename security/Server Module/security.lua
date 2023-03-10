@@ -183,7 +183,7 @@ function module.init(setit ,doors, serverCommands) --Called when server is first
     doorTable = doors
     server = serverCommands
     if module.debug then server.print("Received Stuff for passes!") end
-    if userTable.passes[1] ~= nil and userTable.passes[1].mcid == nil then --make sure old systems migrate successfully
+    if userTable.passes ~= nil and userTable.passes[1] ~= nil and userTable.passes[1].mcid == nil then --make sure old systems migrate successfully
         for _,value in pairs(userTable.passes) do
             value.mcid = "nil"
         end
