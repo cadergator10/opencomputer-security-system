@@ -19,7 +19,7 @@ local cardRead = {};
 local readerLights = {} --Table full of all reader id's, which a thread uses. {["new"]=0,["old"]=-1,["check"]=0}
 
 local rfidBlock = false
-local rfidReaders = {} --Table full of all RFID Readers id's, which a thread uses. {["uuid"]="reader id",["buffer"]=card buffers,["key"]='door key',["size"]=5,["last"]=whether rfid has opened/closed before}
+local rfidReaders = {} --Table full of all RFID Readers id's, which a thread uses. {["uuid"]="reader id",["buffer"]=card buffers,["key"]='door key',["size"]=5}
 local rfidDoorList = {} --keys of doors for rfid
 local rfidBuffer = {} --Buffer for RFID cards detected. [uuid] = {["timer"]=2,["allowed"]=""}
 local rfidInt = 1
@@ -168,12 +168,12 @@ end
 
           local reader = component.proxy(rfidReaders[rfidInt].uuid).scan(rfidReaders[rfidInt].size) --scan and perform checks on new cards found
           for _,value in pairs(reader) do
-            local data = value.data ~= nil and ser.unserialize(crypt(value.data,extraConfig.cryptKey)) or nil --get data off card
+            local data = value.data ~= nil and ser.unserialize(crypt(value.data,extraConfig.cryptKey,true)) or nil --get data off card
             if data ~= nil then
-              if rfidReaders[rfidInt].buffer[data.uuid] ~= nil then --if there is data and crypt is correct
-              event.push("rfidSuccess",nil,nil,data) --push to main thread to check if allowed or not
-              local e, status = event.pull("rfidRequest") --receive results
-              rfidReaders[rfidInt].buffer[data.uuid] = {["timer"]=rfidWait,["allowed"]=status} --add new user to buffer
+              if rfidReaders[rfidInt].buffer[data.uuid] == nil then --if there is data and crypt is correct
+                event.push("rfidSuccess",rfidReaders[rfidInt].uuid,nil,data) --push to main thread to check if allowed or not
+                local e, status = event.pull(5,"rfidRequest") --receive results
+                rfidReaders[rfidInt].buffer[data.uuid] = {["timer"]=rfidWait,["allowed"]=status} --add new user to buffer
               else
                 rfidReaders[rfidInt].buffer[data.uuid].timer = rfidWait --Update timer back to max as they are still in range
               end
@@ -184,6 +184,7 @@ end
           for i=1, #rfidReaders, 1 do --go through all readers
             doorList[rfidReaders[i].key] = doorList[rfidReaders[i].key] ~= nil and doorList[rfidReaders[i].key] or false --Set the current key to false
             for key, value in pairs(rfidReaders[i].buffer) do --go through every card in buffer
+              rfidReaders[i].buffer[key].timer = rfidReaders[i].buffer[key].timer - 0.05
               if value.timer <= 0 and i == rfidInt then --remove cards if they run out of time and the current door that just scanned didn't see them
                 rfidReaders[i].buffer[key] = nil
               elseif value.allowed == true then
@@ -209,6 +210,11 @@ end
             rfidInt = rfidInt + 1
           end
         else --rfidTimer is still not at 0, so just decrement and wait
+          for i=1, #rfidReaders, 1 do --go through all readers
+            for key, _ in pairs(rfidReaders[i].buffer) do --go through every card in buffer
+              rfidReaders[i].buffer[key].timer = rfidReaders[i].buffer[key].timer - 0.05
+            end
+          end
           rfidTimer = rfidTimer - 0.05
           os.sleep(0.05)
         end
@@ -593,8 +599,13 @@ if osVersion then
   thread.create(colorupdate)
   thread.create(doorupdate)
 end
-for key,_ in pairs(settingData) do
+for key,value in pairs(settingData) do
   doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
+  for _,value2 in pairs(value.reader) do
+    if value2.type == "rfid" then
+      table.insert(rfidReaders,{["uuid"]=value2.uuid,["buffer"]={},["key"]=key,["size"]=5})
+    end
+  end
 end
 for key,_ in pairs(component.list("os_doorcontroller")) do
   component.proxy(key).close()
@@ -651,7 +662,7 @@ while true do
     isOk = "ok"
   else
     print("MAG READER IS NOT SET UP! PLEASE FIX")
-    if crypt(str, extraConfig.cryptKey, true) ~= adminCard then
+    if ev ~= "rfidSuccess" and crypt(str, extraConfig.cryptKey, true) ~= adminCard then
       if osVersion then colorLink(address,{{["color"]=3,["delay"]=3}},0) end
       os.exit()
     end
@@ -659,11 +670,16 @@ while true do
   local data
   if ev == "bioReader" then --TODO: Find all occurances and fix the pull
     data = user
+  elseif ev == "rfidSuccess" then
+    data = str
   else
     data = crypt(str, extraConfig.cryptKey, true)
   end
   if ev then
     if (data == adminCard) then
+      if (ev == "rfidSuccess") then
+        print("RECOMMENDED TO NOT HAVE ADMIN CARD AS RFID")
+      end
       term.write("Admin card swiped. Sending diagnostics\n")
       modem.open(diagPort)
       local diagData = deepcopy(settingData[keyed])
@@ -691,7 +707,11 @@ while true do
       end
       local tmpTable
       if ev ~= "bioReader" then
-        tmpTable = ser.unserialize(data)
+        if ev == "rfidSuccess" then
+          tmpTable = data
+        else
+          tmpTable = ser.unserialize(data)
+        end
         if tmpTable == nil then
           term.write("Card failed to read. it may not have been written to right or cryptkey may be incorrect.")
           if osVersion then colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=3},{["color"]=0,["delay"]=1}}) end
@@ -713,36 +733,47 @@ while true do
         if data == "true" then
           term.write("Access granted\n")
           computer.beep()
-          doorLink(keyed,toggle == 1 and true or delay)
+          if ev == "rfidSuccess" then
+            event.push("rfidRequest",true)
+          else
+            doorLink(keyed,toggle == 1 and true or delay)
+          end
           --thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide,settingData[keyed].reader)
         elseif data == "false" then
           term.write("Access denied\n")
+          if ev == "rfidSuccess" then
+            event.push("rfidRequest",false)
+          end
           if osVersion then
             colorLink(settingData[keyed].reader,{{["color"]=1,["delay"]=1},{["color"]=0,["delay"]=0}})
           end
           computer.beep()
           computer.beep()
         elseif data == "bypass" then
-          if bypassallowed then
-            term.write("Bypass succeeded: lockdown lifted\n")
-            if osVersion then
-              colorLink(settingData[keyed].reader,{{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+          if ev ~= "rfidSuccess" then
+            if bypassallowed then
+              term.write("Bypass succeeded: lockdown lifted\n")
+              if osVersion then
+                colorLink(settingData[keyed].reader,{{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+              end
+              data = crypt(tmpTable.sector,extraConfig.cryptKey)
+              send(modemPort,true, "doorsecupdate", data)
+              computer.beep()
+              computer.beep()
+              computer.beep()
+            else
+              bypassallowed = true
+              thread.create(function()
+                os.sleep(3)
+                bypassallowed = false
+              end)
+              term.write("Requesting bypass\n")
+              if osVersion then
+                colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+              end
             end
-            data = crypt(tmpTable.sector,extraConfig.cryptKey)
-            send(modemPort,true, "doorsecupdate", data)
-            computer.beep()
-            computer.beep()
-            computer.beep()
           else
-            bypassallowed = true
-            thread.create(function()
-              os.sleep(3)
-              bypassallowed = false
-            end)
-            term.write("Requesting bypass\n")
-            if osVersion then
-              colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
-            end
+            event.push("rfidRequest",false)
           end
         else
           term.write("Unknown command\n")
