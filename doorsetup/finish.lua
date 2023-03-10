@@ -245,19 +245,26 @@ for i=1,#finishTable,1 do
                 table.insert(loopArray["reader"],{["uuid"]=value,["type"]="biometric"})
             elseif thisType == "os_rfidreader" then
                 table.insert(loopArray["reader"],{["uuid"]=value,["type"]="rfid"})
+            elseif thisType == "os_keypad" then
+                component.proxy(value).setDisplay("inactive", 6)
+                table.insert(loopArray["reader"],{["uuid"]=value,["type"]="keypad",["global"]=false,["pass"]="1111"})
             end
         end
     else
         j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
         local distable = {}
         for key,_ in pairs(component.list("os_magreader")) do
-            table.insert(distable,{["uuid"]=key,type="swipe"})
+            table.insert(distable,{["uuid"]=key,["type"]="swipe"})
         end
         for key,_ in pairs(component.list("os_biometric")) do
-            table.insert(distable,{["uuid"]=key,type="biometric"})
+            table.insert(distable,{["uuid"]=key,["type"]="biometric"})
         end
         for key,_ in pairs(component.list("os_rfidreader")) do
-            table.insert(distable,{["uuid"]=key,type="rfid"})
+            table.insert(distable,{["uuid"]=key,["type"]="rfid"})
+        end
+        for key,_ in pairs(component.list("os_keypad")) do
+            component.proxy(key).setDisplay("inactive", 6)
+            table.insert(distable,{["uuid"]=key,["type"]="keypad"})
         end
         loopArray["reader"] = distable
     end

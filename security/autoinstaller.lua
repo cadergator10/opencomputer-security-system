@@ -13,10 +13,14 @@ local modemPort = 1000
 local syncPort = 199
 local diagPort = 180
 
+local midPoint = "4.0.1"
+
 local program = "ctrl.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
-local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/security/doorControl.lua"
+--local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/" .. midPoint .. "/security/doorControlSimple.lua"
+--local doorAdv = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/" .. midPoint .. "/security/doorControlAdvanced.lua"
+local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/" .. midPoint .. "/security/doorControlAdvanced.lua" --Make it choosable in future?
 --local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
 
 local settingData = {}
@@ -189,19 +193,26 @@ local function runInstall()
                     table.insert(loopArray["reader"],{["uuid"]=value,["type"]="biometric"})
                 elseif thisType == "os_rfidreader" then
                     table.insert(loopArray["reader"],{["uuid"]=value,["type"]="rfid"})
+                elseif thisType == "os_keypad" then
+                    component.proxy(value).setDisplay("inactive", 6)
+                    table.insert(loopArray["reader"],{["uuid"]=value,["type"]="keypad"})
                 end
             end
         else
             j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
             local distable = {}
             for key,_ in pairs(component.list("os_magreader")) do
-                table.insert(distable,{["uuid"]=key,type="swipe"})
+                table.insert(distable,{["uuid"]=key,["type"]="swipe"})
             end
             for key,_ in pairs(component.list("os_biometric")) do
-                table.insert(distable,{["uuid"]=key,type="biometric"})
+                table.insert(distable,{["uuid"]=key,["type"]="biometric"})
             end
             for key,_ in pairs(component.list("os_rfidreader")) do
-                table.insert(distable,{["uuid"]=key,type="rfid"})
+                table.insert(distable,{["uuid"]=key,["type"]="rfid"})
+            end
+            for key,_ in pairs(component.list("os_keypad")) do
+                component.proxy(key).setDisplay("inactive", 6)
+                table.insert(distable,{["uuid"]=key,["type"]="keypad"})
             end
             loopArray["reader"] = distable
         end

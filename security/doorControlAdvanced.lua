@@ -1,4 +1,5 @@
---Experimental, combined door control with ability to be a multi or single door.
+--Experimental door control. This is way more different than the simple one and is a bit less responsive, less reliable, and uses more memory, but supports RFID readers and keypads.
+--Why 2 different files? I don't want people to use this when they don't absolutely need it and have a glitchy system.
 
 local doorVersion = "4.0.0"
 local testR = true
@@ -17,6 +18,8 @@ local delay = 5
 local cardRead = {};
 
 local readerLights = {} --Table full of all reader id's, which a thread uses. {["new"]=0,["old"]=-1,["check"]=0}
+
+local keypadHolder = {} --Holds states for keypads
 
 local rfidBlock = false
 local rfidReaders = {} --Table full of all RFID Readers id's, which a thread uses. {["uuid"]="reader id",["buffer"]=card buffers,["key"]='door key',["size"]=5}
@@ -597,8 +600,17 @@ if osVersion then
     readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
   end
   thread.create(colorupdate)
-  thread.create(doorupdate)
 end
+thread.create(doorupdate)
+
+for key,_ in pairs(component.list("os_keypad")) do
+  local customButtons = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "#"}
+  local customButtonColor = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+  component.proxy(key).setDisplay("locked", 14)
+  component.proxy(key).setKey(customButtons, customButtonColor)
+  keypadHolder[key] = ""
+end
+
 for key,value in pairs(settingData) do
   doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
   for _,value2 in pairs(value.reader) do
@@ -624,6 +636,14 @@ print("-------------------------------------------------------------------------
 event.listen("modem_message", update)
 process.info().data.signal = function(...)
   print("caught hard interrupt")
+  for key,_ in pairs(component.list("os_keypad")) do
+    component.proxy(key).setDisplay("inactive", 6)
+  end
+  if osVersion then
+    for key,_ in pairs(component.list("os_magreader")) do
+      component.proxy(key).setLightState(7)
+    end
+  end
   event.ignore("modem_message", update)
   testR = false
   os.exit()
@@ -632,159 +652,168 @@ modem.open(diagPort)
 local bypassallowed = false
 
 while true do
-  local ev, address, user, str, uuid, data = event.pullMultiple("magData","bioReader","rfidSuccess","rfidClear")
-  if ev == "magData" then
-    if osVersion then colorLink(address,2) end
-  end
-  local isOk = "ok"
-  local keyed = nil
-  for key, valuedd in pairs(settingData) do
-    for i=1,#valuedd.reader,1 do
-      if(valuedd.reader[i].uuid == address) then
-        keyed = key
+  local ev, address, user, str, uuid, data = event.pullMultiple("magData","bioReader","rfidSuccess","keypad") --for keypad, address is its address, user is button id, str is button label.
+  if ev ~= "keypad" or str == "#" then
+    if ev == "magData" then
+      if osVersion then colorLink(address,2) end
+    end
+    local isOk = "ok"
+    local keyed = nil
+    for key, valuedd in pairs(settingData) do
+      for i=1,#valuedd.reader,1 do
+        if(valuedd.reader[i].uuid == address) then
+          keyed = key
+          break
+        end
+      end
+      if keyed ~= nil then
         break
       end
     end
-    if keyed ~= nil then
-      break
-    end
-  end
-  isOk = "incorrect magreader"
-  if(keyed ~= nil)then
-    redColor = settingData[keyed].redColor
-    redSide = settingData[keyed].redSide
-    delay = settingData[keyed].delay
-    cardRead = settingData[keyed].cardRead
-    doorType = settingData[keyed].doorType
-    doorAddress = settingData[keyed].doorAddress
-    toggle = settingData[keyed].toggle
-    sector = settingData[keyed].sector
-    isOk = "ok"
-  else
-    print("MAG READER IS NOT SET UP! PLEASE FIX")
-    if ev ~= "rfidSuccess" and crypt(str, extraConfig.cryptKey, true) ~= adminCard then
-      if osVersion then colorLink(address,{{["color"]=3,["delay"]=3}},0) end
-      os.exit()
-    end
-  end
-  local data
-  if ev == "bioReader" then --TODO: Find all occurances and fix the pull
-    data = user
-  elseif ev == "rfidSuccess" then
-    data = str
-  else
-    data = crypt(str, extraConfig.cryptKey, true)
-  end
-  if ev then
-    if (data == adminCard) then
-      if (ev == "rfidSuccess") then
-        print("RECOMMENDED TO NOT HAVE ADMIN CARD AS RFID")
-      end
-      term.write("Admin card swiped. Sending diagnostics\n")
-      modem.open(diagPort)
-      local diagData = deepcopy(settingData[keyed])
-      if diagData == nil then
-        diagData = {}
-      end
-      diagData["status"] = isOk
-      diagData["version"] = doorVersion
-      diagData["key"] = keyed or nil
-      diagData["num"] = 3
-      diagData["entireDoor"] = deepcopy(settingData)
-      local counter = 0
-      for index in pairs(settingData) do
-        counter = counter + 1
-      end
-      diagData["entries"] = counter
-      data = ser.serialize(diagData)
-      send(diagPort,false, "diag", data)
-      if osVersion then
-        colorLink(settingData[keyed].reader,{{["color"]=1,["delay"]=0.3},{["color"]=2,["delay"]=0.3},{["color"]=4,["delay"]=0.3},{["color"]=0,["delay"]=0}})
-      end
+    isOk = "incorrect magreader"
+    if(keyed ~= nil)then
+      redColor = settingData[keyed].redColor
+      redSide = settingData[keyed].redSide
+      delay = settingData[keyed].delay
+      cardRead = settingData[keyed].cardRead
+      doorType = settingData[keyed].doorType
+      doorAddress = settingData[keyed].doorAddress
+      toggle = settingData[keyed].toggle
+      sector = settingData[keyed].sector
+      isOk = "ok"
     else
-      if keyed == nil then
+      print("MAG READER IS NOT SET UP! PLEASE FIX")
+      if ev ~= "rfidSuccess" and crypt(str, extraConfig.cryptKey, true) ~= adminCard then
+        if osVersion then colorLink(address,{{["color"]=3,["delay"]=3}},0) end
         os.exit()
       end
-      local tmpTable
-      if ev ~= "bioReader" then
-        if ev == "rfidSuccess" then
-          tmpTable = data
-          tmpTable.isRFID = true
-        else
-          tmpTable = ser.unserialize(data)
+    end
+    local data
+    if ev == "bioReader" then --TODO: Find all occurances and fix the pull
+      data = user
+    elseif ev == "rfidSuccess" then
+      data = str
+    else
+      data = crypt(str, extraConfig.cryptKey, true)
+    end
+    if ev then
+      if (data == adminCard) then
+        if (ev == "rfidSuccess") then
+          print("RECOMMENDED TO NOT HAVE ADMIN CARD AS RFID")
         end
-        if tmpTable == nil then
-          term.write("Card failed to read. it may not have been written to right or cryptkey may be incorrect.")
-          if osVersion then colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=3},{["color"]=0,["delay"]=1}}) end
+        term.write("Admin card swiped. Sending diagnostics\n")
+        modem.open(diagPort)
+        local diagData = deepcopy(settingData[keyed])
+        if diagData == nil then
+          diagData = {}
+        end
+        diagData["status"] = isOk
+        diagData["version"] = doorVersion
+        diagData["key"] = keyed or nil
+        diagData["num"] = 3
+        diagData["entireDoor"] = deepcopy(settingData)
+        local counter = 0
+        for index in pairs(settingData) do
+          counter = counter + 1
+        end
+        diagData["entries"] = counter
+        data = ser.serialize(diagData)
+        send(diagPort,false, "diag", data)
+        if osVersion then
+          colorLink(settingData[keyed].reader,{{["color"]=1,["delay"]=0.3},{["color"]=2,["delay"]=0.3},{["color"]=4,["delay"]=0.3},{["color"]=0,["delay"]=0}})
+        end
+      else
+        if keyed == nil then
           os.exit()
         end
-        term.write(tmpTable["name"] .. ":")
-      else
-        tmpTable = {["isBio"] = true,["uuid"] = user}
-        term.write("UUID " .. user .. ":")
-      end
-      tmpTable["type"] = extraConfig.type
-      tmpTable["key"] = keyed
-      tmpTable["sector"] = sector
-      data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-      send(modemPort,true, "checkRules", data)
-      local e, _, from, port, _, msg = event.pull(1, "modem_message")
-      if e then
-        data = crypt(msg, extraConfig.cryptKey, true)
-        if data == "true" then
-          term.write("Access granted\n")
-          computer.beep()
+        local tmpTable
+        if ev ~= "bioReader" then
           if ev == "rfidSuccess" then
-            event.push("rfidRequest",true)
+            tmpTable = data
+            tmpTable.isRFID = true
           else
-            doorLink(keyed,toggle == 1 and true or delay)
+            tmpTable = ser.unserialize(data)
           end
-          --thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide,settingData[keyed].reader)
-        elseif data == "false" then
-          term.write("Access denied\n")
-          if ev == "rfidSuccess" then
-            event.push("rfidRequest",false)
+          if tmpTable == nil then
+            term.write("Card failed to read. it may not have been written to right or cryptkey may be incorrect.")
+            if osVersion then colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=3},{["color"]=0,["delay"]=1}}) end
+            os.exit()
           end
-          if osVersion then
-            colorLink(settingData[keyed].reader,{{["color"]=1,["delay"]=1},{["color"]=0,["delay"]=0}})
-          end
-          computer.beep()
-          computer.beep()
-        elseif data == "bypass" then
-          if ev ~= "rfidSuccess" then
-            if bypassallowed then
-              term.write("Bypass succeeded: lockdown lifted\n")
-              if osVersion then
-                colorLink(settingData[keyed].reader,{{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
-              end
-              data = crypt(tmpTable.sector,extraConfig.cryptKey)
-              send(modemPort,true, "doorsecupdate", data)
-              computer.beep()
-              computer.beep()
-              computer.beep()
+          term.write(tmpTable["name"] .. ":")
+        else
+          tmpTable = {["isBio"] = true,["uuid"] = user}
+          term.write("UUID " .. user .. ":")
+        end
+        tmpTable["type"] = extraConfig.type
+        tmpTable["key"] = keyed
+        tmpTable["sector"] = sector
+        data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
+        send(modemPort,true, "checkRules", data)
+        local e, _, from, port, _, msg = event.pull(1, "modem_message")
+        if e then
+          data = crypt(msg, extraConfig.cryptKey, true)
+          if data == "true" then
+            term.write("Access granted\n")
+            computer.beep()
+            if ev == "rfidSuccess" then
+              event.push("rfidRequest",true)
             else
-              bypassallowed = true
-              thread.create(function()
-                os.sleep(3)
-                bypassallowed = false
-              end)
-              term.write("Requesting bypass\n")
-              if osVersion then
-                colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+              doorLink(keyed,toggle == 1 and true or delay)
+            end
+            --thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide,settingData[keyed].reader)
+          elseif data == "false" then
+            term.write("Access denied\n")
+            if ev == "rfidSuccess" then
+              event.push("rfidRequest",false)
+            end
+            if osVersion then
+              colorLink(settingData[keyed].reader,{{["color"]=1,["delay"]=1},{["color"]=0,["delay"]=0}})
+            end
+            computer.beep()
+            computer.beep()
+          elseif data == "bypass" then
+            if ev ~= "rfidSuccess" then
+              if bypassallowed then
+                term.write("Bypass succeeded: lockdown lifted\n")
+                if osVersion then
+                  colorLink(settingData[keyed].reader,{{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=4,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+                end
+                data = crypt(tmpTable.sector,extraConfig.cryptKey)
+                send(modemPort,true, "doorsecupdate", data)
+                computer.beep()
+                computer.beep()
+                computer.beep()
+              else
+                bypassallowed = true
+                thread.create(function()
+                  os.sleep(3)
+                  bypassallowed = false
+                end)
+                term.write("Requesting bypass\n")
+                if osVersion then
+                  colorLink(settingData[keyed].reader,{{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5},{["color"]=3,["delay"]=0.5},{["color"]=0,["delay"]=0.5}})
+                end
               end
+            else
+              event.push("rfidRequest",false)
             end
           else
-            event.push("rfidRequest",false)
+            term.write("Unknown command\n")
           end
         else
-          term.write("Unknown command\n")
-        end
-      else
-        term.write("server timeout\n")
-        if osVersion then
-          colorLink(settingData[keyed].reader,{{["color"]=5,["delay"]=1},{["color"]=0,["delay"]=0}})
+          term.write("server timeout\n")
+          if osVersion then
+            colorLink(settingData[keyed].reader,{{["color"]=5,["delay"]=1},{["color"]=0,["delay"]=0}})
+          end
         end
       end
+    end
+  else --Keypad stuff (other than #, which is enter)
+    if str == "C" then
+      keypadHolder[address] = ""
+      component.proxy(address).setDisplay("locked", 14)
+    elseif string.len(keypadHolder[address]) < 4 then
+      keypadHolder[address] = keypadHolder[address] .. str
     end
   end
 end

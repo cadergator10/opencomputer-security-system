@@ -7,6 +7,8 @@ Definitely Servertine (this):
 8. Database remote control module
 10. Open Linking and User ID string values
 
+Debug and Test
+RFID Reader
 
 done
 groups (-int) get dropdown rather than int changer with +- (DONE)
