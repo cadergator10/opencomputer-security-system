@@ -220,12 +220,14 @@ end
 
   local function colorLink(key, var, check) --{["color"]=0,["delay"]=1} or just a number
     local chech = function(key)
-      if readerLights[key] == nil then
-        component.proxy(key).swipeIndicator(false)
-        readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
+      if component.proxy(key) ~= nil then
+        if readerLights[key] == nil then
+          component.proxy(key).swipeIndicator(false)
+          readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
+        end
+        readerLights[key].new = deepcopy(var)
+        if check then readerLights[key].check = check end
       end
-      readerLights[key].new = deepcopy(var)
-      if check then readerLights[key].check = check end
     end
     if type(key) == "table" then
       for i=1,#key,1 do
@@ -250,7 +252,7 @@ end
     event.push("doorChange")
   end
 
-  local function doorupdate() --A seperate thread that reads a table of door addresses and redstone stuff and can control them.
+  local function doorupdate() --A seperate thread that reads a table of door addresses and redstone stuff and can control them. FIXME: This crashes after a door opens for some reason. Only one door actually opens. Also make RFID WORK FOR REALSIES
     while true do
       local shouldContinue = false
       for key, value in pairs(doorControls) do
@@ -277,10 +279,12 @@ end
           doorControls[key].memory = isOpen
           if settingData[key].doorType == 3 then
             for _, value2 in pairs(settingData[key].doorAddress) do
-              if isOpen then
-                component.proxy(value2).open()
-              else
-                component.proxy(value2).close()
+              if component.proxy(value2) ~= nil then
+                if isOpen then
+                  component.proxy(value2).open()
+                else
+                  component.proxy(value2).close()
+                end
               end
             end
           elseif settingData[key].doorType == 2 then
@@ -359,7 +363,7 @@ end
               doorControls[dk].lock = value2 - 1
               if osVersion then
                 if value2 == 1 then
-                  colorLink(value.reader,0,0)
+                  colorLink(value.reader,0,0) --crashing it
                 elseif value2 == 2 then
                   colorLink(value.reader,1,1)
                 elseif value2 == 3 then
@@ -427,7 +431,7 @@ end
           term.write("\n")
           send(modemPort,true,"loginfo",ser.serialize({{["text"]="Remote control open: ",["color"]=0xFFFF80},{["text"]=settingData[data.key].name,["color"]=0xFFFFFF}}))
           if data.type == "base" then
-            doorLink(data.key,settingData[data.key].toggle == true and true or settingData[data.key].delay)
+            doorLink(data.key,settingData[data.key].toggle == 1 and true or settingData[data.key].delay)
             --thread.create(openDoor, settingData[data.key].delay, settingData[data.key].redColor, settingData[data.key].doorAddress, settingData[data.key].toggle, settingData[data.key].doorType, settingData[data.key].redSide,settingData[data.key].reader)
           elseif data.type == "toggle" then
             doorLink(data.key,true)
@@ -709,7 +713,7 @@ while true do
         if data == "true" then
           term.write("Access granted\n")
           computer.beep()
-          doorLink(keyed,toggle == true and true or delay)
+          doorLink(keyed,toggle == 1 and true or delay)
           --thread.create(openDoor, delay, redColor, doorAddress, toggle, doorType, redSide,settingData[keyed].reader)
         elseif data == "false" then
           term.write("Access denied\n")

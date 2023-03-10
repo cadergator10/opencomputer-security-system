@@ -18,6 +18,15 @@ module.debug = false
 module.version = "4.0.0"
 module.id = 1112
 
+local function checkMCID(id) --Pulled from Security module
+  for _, value in pairs(userTable.passes) do
+    if value.mcid == id then
+      return true, value.uuid, value.name
+    end
+  end
+  return false
+end
+
 function module.init(setit ,doors, serverCommands) --Called when server is first started. Passes userTable and doorTable.
   userTable = setit
   doorTable = doors
@@ -70,6 +79,15 @@ function module.message(command,datar) --Called when a command goes past all def
 
     end
   elseif command == "doorsector" then
+    if data.isBio then
+      local e,good,nome = checkMCID(data.uuid)
+      if e then
+        data.uuid = good
+        data.name = nome
+      else
+        return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User" .. data.uuid .. " not linked to biometrics",["color"]=0x994049}},false,true,server.crypt("false")
+      end
+    end
     for i=1,#userTable.sectors,1 do
       if userTable.sectors[i].uuid == data.sector then
         if userTable.sectorStatus[userTable.sectors[i].uuid] == 1 then
