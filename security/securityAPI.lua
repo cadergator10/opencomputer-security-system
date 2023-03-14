@@ -125,7 +125,7 @@ end
         config.cryptKey = {1,2,3,4,5}
       end
       config.type = "single"
-      config.num = 2
+      config.num = 3
       config.version = version
       modem.open(syncPort)
       modem.broadcast(syncPort,"syncport")
@@ -404,6 +404,126 @@ end
       return false, "timed out"
     end
   end
+
+local function checkLink() --ported directly from my single program using this. Should work as I haven't modified it since
+  print("retrieving config")
+  local fill = io.open("linkConfig.txt", "r")
+  if fill~=nil then 
+    print("previous config detected")
+    io.close(fill) 
+  else 
+    print("no config detected. Making new one")
+    settingData = {}
+    settingData["code"] = uuid.next()
+    saveTable(settingData,"linkConfig.txt")
+  end
+  settingData = loadTable("linkConfig.txt")
+  print("loaded config. Connecting to account...")
+  modem.open(modemPort)  
+  local str = crypt(settingData["code"],extraConfig.cryptKey)
+  send(nil,modemPort,true,"checkLinked",str)
+  local e, _, from, port, _, msg = event.pull(1, "modem_message")
+  modem.close(modemPort)
+  if e then
+    str = crypt(msg, extraConfig.cryptKey, true)
+    local da = ser.unserialize(str)
+    if da["status"] == true then
+      print("successfully connected")
+      return "true",da["name"],settingData.code
+    else
+      if da["reason"] == 1 then
+        print("No account linked. When you are ready, click the screen")
+        event.pull("touch")
+        term.write("wait...")
+        modem.open(dbPort)
+        local newUUID = uuid.next()
+        send(nil,dbPort,false,crypt(newUUID,extraConfig.cryptKey))
+        e, _, from, port, _, msg = event.pull(3, "modem_message")
+        modem.close(dbPort)
+        if e then
+          local nm = crypt(msg,extraConfig.cryptKey,true)
+          term.write(" linked to " .. nm .. "\n")
+          settingData["code"] = newUUID
+          saveTable(settingData,"linkConfig.txt")
+          return true,nm, settingData.code
+        else
+          term.write(" linking failed\n")
+          return "false","nil", settingData.code
+        end
+      elseif da["reason"] == 2 then
+        print("Your account is blocked")
+        return "false","nil", settingData.code
+      else
+        print("unknown error")
+        return "false","nil", settingData.code
+      end
+    end
+  else
+    print("server timeout")
+    return "false"
+  end
+end
+
+function security.link() --If using linking, do this rather than security.setup()
+  local e
+  local fill = io.open("extraConfig.txt", "r")
+  if fill ~= nil then
+    io.close(fill)
+  else
+    local config = {}
+    config.cryptKey = {}
+    term.clear()
+    print("First Time Config Setup: Would you like to use default cryptKey? 1 for yes, 2 for no")
+    local text = term.read()
+    if tonumber(text) == 2 then
+      print("there are 5 parameters, each requiring a number. Recommend doing 1 digit numbers")
+      for i=1,5,1 do
+        print("enter param " .. i)
+        text = term.read()
+        config.cryptKey[i] = tonumber(text)
+      end
+    else
+      config.cryptKey = {1,2,3,4,5}
+    end
+    config.type = "link"
+    config.num = 3
+    config.version = version
+    modem.open(syncPort)
+    modem.broadcast(syncPort,"syncport")
+    local e,_,_,_,_,msg = event.pull(1,"modem_message")
+    modem.close(syncPort)
+    if e then
+      config.port = tonumber(msg)
+    else
+      print("What port is the server running off of?")
+      local text = term.read()
+      config.port = tonumber(text:sub(1,-2))
+      term.clear()
+    end
+    saveTable(config,"extraConfig.txt")
+  end
+  extraConfig = loadTable("extraConfig.txt")
+  modemPort = extraConfig.port
+  if component.isAvailable("tunnel") then
+    link = component.tunnel
+    modem.close(modemPort)
+  else
+    modem.open(modemPort)
+  end
+  send(nil,modemPort,true,"getquery",ser.serialize({"passSettings"}))
+  e,_,_,_,_,query = event.pull(3,"modem_message")
+  if e == nil then
+    print("Failed query. Is the server on?")
+    os.exit()
+  end
+  query = ser.unserialize(crypt(query,extraConfig.cryptKey,true))
+  if query.num ~= 3 then
+    print("Server is not 3.0.0 and up")
+    os.exit()
+  end
+  local worked, user = checkLink()
+
+end
 
 function security.crypt(str,reverse)
   return true,crypt(str,extraConfig.cryptKey,reverse)

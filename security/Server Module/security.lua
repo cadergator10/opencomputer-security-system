@@ -9,9 +9,9 @@ local ser = require("serialization")
 
 local module = {}
 module.name = "passes"
-module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules","linkMCID"}
+module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules","linkMCID","checkKeypad"}
 module.skipcrypt = {}
-module.table = {["passes"]={},["passSettings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}}
+module.table = {["passes"]={},["passSettings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}},["securityKeypads"] = {["testone"]={["pass"]="1234",["label"]="Test One"}}}
 module.debug = false
 module.version = "4.0.0"
 module.id = 1111
@@ -288,6 +288,29 @@ function module.message(command,datar,from) --Called when a command goes past al
         else
             return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Quick Linking MCID's has been disabled by database",["color"]=0xFF0000}}, false, true, server.crypt("false")
         end
+    elseif command == "checkKeypad" then --theoretically should be goody goody two shoes :D (maybe)
+        for key, value in pairs(doorTable) do
+            if value.id == from then
+                for _, value2 in pairs(value.data[data.key].reader) do
+                    if value2.uuid == data.uuid then
+                        if value2.global == false then --Local pass
+                            if value2.pass == data.pass then
+                                return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Correct password for " .. value.data[data.key].name,["color"]=0x00FF00}}, false, true, server.crypt("true")
+                            else
+                                return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Incorrect password for " .. value.data[data.key].name,["color"]=0xFF0000}}, false, true, server.crypt("false")
+                            end
+                        else --Check the global one
+                            if userTable.securityKeypads[value2.pass] == data.pass then
+                                return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Correct password for " .. value.data[data.key].name,["color"]=0x00FF00}}, false, true, server.crypt("true")
+                            else
+                                return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Incorrect password for " .. value.data[data.key].name,["color"]=0xFF0000}}, false, true, server.crypt("false")
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        return true, {{["text"]="Passes: ",["color"]=0xFF0000},{["text"]="Door was not found",["color"]=0xFF0000}}, false, true, server.crypt("false")
     elseif command == "checkRules" then
         local currentDoor = getDoorInfo(data.type,from,data.key)
         local enter = true

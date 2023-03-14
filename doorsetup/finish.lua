@@ -264,7 +264,7 @@ for i=1,#finishTable,1 do
         end
         for key,_ in pairs(component.list("os_keypad")) do
             component.proxy(key).setDisplay("inactive", 6)
-            table.insert(distable,{["uuid"]=key,["type"]="keypad"})
+            table.insert(distable,{["uuid"]=key,["type"]="keypad",["global"]=false,["pass"]="1111"})
         end
         loopArray["reader"] = distable
     end
