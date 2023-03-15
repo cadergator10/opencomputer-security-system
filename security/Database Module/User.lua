@@ -1,6 +1,14 @@
 --Moved over all pass stuff from security module to another file to save space in main and make some stuff easier to see
 local workspace, window, loc, database, style, permissions, userTable = table.unpack({...}) --main stuff TODO: Check to see if anything is missing
 
+local component = require("component")
+local ser = require("serialization")
+local GUI = require("GUI")
+local uuid = require("uuid")
+local event = require("event")
+local fs = require("Filesystem")
+local system = require("System")
+
 local varEditWindow --Container of all the stuff for variable editing for easy removal of it all.
 local userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
 local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
