@@ -19,6 +19,8 @@ Save changes done on DoorSetup to prevent data loss upon leaving the module (DON
 Make SectorControl utilize runtime changes (3 wires per sector: 1 to turn off lockdown, another to enable, and another to lock open) (DONE)
 
 
-remember
-dataBackup()
-checkConfig()
+DO:
+1. Fix the formatting of list and passes
+2. Fix biometric reader for User
+3. Fix list being too small to show all options (WWHHYY)
+4. Update workspace when pressing the two buttons (update gui)
