@@ -19,7 +19,7 @@ local baseVariables = {"name","uuid","date","link","blocked","staff"} --Used to 
 local guiCalls = {} --Holds all the buttons and stuff for each pass created in a neat order.
 --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 -----------
-
+--136 width, 30 height
 local adminCard = "admincard" --what is written to admin cards
 
 local modemPort = 199
@@ -595,10 +595,10 @@ local function passSetup(deleteprev) --This sets up all the pass buttons into a 
     userMCIDClear.disabled = true
     labelSpot = labelSpot + 2
     --list button stuff to change pages
-    listPageLabel = window:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
-    listUpButton = window:addChild(GUI.button(8,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
+    listPageLabel = window:addChild(GUI.label(2,30,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
+    listUpButton = window:addChild(GUI.button(8,30,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
     listUpButton.onTouch, listUpButton.isPos = pageCallback,true
-    listDownButton = window:addChild(GUI.button(12,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
+    listDownButton = window:addChild(GUI.button(12,30,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
     listDownButton.onTouch, listDownButton.isPos = pageCallback,false
 
     --Line and user buttons (all the stuff on right and bottom of module)
@@ -607,19 +607,19 @@ local function passSetup(deleteprev) --This sets up all the pass buttons into a 
     --window:addChild(GUI.panel(64,10,86,1,style.bottomDivider))
     --window:addChild(GUI.panel(64,36,86,1,style.bottomDivider))
     local va = database.checkPerms("security",{"varmanagement"},true)
-    userNewButton = window:addChild(GUI.button(118,12,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new)) --118 is furthest right
+    userNewButton = window:addChild(GUI.button(118,9,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.new)) --118 is furthest right
     userNewButton.onTouch = newUserCallback
     userNewButton.disabled = va
-    userDeleteButton = window:addChild(GUI.button(118,14,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delete))
+    userDeleteButton = window:addChild(GUI.button(118,11,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delete))
     userDeleteButton.onTouch = deleteUserCallback
     userDeleteButton.disabled = va
-    userChangeUUIDButton = window:addChild(GUI.button(118,18,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.resetuuid))
+    userChangeUUIDButton = window:addChild(GUI.button(118,15,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.resetuuid))
     userChangeUUIDButton.onTouch = changeUUID
     userChangeUUIDButton.disabled = database.checkPerms("security",{"varmanagement","resetuuid"},true)
-    createAdminCardButton = window:addChild(GUI.button(118,30,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.admincardbutton))
+    createAdminCardButton = window:addChild(GUI.button(118,27,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.admincardbutton))
     createAdminCardButton.onTouch = writeAdminCardCallback
     createAdminCardButton.disabled = database.checkPerms("security",{"varmanagement","admincard"},true)
-    addVarButton = window:addChild(GUI.button(118,22,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.addvar))
+    addVarButton = window:addChild(GUI.button(118,19,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.addvar))
     addVarButton.onTouch = function() --Page for creating new variables TODO: Make this be a new tab for the module
     addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=1} --The default needed per variable
     varContainer = GUI.addBackgroundContainer(workspace, true, true)
@@ -679,7 +679,7 @@ local function passSetup(deleteprev) --This sets up all the pass buttons into a 
     checkTypeCallback(nil,{["izit"]="add"}) --does it the first time
     end
     addVarButton.disabled = va
-    delVarButton = window:addChild(GUI.button(118,26,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delvar))
+    delVarButton = window:addChild(GUI.button(118,23,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delvar))
     delVarButton.onTouch = function() --del a var. Basically just choose the var and press delete, not much to it
     varContainer = GUI.addBackgroundContainer(workspace, true, true)
     typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
@@ -708,7 +708,7 @@ local function passSetup(deleteprev) --This sets up all the pass buttons into a 
     end
     delVarButton.disabled = va
 
-    editVarButton = window:addChild(GUI.button(118,24,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.editvar))
+    editVarButton = window:addChild(GUI.button(118,21,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.editvar))
     editVarButton.onTouch = function() --similar to add, but you get a dropdown to choose what to edit and also the extra setting is set to what was previously there. 
     addVarArray = {}
     varContainer = GUI.addBackgroundContainer(workspace, true, true)
@@ -752,8 +752,8 @@ end
 --permissionRefresh() permissions given by database
 
 varEditWindow = window:addChild(GUI.container(1,1,window.width,window.height)) --create window all the passes are in
-window:addChild(GUI.panel(1,1,37,33,style.listPanel))
-userList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+window:addChild(GUI.panel(1,1,37,30,style.listPanel))
+userList = window:addChild(GUI.list(2, 2, 35, 28, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
 userList:addItem("HELLO") --if this shows an error occurred
 listPageNumber = 0
 
@@ -761,6 +761,6 @@ passSetup(false) --don't del anything previously there (as nothing is there)
 updateList() --populate the userlist list for the first time
 
 --write card button
-cardWriteButton = window:addChild(GUI.button(118,32,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.writebutton))
+cardWriteButton = window:addChild(GUI.button(118,29,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.writebutton))
 cardWriteButton.onTouch = writeCardCallback
 cardWriteButton.disabled = database.checkPerms("security",{"varmanagement","writecard"},true)

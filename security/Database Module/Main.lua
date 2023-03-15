@@ -87,8 +87,8 @@ module.onTouch = function()
     end
   end
   
-  window:addChild(GUI.panel(123,2,12,3,style.cardStatusPanel))
-  cardStatusLabel = window:addChild(GUI.label(124, 1, 10,3,style.cardStatusLabel,loc.cardabsent))
+  window:addChild(GUI.panel(123,1,12,3,style.cardStatusPanel))
+  cardStatusLabel = window:addChild(GUI.label(124, 2, 10,1,style.cardStatusLabel,loc.cardabsent))
   handler = event.addHandler(eventCallback) --create callback to the handler to check for cardinsert and cardremoval
 
   tabWindow = window:addChild(GUI.container(1,4,window.width,window.height - 3))
