@@ -309,7 +309,7 @@ local function writeCardCallback() --write a card, magswipe atm but possibly rfi
     local selected = pageMult * listPageNumber + userList.selectedItem
     local data, crypted
     local name = userTable.passes[selected].name
-    while crypted ~= nil and string.len(crypted) <= 64 do
+    while crypted == nil or string.len(crypted) > 64 do
         data = {["name"]=name,["uuid"]=string.sub(userTable.passes[selected].uuid,1,-14)}
         data = ser.serialize(data)
         crypted = database.crypt(data)
