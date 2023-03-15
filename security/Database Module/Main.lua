@@ -67,7 +67,7 @@ module.onTouch = function()
     end
     if selected ~= button.myId then
       local success, result = pcall(button.toRun, workspace, tabWindow, loc, database, style, permissions, userTable)
-      if !success then
+      if not success then
         GUI.alert("Failed to run file: " .. tostring(reason))
       end
 
