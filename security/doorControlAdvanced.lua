@@ -605,7 +605,7 @@ thread.create(doorupdate)
 
 for key,_ in pairs(component.list("os_keypad")) do
   local customButtons = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "#"}
-  local customButtonColor = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+  local customButtonColor = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
   component.proxy(key).setDisplay("locked", 14)
   component.proxy(key).setKey(customButtons, customButtonColor)
   keypadHolder[key] = ""
