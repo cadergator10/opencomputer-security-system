@@ -37,14 +37,6 @@ if component.isAvailable("os_biometric") then --see if it exists, otherwise you 
   scanner = component.os_biometric
 end
 
-local function split(s, delimiter) --splits string to table. "e,f,g" to {"e","f","g"}
-  local result = {};
-  for match in (s..delimiter):gmatch("(.-)"..delimiter) do
-    table.insert(result, match);
-  end
-  return result;
-end
-
 module.onTouch = function()
   local tabWindow, tabs, cardStatusLabel, selected
   local userEdit, passEdit

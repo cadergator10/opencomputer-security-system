@@ -41,6 +41,14 @@ local pageMult = 9 --how many items in a list allowed
 local listPageNumber = 0 --current page number (down by 1. page 1 is 0)
 local previousPage = 0 --previous page that was selected.
 
+local function split(s, delimiter) --splits string to table. "e,f,g" to {"e","f","g"}
+    local result = {};
+    for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+        table.insert(result, match);
+    end
+    return result;
+end
+
 --Pass types: security.* = all, security.passediting = pass stuff, security.varmanagement = add/del passes + users security.resetuuid = reset user uuid (make card useless)
 local function userListCallback() --When a value is changed or new user selected
     local selectedId = pageMult * listPageNumber + userList.selectedItem --get user selected in list
@@ -147,43 +155,42 @@ end
 local function buttonCallback(workspace, button) --callback for all user created variables
     local buttonInt, callbackInt, isPos
     if button ~= nil then
-    buttonInt = button.buttonInt --buttonInt is what spot the button is in the guiCalls
-    callbackInt = button.callbackInt --callbackInt is what spot the button is specifically in the guiCalls[buttonInt]
-    isPos = button.isPos --for +- buttons in int passes.
+        buttonInt = button.buttonInt --buttonInt is what spot the button is in the guiCalls
+        callbackInt = button.callbackInt - #baseVariables --callbackInt is what spot the button is specifically in the guiCalls[buttonInt]
+        isPos = button.isPos --for +- buttons in int passes.
     end
     local selected = pageMult * listPageNumber + userList.selectedItem
     if userTable.passSettings.type[callbackInt] == "string" then --simply change string value
-    userTable.passes[selected][userTable.passSettings.var[callbackInt]] = guiCalls[buttonInt][1].text
+        userTable.passes[selected][userTable.passSettings.var[callbackInt]] = guiCalls[buttonInt][1].text
     elseif userTable.passSettings.type[callbackInt] == "-string" then
-    if isPos == true then --if isPos then add a string, otherwise remove the selected one
-        table.insert(userTable.passes[selected][userTable.passSettings.var[callbackInt]],guiCalls[buttonInt][4].text)
-    else
-        table.remove(userTable.passes[selected][userTable.passSettings.var[callbackInt]],guiCalls[buttonInt][1].selectedItem)
-    end
-    elseif userTable.passSettings.type[callbackInt] == "bool" then --simply change true/false
-    userTable.passes[selected][userTable.passSettings.var[callbackInt]] = guiCalls[buttonInt][1].pressed
-    elseif userTable.passSettings.type[callbackInt] == "int" then --if isPos is true or false, increment up or down; otherwise if nil check if input is a number and between 0 and 100 inclusive, then change the value or if not a num or too large/small, return to prev. value
-    if isPos == true then
-        if userTable.passes[selected][userTable.passSettings.var[callbackInt]] < 100 then
-        userTable.passes[selected][userTable.passSettings.var[callbackInt]] = userTable.passes[selected][userTable.passSettings.var[callbackInt]] + 1
-        end
-    elseif isPos == false then
-        if userTable.passes[selected][userTable.passSettings.var[callbackInt]] > 0 then
-        userTable.passes[selected][userTable.passSettings.var[callbackInt]] = userTable.passes[selected][userTable.passSettings.var[callbackInt]] - 1
-        end
-    elseif isPos == nil then
-        theNum = tonumber(guiCalls[buttonInt][3].text)
-        if theNum and theNum >= 0 and theNum <= 100 then
-        userTable.passes[selected][userTable.passSettings.var[callbackInt]] = theNum
+        if isPos == true then --if isPos then add a string, otherwise remove the selected one
+            table.insert(userTable.passes[selected][userTable.passSettings.var[callbackInt]],guiCalls[buttonInt][4].text)
         else
-        guiCalls[buttonInt][3].text = tostring(userTable.passes[selected][userTable.passSettings.var[callbackInt]])
+            table.remove(userTable.passes[selected][userTable.passSettings.var[callbackInt]],guiCalls[buttonInt][1].selectedItem)
         end
-    end
+    elseif userTable.passSettings.type[callbackInt] == "bool" then --simply change true/false
+        userTable.passes[selected][userTable.passSettings.var[callbackInt]] = guiCalls[buttonInt][1].pressed
+    elseif userTable.passSettings.type[callbackInt] == "int" then --if isPos is true or false, increment up or down; otherwise if nil check if input is a number and between 0 and 100 inclusive, then change the value or if not a num or too large/small, return to prev. value
+        if isPos == true then
+            if userTable.passes[selected][userTable.passSettings.var[callbackInt]] < 100 then
+            userTable.passes[selected][userTable.passSettings.var[callbackInt]] = userTable.passes[selected][userTable.passSettings.var[callbackInt]] + 1
+            end
+        elseif isPos == false then
+            if userTable.passes[selected][userTable.passSettings.var[callbackInt]] > 0 then
+            userTable.passes[selected][userTable.passSettings.var[callbackInt]] = userTable.passes[selected][userTable.passSettings.var[callbackInt]] - 1
+            end
+        elseif isPos == nil then
+            local theNum = tonumber(guiCalls[buttonInt][3].text)
+            if theNum and theNum >= 0 and theNum <= 100 then
+            userTable.passes[selected][userTable.passSettings.var[callbackInt]] = theNum
+            else
+            guiCalls[buttonInt][3].text = tostring(userTable.passes[selected][userTable.passSettings.var[callbackInt]])
+            end
+        end
     elseif userTable.passSettings.type[callbackInt] == "-int" then --simply change to selected item on dropdown - 1 (0 = no group, which is the 1st selected in a dropdown)
-    userTable.passes[selected][userTable.passSettings.var[callbackInt]] = guiCalls[buttonInt][1].selectedItem - 1
+        userTable.passes[selected][userTable.passSettings.var[callbackInt]] = guiCalls[buttonInt][1].selectedItem - 1
     else
-    GUI.alert(loc.buttoncallbackalert .. buttonInt)
-    return
+        GUI.alert(loc.buttoncallbackalert .. buttonInt)
     end
     updateList()
     userListCallback()
