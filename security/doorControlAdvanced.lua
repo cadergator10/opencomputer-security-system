@@ -693,7 +693,7 @@ while true do
       data = user
     elseif ev == "rfidSuccess" then
       data = str
-    else
+    elseif ev ~= "keypad" then
       data = crypt(str, extraConfig.cryptKey, true)
     end
     if ev then
@@ -727,7 +727,7 @@ while true do
           os.exit()
         end
         local tmpTable
-        if ev ~= "bioReader" then
+        if ev ~= "bioReader" and ev ~= "keypad" then
           if ev == "rfidSuccess" then
             tmpTable = data
             tmpTable.isRFID = true
@@ -740,15 +740,21 @@ while true do
             os.exit()
           end
           term.write(tmpTable["name"] .. ":")
-        else
+        elseif ev == "bioReader" then
           tmpTable = {["isBio"] = true,["uuid"] = user}
           term.write("UUID " .. user .. ":")
+        else
+          tmpTable = {["uuid"]=address,["pass"]=keypadHolder[address]}
         end
         tmpTable["type"] = extraConfig.type
         tmpTable["key"] = keyed
         tmpTable["sector"] = sector
         data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
-        send(modemPort,true, "checkRules", data)
+        if ev == "keypad" then
+          send(modemPort,true,"checkKeypad",data)
+        else
+          send(modemPort,true, "checkRules", data)
+        end
         local e, _, from, port, _, msg = event.pull(1, "modem_message")
         if e then
           data = crypt(msg, extraConfig.cryptKey, true)
@@ -814,6 +820,11 @@ while true do
       component.proxy(address).setDisplay("locked", 14)
     elseif string.len(keypadHolder[address]) < 4 then
       keypadHolder[address] = keypadHolder[address] .. str
+      str = ""
+      for i=0,i<string.len(keypadHolder[address]),1 do
+        str = str .. "*"
+      end
+      component.proxy(address).setDisplay("locked", 0)
     end
   end
 end
