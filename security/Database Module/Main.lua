@@ -5,6 +5,7 @@ local GUI = require("GUI")
 local uuid = require("uuid")
 local event = require("event")
 local fs = require("Filesystem")
+local system = require("System")
 local modem = component.modem
 local scanner --if biometric reader is connected this isn't nil
 local writer --Card reader
@@ -64,12 +65,12 @@ module.onTouch = function()
   
   local function migrateTab(_, button)
     if not button.doTheMove then
-      varEditWindow:removeChildren()
+      tabWindow:removeChildren()
     end
     if selected ~= button.myId then
       local success, result = pcall(button.toRun, workspace, tabWindow, loc, database, style, permissions, userTable)
       if not success then
-        GUI.alert("Failed to run file: " .. tostring(reason))
+        GUI.alert("Failed to run file: " .. tostring(result))
       end
 
       selected = button.myId
@@ -91,7 +92,7 @@ module.onTouch = function()
   handler = event.addHandler(eventCallback) --create callback to the handler to check for cardinsert and cardremoval
 
   tabWindow = window:addChild(GUI.container(1,4,window.width,window.height - 3))
-  tabs = window:addChild(GUI.list(1, 1, window.width, 3, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+  tabs = window:addChild(GUI.list(1, 1, 75, 3, 2, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
   tabs:setDirection(GUI.DIRECTION_HORIZONTAL)
   tabs:setAlignment(GUI.ALIGNMENT_HORIZONTAL_CENTER, GUI.ALIGNMENT_VERTICAL_TOP)
   local meh = tabs:addItem("Cards")
