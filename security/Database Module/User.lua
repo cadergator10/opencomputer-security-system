@@ -8,6 +8,18 @@ local uuid = require("uuid")
 local event = require("event")
 local fs = require("Filesystem")
 local system = require("System")
+local scanner --if biometric reader is connected this isn't nil
+local writer --Card reader
+
+if component.isAvailable("os_cardwriter") then --see if it exists, otherwise close/crash program.
+    writer = component.os_cardwriter
+else
+    GUI.alert(loc.cardwriteralert)
+    return
+end
+if component.isAvailable("os_biometric") then --see if it exists, otherwise you can't link user biometrics
+    scanner = component.os_biometric
+end
 
 local varEditWindow --Container of all the stuff for variable editing for easy removal of it all.
 local userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
@@ -25,7 +37,7 @@ local adminCard = "admincard" --what is written to admin cards
 local modemPort = 199
 local dbPort = 144 --port used for linking
 
-local pageMult = 10 --how many items in a list allowed
+local pageMult = 9 --how many items in a list allowed
 local listPageNumber = 0 --current page number (down by 1. page 1 is 0)
 local previousPage = 0 --previous page that was selected.
 

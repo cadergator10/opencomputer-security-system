@@ -72,7 +72,7 @@ module.onTouch = function()
       if not success then
         GUI.alert("Failed to run file: " .. tostring(result))
       end
-
+      workspace:draw()
       selected = button.myId
     end
   end
@@ -92,7 +92,7 @@ module.onTouch = function()
   handler = event.addHandler(eventCallback) --create callback to the handler to check for cardinsert and cardremoval
 
   tabWindow = window:addChild(GUI.container(1,4,window.width,window.height - 3))
-  tabs = window:addChild(GUI.list(1, 1, 75, 3, 2, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+  tabs = window:addChild(GUI.list(1, 1, 75, 3, 2, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, true))
   tabs:setDirection(GUI.DIRECTION_HORIZONTAL)
   tabs:setAlignment(GUI.ALIGNMENT_HORIZONTAL_CENTER, GUI.ALIGNMENT_VERTICAL_TOP)
   local meh = tabs:addItem("Cards")
