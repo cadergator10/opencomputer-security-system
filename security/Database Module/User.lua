@@ -10,6 +10,7 @@ local fs = require("Filesystem")
 local system = require("System")
 local scanner --if biometric reader is connected this isn't nil
 local writer --Card reader
+local modem = component.modem
 
 if component.isAvailable("os_cardwriter") then --see if it exists, otherwise close/crash program.
     writer = component.os_cardwriter
@@ -306,9 +307,16 @@ end
 
 local function writeCardCallback() --write a card, magswipe atm but possibly rfid in future
     local selected = pageMult * listPageNumber + userList.selectedItem
-    local data = {["date"]=userTable.passes[selected].date,["name"]=userTable.passes[selected].name,["uuid"]=userTable.passes[selected].uuid}
-    data = ser.serialize(data)
-    local crypted = database.crypt(data)
+    local data, crypted
+    local name = userTable.passes[selected].name
+    while crypted ~= nil and string.len(crypted) <= 64 do
+        data = {["name"]=name,["uuid"]=string.sub(userTable.passes[selected].uuid,1,-14)}
+        data = ser.serialize(data)
+        crypted = database.crypt(data)
+        if string.len(crypted) > 64 then
+            name = string.sub(name,1,string.len(name) - 1)
+        end
+    end
     writer.write(crypted, userTable.passes[selected].name .. loc.cardlabel, false, 0)
 end
 

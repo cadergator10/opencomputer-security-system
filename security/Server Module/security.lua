@@ -37,7 +37,7 @@ end
 
 local function getVar(var,user)
     for key, value in pairs(userTable.passes) do
-        if value.uuid == user then
+        if string.sub(value.uuid,1,-14) == user or value.uuid == user then
             return value[var]
         end
     end
@@ -74,7 +74,7 @@ local function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["para
     local label,color = "will be set",0x000000
     local foundOne = false
     for key, value in pairs(userTable.passes) do
-        if value.uuid == user then
+        if string.sub(value.uuid,1,-14) == user or value.uuid == user then
             foundOne = true
             local skipBase = false
             for i=1,#rules,1 do
@@ -241,7 +241,7 @@ function module.message(command,datar,from) --Called when a command goes past al
         if (server.configCheck("secAPI")) then
             local worked = false
             for _, value in pairs(userTable.passes) do
-                if value.uuid == data.uuid then
+                if string.sub(value.uuid,1,-14) == data.uuid or value.uuid == data.uuid then
                     worked = true
                     local mee = type(value[data.var]) == "table" and ser.serialize(value[data.var]) or value[data.var]
                     return true,nil,false,true,server.crypt(mee)
@@ -255,7 +255,7 @@ function module.message(command,datar,from) --Called when a command goes past al
             local worked = false
             local counter = 1
             for _, value in pairs(userTable.passes) do
-                if value.uuid == data.uuid then
+                if string.sub(value.uuid,1,-14) == data.uuid or value.uuid == data.uuid then
                     worked = true
                     if type(userTable.passes[counter][data.var]) == type(data.data) then
                         userTable.passes[counter][data.var] = data.data
@@ -273,7 +273,7 @@ function module.message(command,datar,from) --Called when a command goes past al
             local worked = false
             local counter = 1
             for _, value in pairs(userTable.passes) do
-                if value.uuid == data.uuid then
+                if string.sub(value.uuid,1,-14) == data.uuid or value.uuid == data.uuid then
                     worked = true
                     if value.mcid == "nil" then
                         value.mcid = data.mcid
@@ -300,7 +300,7 @@ function module.message(command,datar,from) --Called when a command goes past al
                                 return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Incorrect password for " .. value.data[data.key].name,["color"]=0xFF0000}}, false, true, server.crypt("false")
                             end
                         else --Check the global one
-                            if userTable.securityKeypads[value2.pass] == data.pass then
+                            if userTable.securityKeypads[value2.pass].pass == data.pass then
                                 return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Correct password for " .. value.data[data.key].name,["color"]=0x00FF00}}, false, true, server.crypt("true")
                             else
                                 return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Incorrect password for " .. value.data[data.key].name,["color"]=0xFF0000}}, false, true, server.crypt("false")

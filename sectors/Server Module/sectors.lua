@@ -96,7 +96,7 @@ function module.message(command,datar) --Called when a command goes past all def
           local passed = false
           local user = false
           for j=1,#userTable.passes,1 do
-            if userTable.passes[j].uuid == data.uuid then
+            if string.sub(userTable.passes[j].uuid,1,-14) == data.uuid or userTable.passes[j].uuid == data.uuid then
               user = j
               break
             end

@@ -821,10 +821,10 @@ while true do
     elseif string.len(keypadHolder[address]) < 4 then
       keypadHolder[address] = keypadHolder[address] .. str
       str = ""
-      for i=0,i<string.len(keypadHolder[address]),1 do
+      for i=1,string.len(keypadHolder[address]),1 do
         str = str .. "*"
       end
-      component.proxy(address).setDisplay("locked", 0)
+      component.proxy(address).setDisplay(str, 0)
     end
   end
 end
