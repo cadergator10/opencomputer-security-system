@@ -210,8 +210,8 @@ local function runInstall()
                 end
                 for key, value in pairs(loopArray["reader"]) do
                     if value.type == "keypad" then
-                        value.global = hasPad
-                        value.pass = text
+                        loopArray["reader"][key].global = hasPad
+                        loopArray["reader"][key].pass = text
                     end
                 end
             end
@@ -243,8 +243,8 @@ local function runInstall()
                 end
                 for key, value in pairs(distable) do
                     if value.type == "keypad" then
-                        distable.global = hasPad
-                        value.pass = text
+                        distable[key].global = hasPad
+                        distable[key].pass = text
                     end
                 end
             end

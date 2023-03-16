@@ -309,7 +309,7 @@ end
         end
       end
       if shouldContinue then
-        os.sleep()
+        os.sleep(0.05)
       else
         event.pull(5,"doorChange") --to attempt to save system resources: Only runs if 1. Some values in the door system require it to wait a certain amount of time, 2. An event is pushed called doorChange, and 3. The timeout of x seconds is reached (in case it happens to miss a door change, it WILL do it.)
       end
@@ -605,7 +605,7 @@ thread.create(doorupdate)
 
 for key,_ in pairs(component.list("os_keypad")) do
   local customButtons = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "#"}
-  local customButtonColor = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  local customButtonColor = {7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 7, 10}
   component.proxy(key).setDisplay("locked", 14)
   component.proxy(key).setKey(customButtons, customButtonColor)
   keypadHolder[key] = ""
@@ -752,6 +752,7 @@ while true do
         data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
         if ev == "keypad" then
           send(modemPort,true,"checkKeypad",data)
+          keypadHolder[address] = ""
         else
           send(modemPort,true, "checkRules", data)
         end
@@ -824,7 +825,7 @@ while true do
       for i=1,string.len(keypadHolder[address]),1 do
         str = str .. "*"
       end
-      component.proxy(address).setDisplay(str, 0)
+      component.proxy(address).setDisplay(str, 7)
     end
   end
 end
