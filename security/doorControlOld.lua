@@ -224,6 +224,7 @@ end
         if value.sector ~= false then
           for key,value2 in pairs(data) do
             if key == value.sector then
+              
               if value2 == 1 then
                 if value.doorType == 3 then
                   for _,value2 in pairs(value.doorAddress) do

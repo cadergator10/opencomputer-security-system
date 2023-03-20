@@ -18,9 +18,7 @@ local midPoint = "4.0.1"
 local program = "ctrl.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
---local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/" .. midPoint .. "/security/doorControlSimple.lua"
---local doorAdv = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/" .. midPoint .. "/security/doorControlAdvanced.lua"
-local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/" .. midPoint .. "/security/doorControlAdvanced.lua" --Make it choosable in future?
+local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/" .. midPoint .. "/security/doorControl.lua"
 --local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
 
 local settingData = {}
