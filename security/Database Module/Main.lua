@@ -95,7 +95,7 @@ module.onTouch = function()
   meh.onTouch = migrateTab
   meh.myId = 2
   meh.toRun = passEdit
-  meh.disabled = database.checkPerms("security",{"varmanagement"},true)
+  meh.disabled = database.checkPerms("security",{"varmanagement","keypad"},true)
 
   tabs.selected = 1
   migrateTab(nil, {["doTheMove"]=true,["myId"]=1,["toRun"]=userEdit})
