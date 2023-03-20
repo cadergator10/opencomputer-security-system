@@ -28,7 +28,6 @@ local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButto
 local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2
 local userMCIDLabel, userMCIDButton, userMCIDClear
 
-local baseVariables = {"name","uuid","date","link","blocked","staff"} --Used to determine how much to shift values in table or something. Don't know why I did it, but it'll be a pain to program out so its fine
 local guiCalls = {} --Holds all the buttons and stuff for each pass created in a neat order.
 --Usertable.settings = {["var"]="level",["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}}
 -----------
@@ -154,42 +153,41 @@ local function updateList() --when a new user is selected
 end
 
 local function buttonCallback(workspace, button) --callback for all user created variables
-    local buttonInt, callbackInt, isPos
+    local buttonInt, isPos
     if button ~= nil then
         buttonInt = button.buttonInt --buttonInt is what spot the button is in the guiCalls
-        callbackInt = button.callbackInt - #baseVariables --callbackInt is what spot the button is specifically in the guiCalls[buttonInt]
         isPos = button.isPos --for +- buttons in int passes.
     end
     local selected = pageMult * listPageNumber + userList.selectedItem
-    if userTable.passSettings.type[callbackInt] == "string" then --simply change string value
-        userTable.passes[selected][userTable.passSettings.var[callbackInt]] = guiCalls[buttonInt][1].text
-    elseif userTable.passSettings.type[callbackInt] == "-string" then
+    if userTable.passSettings.type[buttonInt] == "string" then --simply change string value
+        userTable.passes[selected][userTable.passSettings.var[buttonInt]] = guiCalls[buttonInt][1].text
+    elseif userTable.passSettings.type[buttonInt] == "-string" then
         if isPos == true then --if isPos then add a string, otherwise remove the selected one
-            table.insert(userTable.passes[selected][userTable.passSettings.var[callbackInt]],guiCalls[buttonInt][4].text)
+            table.insert(userTable.passes[selected][userTable.passSettings.var[buttonInt]],guiCalls[buttonInt][4].text)
         else
-            table.remove(userTable.passes[selected][userTable.passSettings.var[callbackInt]],guiCalls[buttonInt][1].selectedItem)
+            table.remove(userTable.passes[selected][userTable.passSettings.var[buttonInt]],guiCalls[buttonInt][1].selectedItem)
         end
-    elseif userTable.passSettings.type[callbackInt] == "bool" then --simply change true/false
-        userTable.passes[selected][userTable.passSettings.var[callbackInt]] = guiCalls[buttonInt][1].pressed
-    elseif userTable.passSettings.type[callbackInt] == "int" then --if isPos is true or false, increment up or down; otherwise if nil check if input is a number and between 0 and 100 inclusive, then change the value or if not a num or too large/small, return to prev. value
+    elseif userTable.passSettings.type[buttonInt] == "bool" then --simply change true/false
+        userTable.passes[selected][userTable.passSettings.var[buttonInt]] = guiCalls[buttonInt][1].pressed
+    elseif userTable.passSettings.type[buttonInt] == "int" then --if isPos is true or false, increment up or down; otherwise if nil check if input is a number and between 0 and 100 inclusive, then change the value or if not a num or too large/small, return to prev. value
         if isPos == true then
-            if userTable.passes[selected][userTable.passSettings.var[callbackInt]] < 100 then
-            userTable.passes[selected][userTable.passSettings.var[callbackInt]] = userTable.passes[selected][userTable.passSettings.var[callbackInt]] + 1
+            if userTable.passes[selected][userTable.passSettings.var[buttonInt]] < 100 then
+            userTable.passes[selected][userTable.passSettings.var[buttonInt]] = userTable.passes[selected][userTable.passSettings.var[buttonInt]] + 1
             end
         elseif isPos == false then
-            if userTable.passes[selected][userTable.passSettings.var[callbackInt]] > 0 then
-            userTable.passes[selected][userTable.passSettings.var[callbackInt]] = userTable.passes[selected][userTable.passSettings.var[callbackInt]] - 1
+            if userTable.passes[selected][userTable.passSettings.var[buttonInt]] > 0 then
+            userTable.passes[selected][userTable.passSettings.var[buttonInt]] = userTable.passes[selected][userTable.passSettings.var[buttonInt]] - 1
             end
         elseif isPos == nil then
             local theNum = tonumber(guiCalls[buttonInt][3].text)
             if theNum and theNum >= 0 and theNum <= 100 then
-            userTable.passes[selected][userTable.passSettings.var[callbackInt]] = theNum
+            userTable.passes[selected][userTable.passSettings.var[buttonInt]] = theNum
             else
-            guiCalls[buttonInt][3].text = tostring(userTable.passes[selected][userTable.passSettings.var[callbackInt]])
+            guiCalls[buttonInt][3].text = tostring(userTable.passes[selected][userTable.passSettings.var[buttonInt]])
             end
         end
-    elseif userTable.passSettings.type[callbackInt] == "-int" then --simply change to selected item on dropdown - 1 (0 = no group, which is the 1st selected in a dropdown)
-        userTable.passes[selected][userTable.passSettings.var[callbackInt]] = guiCalls[buttonInt][1].selectedItem - 1
+    elseif userTable.passSettings.type[buttonInt] == "-int" then --simply change to selected item on dropdown - 1 (0 = no group, which is the 1st selected in a dropdown)
+        userTable.passes[selected][userTable.passSettings.var[buttonInt]] = guiCalls[buttonInt][1].selectedItem - 1
     else
         GUI.alert(loc.buttoncallbackalert .. buttonInt)
     end
@@ -309,11 +307,11 @@ local function writeCardCallback() --write a card, magswipe atm but possibly rfi
     local selected = pageMult * listPageNumber + userList.selectedItem
     local data, crypted
     local name = userTable.passes[selected].name
-    while crypted == nil or string.len(crypted) > 64 do
+    while crypted == nil or string.len(crypted) >= 64 do
         data = {["name"]=name,["uuid"]=string.sub(userTable.passes[selected].uuid,1,-14)}
         data = ser.serialize(data)
         crypted = database.crypt(data)
-        if string.len(crypted) > 64 then
+        if string.len(crypted) >= 64 then
             name = string.sub(name,1,string.len(name) - 1)
         end
     end
@@ -517,7 +515,6 @@ local function passSetup(deleteprev) --This sets up all the pass buttons into a 
         if userTable.passSettings.data[i] == 1 then
         guiCalls[i][1] = varEditWindow:addChild(GUI.input(64,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
         guiCalls[i][1].buttonInt = i
-        guiCalls[i][1].callbackInt = i + #baseVariables
         guiCalls[i][1].onInputFinished = buttonCallback
         guiCalls[i][1].disabled = true
         elseif userTable.passSettings.data[i] == 2 then
@@ -529,22 +526,18 @@ local function passSetup(deleteprev) --This sets up all the pass buttons into a 
         if userTable.passSettings.data[i] == 1 then
         guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
         guiCalls[i][1].buttonInt = i
-        guiCalls[i][1].callbackInt = i + #baseVariables
         guiCalls[i][2] = varEditWindow:addChild(GUI.button(86,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
         guiCalls[i][2].buttonInt = i
-        guiCalls[i][2].callbackInt = i + #baseVariables
         guiCalls[i][2].isPos = true
         guiCalls[i][2].onTouch = buttonCallback
         guiCalls[i][3] = varEditWindow:addChild(GUI.button(90,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "-"))
         guiCalls[i][3].buttonInt = i
-        guiCalls[i][3].callbackInt = i + #baseVariables
         guiCalls[i][3].isPos = false
         guiCalls[i][3].onTouch = buttonCallback
         guiCalls[i][2].disabled = true
         guiCalls[i][3].disabled = true
         guiCalls[i][4] = varEditWindow:addChild(GUI.input(94,labelSpot,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputtext))
         guiCalls[i][4].buttonInt = i
-        guiCalls[i][4].callbackInt = i + #baseVariables
         guiCalls[i][4].disabled = true
         elseif userTable.passSettings.data[i] == 2 then
         guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,30,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
@@ -553,17 +546,14 @@ local function passSetup(deleteprev) --This sets up all the pass buttons into a 
         end
     elseif userTable.passSettings.type[i] == "int" then --no matter what has 3 populated. [1] and [2] are the + and - buttons in that order, and [3] is the input box to input the number
         guiCalls[i][3] = varEditWindow:addChild(GUI.input(72,labelSpot,10,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "#", loc.inputtext))
-        guiCalls[i][3].callbackInt = i + #baseVariables
         guiCalls[i][3].buttonInt = i
         guiCalls[i][3].onInputFinished = buttonCallback
         guiCalls[i][1] = varEditWindow:addChild(GUI.button(64,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "+"))
         guiCalls[i][1].buttonInt = i
-        guiCalls[i][1].callbackInt = i + #baseVariables
         guiCalls[i][1].isPos = true
         guiCalls[i][1].onTouch = buttonCallback
         guiCalls[i][2] = varEditWindow:addChild(GUI.button(68,labelSpot,3,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "-"))
         guiCalls[i][2].buttonInt = i
-        guiCalls[i][2].callbackInt = i + #baseVariables
         guiCalls[i][2].isPos = false
         guiCalls[i][2].onTouch = buttonCallback
         guiCalls[i][1].disabled = true
@@ -572,36 +562,19 @@ local function passSetup(deleteprev) --This sets up all the pass buttons into a 
     elseif userTable.passSettings.type[i] == "-int" then
         guiCalls[i][1] = varEditWindow:addChild(GUI.comboBox(64,labelSpot,30,1, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
         local cur = guiCalls[i][1]:addItem("none")
-        cur.callbackInt = i + #baseVariables --when first trying this way it was broken. Creator says its fixed so returned it
         cur.buttonInt = i
         cur.onTouch = buttonCallback
         for _,vas in pairs(userTable.passSettings.data[i]) do
-        cur = guiCalls[i][1]:addItem(vas)
-        cur.callbackInt = i + #baseVariables
-        cur.buttonInt = i
-        cur.onTouch = buttonCallback
+            cur = guiCalls[i][1]:addItem(vas)
+            cur.buttonInt = i
+            cur.onTouch = buttonCallback
         end
-        --[[local cur = guiCalls[i][1]:addItem("none")
-        cur.callbackInt = i + #baseVariables
-        cur.buttonInt = i
-        cur.onTouch = function()
-        buttonCallback(nil,cur)
-        end
-        for _,vas in pairs(userTable.passSettings.data[i]) do
-        cur = guiCalls[i][1]:addItem(vas)
-        cur.callbackInt = i + #baseVariables
-        cur.buttonInt = i
-        cur.onTouch = function()
-            buttonCallback(nil,cur)
-        end
-        end]]
         guiCalls[i][1].disabled = true
     elseif userTable.passSettings.type[i] == "bool" then --only [1] is populated by the button
         guiCalls[i][1] = varEditWindow:addChild(GUI.button(64,labelSpot,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.toggle))
         guiCalls[i][1].buttonInt = i
-        guiCalls[i][1].callbackInt = i + #baseVariables
         guiCalls[i][1].switchMode = true
-        guiCalls[i][1].onTouch = buttonCallback,i,i + #baseVariables
+        guiCalls[i][1].onTouch = buttonCallback
         guiCalls[i][1].disabled = true
     end
     labelSpot = labelSpot + 2 --increment y spot
