@@ -38,7 +38,7 @@ local function updateKeyList()
     database.save()
     local selected = padBox.selectedItem
     if padBox:count() > 0 then
-        padBox:removeChildren()
+        padBox:clear()
     end
     for  key,value in pairs(userTable.securityKeypads) do
         local meh = padBox:addItem(key)
@@ -61,7 +61,6 @@ local function passNew()
         userTable.securityKeypads[padNewKey.text] = {["pass"]="1234",["label"]=padNewKey.text}
         padNewKey.text = ""
         updateKeyList()
-        keypadCallback()
     end
 end
 
@@ -72,7 +71,6 @@ local function passDel()
     padLabel.disabled = true
     padPass.disabled = true
     updateKeyList()
-    keypadCallback()
 end
 
 local function passLabelCallback()
@@ -90,7 +88,7 @@ local function passInputCallback()
 end
 
 window:addChild(GUI.label(1,1,3,3,style.passNameLabel,"Global Keypads"))
-padBox = window:addChild(GUI.combobox(1,3,16,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+padBox = window:addChild(GUI.comboBox(1,3,16,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
 padLabel = window:addChild(GUI.input(1,5,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
 padLabel.onInputFinished = passLabelCallback
 padLabel.disabled = true

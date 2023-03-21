@@ -733,6 +733,7 @@ while true do
         if ev == "keypad" then
           send(modemPort,true,"checkKeypad",data)
           keypadHolder[address] = ""
+          component.proxy(address).setDisplay("locked", 14)
         else
           send(modemPort,true, "checkRules", data)
         end
