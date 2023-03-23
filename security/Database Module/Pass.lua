@@ -14,7 +14,8 @@ local modemPort = 199
 
 --Variable declarations for keypad stuff
 local padBox, padLabel, padPass, padNew, padNewKey, padDel
-local canPad = database.checkPerms("security",{"varmanagement"},true) --whether they have keypad perms
+local canPad = database.checkPerms("security",{"varmanagement","keypad"},true) --whether they have keypad perms
+local canPass = database.checkPerms("security",{"varmanagement"},true)
 
 local function split(s, delimiter) --splits string to table. "e,f,g" to {"e","f","g"}
     local result = {};
@@ -56,7 +57,7 @@ local function updateKeyList()
     database.update({"securityKeypads"})
 end
 
-local function passNew()
+local function padNew()
     if padNewKey.text ~= "" then
         userTable.securityKeypads[padNewKey.text] = {["pass"]="1234",["label"]=padNewKey.text}
         padNewKey.text = ""
@@ -64,7 +65,7 @@ local function passNew()
     end
 end
 
-local function passDel()
+local function padDel()
     local selected = padBox.selectedItem
     local sel = padBox:getItem(selected)
     userTable.securityKeypads[sel.key] = nil
@@ -87,6 +88,10 @@ local function passInputCallback()
     end
 end
 
+--Variable declarations for Variable pass stuff
+
+
+
 window:addChild(GUI.label(1,1,3,3,style.passNameLabel,"Global Keypads"))
 padBox = window:addChild(GUI.comboBox(1,3,16,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
 padLabel = window:addChild(GUI.input(1,5,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
@@ -96,10 +101,10 @@ padPass = window:addChild(GUI.input(1,7,16,1, style.passInputBack,style.passInpu
 padPass.onInputFinished = passInputCallback
 padPass.disabled = true
 padDel = window:addChild(GUI.button(1,9,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.delete))
-padDel.onTouch = passDel
+padDel.onTouch = padDel
 padDel.disabled = true
 padNew = window:addChild(GUI.button(1,11,7,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.new))
-padNew.onTouch = passNew
+padNew.onTouch = padNew
 padNew.disabled = canPad
 padNewKey = window:addChild(GUI.input(9,11,7,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "input key"))
 padNewKey.disabled = canPad

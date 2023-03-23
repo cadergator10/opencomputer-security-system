@@ -275,7 +275,7 @@ function module.message(command,datar,from) --Called when a command goes past al
             for _, value in pairs(userTable.passes) do
                 if string.sub(value.uuid,1,-14) == data.uuid or value.uuid == data.uuid then
                     worked = true
-                    if value.mcid == "nil" then
+                    if value.mcid == "nil" and not value.blocked then --make sure an account isn't linked AND they are not blocked.
                         value.mcid = data.mcid
                         return true, nil, true, true, server.crypt("true")
                     else

@@ -354,7 +354,10 @@ local function linkUserCallback() --linking button. TODO: Make this work a littl
     local selected = pageMult * listPageNumber + userList.selectedItem
     modem.open(dbPort)
     workspace:draw()
-    local e, _, from, port, _, msg = event.pull(20) --wait for message
+    local e, _, from, port, _, msg
+    while e ~= "modem_message" and e ~= "touch" do
+        e, _, from, port, _, msg = event.pull(20) --wait for message
+    end
     container:remove()
     if e == "modem_message" then
     local data = database.crypt(msg,true) --decrypt message
@@ -375,7 +378,10 @@ local function linkMCIDCallback() --use Biometric reader to link a card to a pla
     local container = GUI.addBackgroundContainer(workspace, false, true, "Please have the user who you are linking to the card click the Biometric Reader")
     local selected = pageMult * listPageNumber + userList.selectedItem
     workspace:draw()
-    local e, _, msg = event.pull(10)
+    local e, _, msg
+    while e ~= "bioReader" and e ~= "touch" do --implemented a check so button presses now don't mess it up
+        e, _, msg = event.pull(10) --wait for message
+    end
     container:remove()
     if e == "bioReader" then --set the card to the id of player
         userTable.passes[selected].mcid = msg
