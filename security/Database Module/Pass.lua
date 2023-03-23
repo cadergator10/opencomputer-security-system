@@ -89,23 +89,30 @@ local function passInputCallback()
 end
 
 --Variable declarations for Variable pass stuff
+local addVarButton, delVarButton, editVarButton, updateVarButton, clearVarButton varKeyInput, varLabelInput, varTypeSelect, addVarArray extraVar1, extraVar2, extraVar3 --NOTE: Updatevarbutton works in both add and edit mode
+local varMode = "none" --Indicates the mode, so pressing add button knows what to do when pressed. add means that a new one is added to the list. edit means var will be edited. none means nothing will happen (just in case)
 
 
 
+--Create keypad stuff
 window:addChild(GUI.label(1,1,3,3,style.passNameLabel,"Global Keypads"))
-padBox = window:addChild(GUI.comboBox(1,3,16,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
-padLabel = window:addChild(GUI.input(1,5,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
-padLabel.onInputFinished = passLabelCallback
-padLabel.disabled = true
-padPass = window:addChild(GUI.input(1,7,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputpass))
-padPass.onInputFinished = passInputCallback
-padPass.disabled = true
-padDel = window:addChild(GUI.button(1,9,16,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.delete))
+padBox = window:addChild(GUI.comboBox(1,3,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+padDel = window:addChild(GUI.button(22,3,10,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.delete))
 padDel.onTouch = padDel
 padDel.disabled = true
-padNew = window:addChild(GUI.button(1,11,7,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.new))
+window:addChild(GUI.label(1,5,3,3,style.passNameLabel,"Label"))
+padLabel = window:addChild(GUI.input(1,6,15,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
+padLabel.onInputFinished = passLabelCallback
+padLabel.disabled = true
+window:addChild(GUI.label(17,5,3,3,style.passNameLabel,"Pin / Password"))
+padPass = window:addChild(GUI.input(17,6,15,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputpass))
+padPass.onInputFinished = passInputCallback
+padPass.disabled = true
+padNew = window:addChild(GUI.button(22,8,7,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.new))
 padNew.onTouch = padNew
 padNew.disabled = canPad
-padNewKey = window:addChild(GUI.input(9,11,7,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "input key"))
+padNewKey = window:addChild(GUI.input(1,8,20,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "input key"))
 padNewKey.disabled = canPad
+window:addChild(GUI.panel(34,1,1,8,style.bottomDivider)) --Create pass creation stuff
+window:addChild(GUI.label(36,1,3,3,style.passNameLabel,"Pass Management"))
 updateKeyList()
