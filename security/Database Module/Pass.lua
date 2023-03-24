@@ -93,6 +93,32 @@ local addVarButton, delVarButton, editVarButton, updateVarButton, clearVarButton
 local varKeyInput, varLabelInput, varTypeSelect, addVarArray, extraVar, extraVar2 --NOTE: Updatevarbutton works in both add and edit mode
 local varMode = "none" --Indicates the mode, so pressing add button knows what to do when pressed. add means that a new one is added to the list. edit means var will be edited. none means nothing will happen (just in case)
 
+local function passComboPress()
+    local describe = {["string"]="Regular String",["-string"]="Multi String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
+    local selected = varList.selectedItem
+    varLabel.text = "Label: " + userTable.passSettings.label[selected]
+    varDesc.text = "Desc: " + describe[userTable.passSettings.type]
+    if userTable.passSettings.type == "string" or userTable.passSettings.type == "-string" then
+        varDesc.text = varDesc.text + " | " + (userTable.passSettings.data == 1 and "Editable" or userTable.passSettings.data == 2 and "Uneditable" or "Hidden")
+    elseif userTable.passSettings.type == "int" then
+        varDesc.text = varDesc.text + " | " + (userTable.passSettings.above and "Checks above" or "Checks exact")
+    elseif userTable.passSettings.type == "-int" then
+        varDesc.text = varDesc.text + " | " + tostring(#userTable.passSettings.data) + " groups"
+    end
+end
+
+local function updatePassCombo()
+    if varList:count() > 0 then
+        varList:clear()
+    end
+    for i=1,#userTable.passSettings.var,1 do
+        local k = varList:addItem(userTable.passSettings.var[i])
+        k.onTouch = passComboPress
+    end
+    varLabel.text = "Label: NAN"
+    varDesc.text = "Desc: NAN"
+end
+
 local function checkTypeCallback() --Used when creating a var and choosing the type of var, or if editing
     local typeArray = {"string","-string","int","-int","bool"}
     local selected = varTypeSelect.selectedItem
@@ -218,6 +244,7 @@ local function delVarF() --delete a created var
     table.remove(userTable.passSettings.var,selected)
     database.save()
     database.update({"passes","passSettings"})
+    updatePassCombo()
 end
 
 local searchBase = {"name","blocked","staff","uuid","link","mcid"}
@@ -264,6 +291,7 @@ local function updateVarF() --Either add or change (depending on add or edit mod
                 database.save()
                 database.update({"passes","passSettings"})
                 clearVarF()
+                updatePassCombo()
             else
                 GUI.alert("Var key conflicts with another one already created. Please change it.")
             end
@@ -289,6 +317,7 @@ local function updateVarF() --Either add or change (depending on add or edit mod
             database.save()
             database.update({"passes","passSettings"})
             clearVarF()
+            updatePassCombo()
         else
             GUI.alert("Var not found in the list. Was it deleted?")
         end
@@ -322,11 +351,11 @@ padNew.onTouch = padNewF
 padNew.disabled = canPad
 padNewKey = window:addChild(GUI.input(1,8,20,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "input key"))
 padNewKey.disabled = canPad
-window:addChild(GUI.panel(34,1,1,8,style.bottomDivider)) --Create pass creation stuff
+window:addChild(GUI.panel(34,2,1,28,style.bottomDivider)) --Create pass creation stuff
 window:addChild(GUI.label(36,1,3,3,style.passNameLabel,"Pass Management"))
 varList = window:addChild(GUI.comboBox(36,3,32,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
-varLabel = window:addChild(GUI.label(36,5,3,3,style.passNameLabel,"NAN"))
-varDesc = window:addChild(GUI.label(36,7,3,3,style.passNameLabel,"NAN"))
+varLabel = window:addChild(GUI.label(36,5,3,3,style.passNameLabel,"Label: NAN"))
+varDesc = window:addChild(GUI.label(36,7,3,3,style.passNameLabel,"Desc: NAN"))
 addVarButton = window:addChild(GUI.button(36,9,10,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.addvar))
 addVarButton.onTouch = addVarF
 addVarButton.disabled = true
@@ -336,14 +365,14 @@ editVarButton.disabled = true
 delVarButton = window:addChild(GUI.button(58,9,10,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.delvar))
 delVarButton.onTouch = delVarF
 delVarButton.disabled = true
-window:addChild(GUI.panel(36,10,32,1,style.bottomDivider))
-varKeyInput = window:addChild(GUI.input(36,11,10,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarkey))
+window:addChild(GUI.panel(36,11,32,1,style.bottomDivider))
+varKeyInput = window:addChild(GUI.input(36,13,10,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarkey))
 varKeyInput.onInputFinished = onVarKeyInput
 varKeyInput.disabled = true
-varLabelInput = window:addChild(GUI.input(47,11,21,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarlabel))
+varLabelInput = window:addChild(GUI.input(47,15,21,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarlabel))
 varLabelInput.onInputFinished = onVarLabelInput
 varLabelInput.disabled = true
-varTypeSelect = window:addChild(GUI.comboBox(36,13,15,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+varTypeSelect = window:addChild(GUI.comboBox(36,17,15,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
 local lik = varTypeSelect:addItem("String")
 lik.onTouch = checkTypeCallback --every time one is selected it refreshes the extra setting needed for certain choices
 lik = varTypeSelect:addItem("Multi-String")
@@ -355,14 +384,13 @@ lik.onTouch = checkTypeCallback
 lik = varTypeSelect:addItem("Pass (true/false)")
 lik.onTouch = checkTypeCallback
 varTypeSelect.selectedItem = 5
-extraVar = window:addChild(GUI.label(52,15,3,3,style.passNameLabel,"NAN"))
-updateVarButton = window:addChild(GUI.button(58,9,10,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
+extraVar = window:addChild(GUI.label(52,19,3,3,style.passNameLabel,"NAN"))
+updateVarButton = window:addChild(GUI.button(63,21,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
 updateVarButton.onTouch = updateVarF
 updateVarButton.disabled = true
-clearVarButton = window:addChild(GUI.button(58,9,10,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
+clearVarButton = window:addChild(GUI.button(63,23,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
 clearVarButton.onTouch = clearVarF
 clearVarButton.disabled = true
 
-
-
 updateKeyList()
+updatePassCombo()
