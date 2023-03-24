@@ -6,8 +6,6 @@ local ser = require("serialization")
 local GUI = require("GUI")
 local uuid = require("uuid")
 local event = require("event")
-local fs = require("Filesystem")
-local system = require("System")
 local scanner --if biometric reader is connected this isn't nil
 local writer --Card reader
 local modem = component.modem
@@ -24,8 +22,7 @@ end
 
 local varEditWindow --Container of all the stuff for variable editing for easy removal of it all.
 local userList, userNameText, createAdminCardButton, userUUIDLabel, linkUserButton, linkUserLabel, cardWriteButton, StaffYesButton
-local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, updateButton
-local addVarButton, delVarButton, editVarButton, varInput, labelInput, typeSelect, extraVar, varContainer, addVarArray, varYesButton, extraVar2
+local cardBlockedYesButton, userNewButton, userDeleteButton, userChangeUUIDButton, listPageLabel, listUpButton, listDownButton, varContainer
 local userMCIDLabel, userMCIDButton, userMCIDClear
 
 local guiCalls = {} --Holds all the buttons and stuff for each pass created in a neat order.
@@ -404,81 +401,6 @@ local function clearMCIDCallback() --set the user's mcid to "nil"
     userListCallback()
 end
 
-local function checkTypeCallback() --Used when creating or editing variables to set the extra settings needed to configure a pass.
-    local typeArray = {"string","-string","int","-int","bool"}
-    local selected
-    if typeSelect.izit == "add" then --if add, it sets it all to default
-    addVarArray.above = false
-    addVarArray.data = false
-    selected = typeSelect.selectedItem
-    addVarArray.type = typeArray[selected]
-    else --In edit mode addVarArray is never changed, it is also set to the var numbers.
-    selected = addVarArray[typeSelect.selectedItem]
-    end
-    if extraVar ~= nil then --if already populated, remove first so it can be readded
-    extraVar:remove()
-    extraVar = nil
-    end
-    if typeSelect.izit == "add" then
-    if selected == 3 then --int (number)
-        extraVar = varContainer.layout:addChild(GUI.button(1,16,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
-        extraVar.onTouch = function() --a button to determine whether to check above or not. Checkabove means if needed 1 and they have 3, it lets them in. If false, 3 doesn't work
-        addVarArray.above = extraVar.pressed
-        end
-        extraVar.switchMode = true
-    elseif selected == 4 then -- -int (groups)
-        extraVar = varContainer.layout:addChild(GUI.input(1,16,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
-        extraVar.onInputFinished = function() --Input the groups into a textbox splitting with a comma
-        addVarArray.data = split(extraVar.text,",")
-        end
-    elseif selected == 1 or selected == 2 then --string or -string
-        extraVar = varContainer.layout:addChild(GUI.comboBox(1,16,30,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
-        local sub = function()
-        addVarArray.data = extraVar.selectedItem
-        end --you choose whether they can edit it, only view it, or can't see it (only changed by setVar and getVar)
-        extraVar:addItem("Editable").onTouch = sub
-        extraVar:addItem("Uneditable").onTouch = sub
-        extraVar:addItem("Hidden").onTouch = sub
-        addVarArray.data = 1
-    else --bool (no config and shouldn't be able to edit at all)
-
-    end
-    else --Most of this is the same as last stuff, except it doesn't default and is set to the previous input
-    if userTable.passSettings.type[selected] == "int" then 
-        extraVar = varContainer.layout:addChild(GUI.button(1,11,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
-        extraVar.switchMode = true
-        extraVar.pressed = userTable.passSettings.above[selected]
-        extraVar.onTouch = function()
-        extraVar2 = extraVar.pressed
-        end
-        extraVar2 = userTable.passSettings.above[selected]
-    elseif userTable.passSettings.type[selected] == "-int" then
-        extraVar = varContainer.layout:addChild(GUI.input(1,11,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
-        local isme = userTable.passSettings.data[selected][1]
-        for i=2,#userTable.passSettings.data[selected],1 do --combine back into a string to be rejoined after saving
-        isme = isme .. "," .. userTable.passSettings.data[selected][i]
-        end
-        extraVar.text = isme
-        extraVar2 = split(extraVar.text,",")
-        extraVar.onInputFinished = function()
-        extraVar2 = split(extraVar.text,",")
-        end
-    elseif userTable.passSettings.type[selected] == "string" or userTable.passSettings.type[selected] == "-string" then
-        extraVar = varContainer.layout:addChild(GUI.comboBox(1,16,30,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
-        local sub = function()
-        extraVar2 = extraVar.selectedItem
-        end
-        extraVar:addItem("Editable").onTouch = sub
-        extraVar:addItem("Uneditable").onTouch = sub
-        extraVar:addItem("Hidden").onTouch = sub
-        extraVar.selectedItem = userTable.passSettings.data[selected]
-        extraVar2 = extraVar.selectedItem
-    else
-
-    end
-    end
-end
-
 local function passSetup(deleteprev) --This sets up all the pass buttons into a edit window. Made so adding/deleting variables wouldn't mean restarting the database. Deletes all gui elements and recreates them
     if deleteprev then varEditWindow:removeChildren() end
     --I ain't explaining all this in comments. All it does is initializes variables declared by the user as well as built in ones. I will explain guiCalls tho
@@ -625,134 +547,6 @@ local function passSetup(deleteprev) --This sets up all the pass buttons into a 
     createAdminCardButton = window:addChild(GUI.button(118,27,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.admincardbutton))
     createAdminCardButton.onTouch = writeAdminCardCallback
     createAdminCardButton.disabled = database.checkPerms("security",{"varmanagement","admincard"},true)
-    addVarButton = window:addChild(GUI.button(118,19,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.addvar))
-    addVarButton.onTouch = function() --Page for creating new variables TODO: Make this be a new tab for the module
-    addVarArray = {["var"]="placeh",["label"]="PlaceHold",["calls"]=uuid.next(),["type"]="string",["above"]=false,["data"]=1} --The default needed per variable
-    varContainer = GUI.addBackgroundContainer(workspace, true, true)
-    varInput = varContainer.layout:addChild(GUI.input(1,1,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarkey))
-    varInput.onInputFinished = function() --Used for inputting the key in the table userTable.passSettings.var
-        addVarArray.var = varInput.text
-    end
-    labelInput = varContainer.layout:addChild(GUI.input(1,6,16,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarlabel))
-    labelInput.onInputFinished = function() --Used for inputting the label the user sees in the table userTable.passSettings.label
-        addVarArray.label = labelInput.text
-    end
-    typeSelect = varContainer.layout:addChild(GUI.comboBox(1,11,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
-    typeSelect.izit = "add" --Used for choosing the var type in the table userTable.passSettings.type
-    local lik = typeSelect:addItem("String")
-    lik.onTouch = checkTypeCallback --every time one is selected it refreshes the extra setting needed for certain choices
-    lik = typeSelect:addItem("Multi-String")
-    lik.onTouch = checkTypeCallback
-    lik = typeSelect:addItem("Level (Int)")
-    lik.onTouch = checkTypeCallback
-    lik = typeSelect:addItem("Group")
-    lik.onTouch = checkTypeCallback
-    lik = typeSelect:addItem("Pass (true/false)")
-    lik.onTouch = checkTypeCallback
-    varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvaraddbutton))
-    varYesButton.onTouch = function() --confirm choice
-        for i=1,#userTable.passes,1 do
-        if addVarArray.type == "string" then
-            userTable.passes[i][addVarArray.var] = "none"
-        elseif addVarArray.type == "-string" then
-            userTable.passes[i][addVarArray.var] = {}
-        elseif addVarArray.type == "int" or addVarArray.type == "-int" then
-            userTable.passes[i][addVarArray.var] = 0
-        elseif addVarArray.type == "bool" then
-            userTable.passes[i][addVarArray.var] = false
-        else
-            GUI.alert(loc.addvaralert)
-            varContainer:removeChildren()
-            varContainer:remove()
-            varContainer = nil
-            return
-        end
-        end
-        table.insert(userTable.passSettings.var,addVarArray.var)
-        table.insert(userTable.passSettings.label,addVarArray.label)
-        table.insert(userTable.passSettings.calls,addVarArray.calls)
-        table.insert(userTable.passSettings.type,addVarArray.type)
-        table.insert(userTable.passSettings.above,addVarArray.above)
-        table.insert(userTable.passSettings.data,addVarArray.data)
-        addVarArray = nil
-        varContainer:removeChildren()
-        varContainer:remove()
-        varContainer = nil
-        database.save()
-        database.update({"passes","passSettings"})
-        passSetup(true)
-    end
-    checkTypeCallback(nil,{["izit"]="add"}) --does it the first time
-    end
-    addVarButton.disabled = va
-    delVarButton = window:addChild(GUI.button(118,23,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.delvar))
-    delVarButton.onTouch = function() --del a var. Basically just choose the var and press delete, not much to it
-    varContainer = GUI.addBackgroundContainer(workspace, true, true)
-    typeSelect = varContainer.layout:addChild(GUI.comboBox(1,1,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
-    for i=1,#userTable.passSettings.var,1 do
-        typeSelect:addItem(userTable.passSettings.label[i])
-    end
-    varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.delvarcompletedbutton))
-    varYesButton.onTouch = function()
-        local selected = typeSelect.selectedItem
-        table.remove(userTable.passSettings.data,selected)
-        table.remove(userTable.passSettings.label,selected)
-        table.remove(userTable.passSettings.calls,selected)
-        table.remove(userTable.passSettings.type,selected)
-        table.remove(userTable.passSettings.above,selected)
-        for i=1,#userTable.passes,1 do
-        userTable.passes[i][userTable.passSettings.var[selected]] = nil
-        end
-        table.remove(userTable.passSettings.var,selected)
-        varContainer:removeChildren()
-        varContainer:remove()
-        varContainer = nil
-        database.save()
-        database.update({"passes","passSettings"})
-        passSetup(true)
-    end
-    end
-    delVarButton.disabled = va
-
-    editVarButton = window:addChild(GUI.button(118,21,16,1,style.bottomButton, style.bottomText, style.bottomSelectButton, style.bottomSelectText, loc.editvar))
-    editVarButton.onTouch = function() --similar to add, but you get a dropdown to choose what to edit and also the extra setting is set to what was previously there. 
-    addVarArray = {}
-    varContainer = GUI.addBackgroundContainer(workspace, true, true)
-    varContainer.layout:addChild(GUI.label(1,1,3,3,style.containerLabel, "You can only edit level, group, string, and multi-string passes"))
-    typeSelect = varContainer.layout:addChild(GUI.comboBox(1,6,30,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
-    typeSelect.izit = "edit"
-    for i=1,#userTable.passSettings.var,1 do
-        if userTable.passSettings.type[i] ~= "bool" then
-        typeSelect:addItem(userTable.passSettings.label[i]).onTouch = checkTypeCallback
-        table.insert(addVarArray,i)
-        end
-    end
-    local showThis = function(int)
-        addVarArray.var = userTable.passSettings.var[int]
-        addVarArray.label = userTable.passSettings.label[int]
-        addVarArray.calls = userTable.passSettings.calls[int]
-        addVarArray.type = userTable.passSettings.type[int]
-        addVarArray.above = userTable.passSettings.above[int]
-        addVarArray.data = userTable.passSettings.data[int]
-    end
-    varYesButton = varContainer.layout:addChild(GUI.button(1,21,16,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.changevarpropbutton))
-    varYesButton.onTouch = function()
-        local selected = addVarArray[typeSelect.selectedItem]
-        if userTable.passSettings.type[selected] == "int" then
-        userTable.passSettings.above[selected] = extraVar2
-        elseif userTable.passSettings.type[selected] == "-int" or userTable.passSettings.type[selected] == "string" or userTable.passSettings.type[selected] == "-string" then
-        userTable.passSettings.data[selected] = extraVar2
-        end
-        varContainer:removeChildren()
-        varContainer:remove()
-        varContainer = nil
-        database.save()
-        database.update({"passes","passSettings"})
-        passSetup(true)
-    end
-    checkTypeCallback(nil,{["izit"]="edit"})
-    end
-    editVarButton.disabled = va
 end
 
 --permissionRefresh() permissions given by database
