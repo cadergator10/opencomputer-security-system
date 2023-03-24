@@ -99,12 +99,14 @@ local function passComboPress()
     varLabel.text = "Label: " + userTable.passSettings.label[selected]
     varDesc.text = "Desc: " + describe[userTable.passSettings.type]
     if userTable.passSettings.type == "string" or userTable.passSettings.type == "-string" then
-        varDesc.text = varDesc.text + " | " + (userTable.passSettings.data == 1 and "Editable" or userTable.passSettings.data == 2 and "Uneditable" or "Hidden")
+        varDesc.text = varDesc.text .. " | " .. (userTable.passSettings.data == 1 and "Editable" or userTable.passSettings.data == 2 and "Uneditable" or "Hidden")
     elseif userTable.passSettings.type == "int" then
-        varDesc.text = varDesc.text + " | " + (userTable.passSettings.above and "Checks above" or "Checks exact")
+        varDesc.text = varDesc.text .. " | " .. (userTable.passSettings.above and "Checks above" or "Checks exact")
     elseif userTable.passSettings.type == "-int" then
-        varDesc.text = varDesc.text + " | " + tostring(#userTable.passSettings.data) + " groups"
+        varDesc.text = varDesc.text .. " | " .. tostring(#userTable.passSettings.data) .. " groups"
     end
+    editVarButton.disabled = false
+    delVarButton.disabled = false
 end
 
 local function updatePassCombo()
@@ -117,6 +119,8 @@ local function updatePassCombo()
     end
     varLabel.text = "Label: NAN"
     varDesc.text = "Desc: NAN"
+    editVarButton.disabled = true
+    delVarButton.disabled = true
 end
 
 local function checkTypeCallback() --Used when creating a var and choosing the type of var, or if editing
@@ -354,11 +358,12 @@ padNewKey.disabled = canPad
 window:addChild(GUI.panel(34,2,1,28,style.bottomDivider)) --Create pass creation stuff
 window:addChild(GUI.label(36,1,3,3,style.passNameLabel,"Pass Management"))
 varList = window:addChild(GUI.comboBox(36,3,32,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+varList.disabled = canPass
 varLabel = window:addChild(GUI.label(36,5,3,3,style.passNameLabel,"Label: NAN"))
 varDesc = window:addChild(GUI.label(36,7,3,3,style.passNameLabel,"Desc: NAN"))
 addVarButton = window:addChild(GUI.button(36,9,10,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.addvar))
 addVarButton.onTouch = addVarF
-addVarButton.disabled = true
+addVarButton.disabled = canPass
 editVarButton = window:addChild(GUI.button(47,9,10,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.editvar))
 editVarButton.onTouch = editVarF
 editVarButton.disabled = true
@@ -385,10 +390,10 @@ lik = varTypeSelect:addItem("Pass (true/false)")
 lik.onTouch = checkTypeCallback
 varTypeSelect.selectedItem = 5
 extraVar = window:addChild(GUI.label(52,19,3,3,style.passNameLabel,"NAN"))
-updateVarButton = window:addChild(GUI.button(63,21,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
+updateVarButton = window:addChild(GUI.button(43,21,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
 updateVarButton.onTouch = updateVarF
 updateVarButton.disabled = true
-clearVarButton = window:addChild(GUI.button(63,23,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
+clearVarButton = window:addChild(GUI.button(43,23,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "clear"))
 clearVarButton.onTouch = clearVarF
 clearVarButton.disabled = true
 
