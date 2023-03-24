@@ -96,13 +96,13 @@ local varMode = "none" --Indicates the mode, so pressing add button knows what t
 local function passComboPress()
     local describe = {["string"]="Regular String",["-string"]="Multi String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
     local selected = varList.selectedItem
-    varLabel.text = "Label: " + userTable.passSettings.label[selected]
-    varDesc.text = "Desc: " + describe[userTable.passSettings.type]
-    if userTable.passSettings.type == "string" or userTable.passSettings.type == "-string" then
+    varLabel.text = "Label: " .. userTable.passSettings.label[selected]
+    varDesc.text = "Desc: " .. describe[userTable.passSettings.type[selected]]
+    if userTable.passSettings.type[selected] == "string" or userTable.passSettings.type[selected] == "-string" then
         varDesc.text = varDesc.text .. " | " .. (userTable.passSettings.data == 1 and "Editable" or userTable.passSettings.data == 2 and "Uneditable" or "Hidden")
-    elseif userTable.passSettings.type == "int" then
+    elseif userTable.passSettings.type[selected] == "int" then
         varDesc.text = varDesc.text .. " | " .. (userTable.passSettings.above and "Checks above" or "Checks exact")
-    elseif userTable.passSettings.type == "-int" then
+    elseif userTable.passSettings.type[selected] == "-int" then
         varDesc.text = varDesc.text .. " | " .. tostring(#userTable.passSettings.data) .. " groups"
     end
     editVarButton.disabled = false
@@ -137,7 +137,7 @@ local function checkTypeCallback() --Used when creating a var and choosing the t
     end
     --Merged edit and add mode checks
     if selected == 3 then --int (number)
-        extraVar = window:addChild(GUI.button(52,15,3,3, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
+        extraVar = window:addChild(GUI.button(36,19,3,3, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
         extraVar.onTouch = function() --a button to determine whether to check above or not. Checkabove means if needed 1 and they have 3, it lets them in. If false, 3 doesn't work
             addVarArray.above = extraVar.pressed
         end
@@ -148,7 +148,7 @@ local function checkTypeCallback() --Used when creating a var and choosing the t
             addVarArray.data = false
         end
     elseif selected == 4 then -- -int (groups)
-        extraVar = window:addChild(GUI.input(52,15,3,3, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
+        extraVar = window:addChild(GUI.input(36,19,3,3, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
         extraVar.onInputFinished = function() --Input the groups into a textbox splitting with a comma
             addVarArray.data = split(extraVar.text,",")
         end
@@ -162,7 +162,7 @@ local function checkTypeCallback() --Used when creating a var and choosing the t
             addVarArray.data = ""
         end
     elseif selected == 1 or selected == 2 then --string or -string
-        extraVar = window:addChild(GUI.comboBox(52,15,3,3,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+        extraVar = window:addChild(GUI.comboBox(36,19,3,3,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
         local sub = function()
             addVarArray.data = extraVar.selectedItem
         end --you choose whether they can edit it, only view it, or can't see it (only changed by setVar and getVar)
@@ -175,7 +175,7 @@ local function checkTypeCallback() --Used when creating a var and choosing the t
             addVarArray.data = 1
         end
     else --bool (no config and shouldn't be able to edit at all)
-        extraVar = window:addChild(GUI.label(52,15,3,3,style.passNameLabel,"NAN"))
+        extraVar = window:addChild(GUI.label(36,19,3,3,style.passNameLabel,"NAN"))
         if varMode == "add" then
             addVarArray.data = false
         end
@@ -192,7 +192,7 @@ local function clearVarF() --Clear current stuff on creation area
     addVarArray = nil
     if extraVar ~= nil then
         extraVar:remove()
-        extraVar = window:addChild(GUI.label(52,15,3,3,style.passNameLabel,"NAN"))
+        extraVar = window:addChild(GUI.label(36,19,3,3,style.passNameLabel,"NAN"))
     end
     updateVarButton.disabled = true
     clearVarButton.disabled = true
@@ -371,13 +371,13 @@ delVarButton = window:addChild(GUI.button(58,9,10,1, style.passButton, style.pas
 delVarButton.onTouch = delVarF
 delVarButton.disabled = true
 window:addChild(GUI.panel(36,11,32,1,style.bottomDivider))
-varKeyInput = window:addChild(GUI.input(36,13,10,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarkey))
+varKeyInput = window:addChild(GUI.input(36,13,32,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarkey))
 varKeyInput.onInputFinished = onVarKeyInput
 varKeyInput.disabled = true
-varLabelInput = window:addChild(GUI.input(47,15,21,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarlabel))
+varLabelInput = window:addChild(GUI.input(36,15,32,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvarlabel))
 varLabelInput.onInputFinished = onVarLabelInput
 varLabelInput.disabled = true
-varTypeSelect = window:addChild(GUI.comboBox(36,17,15,3, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+varTypeSelect = window:addChild(GUI.comboBox(36,17,32,1, style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
 local lik = varTypeSelect:addItem("String")
 lik.onTouch = checkTypeCallback --every time one is selected it refreshes the extra setting needed for certain choices
 lik = varTypeSelect:addItem("Multi-String")
@@ -389,7 +389,7 @@ lik.onTouch = checkTypeCallback
 lik = varTypeSelect:addItem("Pass (true/false)")
 lik.onTouch = checkTypeCallback
 varTypeSelect.selectedItem = 5
-extraVar = window:addChild(GUI.label(52,19,3,3,style.passNameLabel,"NAN"))
+extraVar = window:addChild(GUI.label(36,19,3,3,style.passNameLabel,"NAN"))
 updateVarButton = window:addChild(GUI.button(43,21,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
 updateVarButton.onTouch = updateVarF
 updateVarButton.disabled = true
