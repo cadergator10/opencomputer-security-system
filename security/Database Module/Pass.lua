@@ -99,13 +99,13 @@ local function passComboPress()
     varLabel.text = "Label: " .. userTable.passSettings.label[selected]
     varDesc.text = "Desc: " .. describe[userTable.passSettings.type[selected]]
     if userTable.passSettings.type[selected] == "string" or userTable.passSettings.type[selected] == "-string" then
-        varDesc.text = varDesc.text .. " | " .. (userTable.passSettings.data == 1 and "Editable" or userTable.passSettings.data == 2 and "Uneditable" or "Hidden")
+        varDesc.text = varDesc.text .. " | " .. (userTable.passSettings.data[selected] == 1 and "Editable" or userTable.passSettings.data[selected] == 2 and "Uneditable" or "Hidden")
     elseif userTable.passSettings.type[selected] == "int" then
-        varDesc.text = varDesc.text .. " | " .. (userTable.passSettings.above and "Checks above" or "Checks exact")
+        varDesc.text = varDesc.text .. " | " .. (userTable.passSettings.above[selected] and "Checks above" or "Checks exact")
     elseif userTable.passSettings.type[selected] == "-int" then
-        varDesc.text = varDesc.text .. " | " .. tostring(#userTable.passSettings.data) .. " groups"
+        varDesc.text = varDesc.text .. " | " .. tostring(#userTable.passSettings.data[selected]) .. " groups"
     end
-    editVarButton.disabled = false
+    editVarButton.disabled = userTable.passSettings.type[selected] == "bool" and true or false
     delVarButton.disabled = false
 end
 
@@ -137,7 +137,7 @@ local function checkTypeCallback() --Used when creating a var and choosing the t
     end
     --Merged edit and add mode checks
     if selected == 3 then --int (number)
-        extraVar = window:addChild(GUI.button(36,19,3,3, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
+        extraVar = window:addChild(GUI.button(36,19,32,1, style.containerButton,style.containerText,style.containerSelectButton,style.containerSelectText, loc.newvarcheckabove))
         extraVar.onTouch = function() --a button to determine whether to check above or not. Checkabove means if needed 1 and they have 3, it lets them in. If false, 3 doesn't work
             addVarArray.above = extraVar.pressed
         end
@@ -148,7 +148,7 @@ local function checkTypeCallback() --Used when creating a var and choosing the t
             addVarArray.data = false
         end
     elseif selected == 4 then -- -int (groups)
-        extraVar = window:addChild(GUI.input(36,19,3,3, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
+        extraVar = window:addChild(GUI.input(36,19,32,1, style.containerInputBack,style.containerInputText,style.containerInputPlaceholder,style.containerInputFocusBack,style.containerInputFocusText, "", loc.newvargroup))
         extraVar.onInputFinished = function() --Input the groups into a textbox splitting with a comma
             addVarArray.data = split(extraVar.text,",")
         end
@@ -162,7 +162,7 @@ local function checkTypeCallback() --Used when creating a var and choosing the t
             addVarArray.data = ""
         end
     elseif selected == 1 or selected == 2 then --string or -string
-        extraVar = window:addChild(GUI.comboBox(36,19,3,3,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
+        extraVar = window:addChild(GUI.comboBox(36,19,32,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
         local sub = function()
             addVarArray.data = extraVar.selectedItem
         end --you choose whether they can edit it, only view it, or can't see it (only changed by setVar and getVar)
@@ -390,10 +390,10 @@ lik = varTypeSelect:addItem("Pass (true/false)")
 lik.onTouch = checkTypeCallback
 varTypeSelect.selectedItem = 5
 extraVar = window:addChild(GUI.label(36,19,3,3,style.passNameLabel,"NAN"))
-updateVarButton = window:addChild(GUI.button(43,21,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
+updateVarButton = window:addChild(GUI.button(36,21,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
 updateVarButton.onTouch = updateVarF
 updateVarButton.disabled = true
-clearVarButton = window:addChild(GUI.button(43,23,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "clear"))
+clearVarButton = window:addChild(GUI.button(36,23,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "clear"))
 clearVarButton.onTouch = clearVarF
 clearVarButton.disabled = true
 
