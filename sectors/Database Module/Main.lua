@@ -4,7 +4,7 @@ local uuid = require("uuid")
 
 local userTable
 
-local workspace, window, loc, database, style = table.unpack({...})
+local workspace, window, loc, database, style, compat = table.unpack({...})
 
 module.name = "Sectors"
 module.table = {"sectors"}
