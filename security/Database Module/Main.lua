@@ -3,7 +3,6 @@ local component = require("component")
 local ser = require("serialization")
 local GUI = require("GUI")
 local uuid = require("uuid")
-local event = require("event")
 local modem = component.modem
 local scanner --if biometric reader is connected this isn't nil
 local writer --Card reader
@@ -15,13 +14,15 @@ local permissions = {} --Holds current user's permissions whos signed in
 local userTable
 
 local workspace, window, loc, database, style, compat = table.unpack({...})
-local system, fs
+local system, fs, event
 if compat == nil then
   system = require("System") --Set it to the MineOS 
   fs = require("Filesystem")
+  event = require("event")
 else
   system = compat.system
   fs = compat.fs
+  event = compat.event
 end
 
 module.name = "Security"
