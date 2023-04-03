@@ -5,7 +5,6 @@ local component = require("component")
 local ser = require("serialization")
 local GUI = require("GUI")
 local uuid = require("uuid")
-local event = require("event")
 local modem = component.modem
 
 local modemPort = 199

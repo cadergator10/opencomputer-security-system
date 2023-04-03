@@ -2,8 +2,6 @@ local module = {}
 local component = require("component")
 local ser = require("serialization")
 local GUI = require("GUI")
-local uuid = require("uuid")
-local modem = component.modem
 local scanner --if biometric reader is connected this isn't nil
 local writer --Card reader
 
