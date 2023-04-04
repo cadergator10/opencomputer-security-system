@@ -86,7 +86,7 @@ module.onTouch = function()
   
   window:addChild(GUI.panel(123,1,12,3,style.cardStatusPanel))
   cardStatusLabel = window:addChild(GUI.label(124, 2, 10,1,style.cardStatusLabel,loc.cardabsent))
-  handler = event.addHandler(eventCallback) --create callback to the handler to check for cardinsert and cardremoval
+  handler = event.addhandler(eventCallback) --create callback to the handler to check for cardinsert and cardremoval
 
   tabWindow = window:addChild(GUI.container(1,4,window.width,window.height - 3))
   tabs = window:addChild(GUI.list(1, 1, 75, 3, 2, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, true))
@@ -107,7 +107,7 @@ module.onTouch = function()
 end
 
 module.close = function() --when user switches modules
-  event.removeHandler(handler) --don't keep looking for event
+  event.removehandler(handler) --don't keep looking for event
   return {"passes","passSettings"} --returns what I want updated (if autoupdate enabled)
 end
 

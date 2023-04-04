@@ -25,6 +25,9 @@ end
 local function keypadCallback(_,button)
     if padBox:count() > 0 then
         local selected = padBox.selectedItem
+        if button == nil then
+            button = padBox:getItem(selected)
+        end
         padLabel.text = userTable.securityKeypads[button.key].label
         padPass.text = canPad and "****" or userTable.securityKeypads[button.key].pass
         padLabel.disabled = canPad
