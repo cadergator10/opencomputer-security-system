@@ -179,7 +179,7 @@ module.onTouch = function()
     local buttonInt, callbackInt, isPos
     if button ~= nil then
       buttonInt = button.buttonInt --buttonInt is what spot the button is in the guiCalls
-      callbackInt = button.callbackInt --callbackInt is what spot the button is specifically in the guiCalls[buttonInt]
+      callbackInt = button.callbackInt - 6 --callbackInt is what spot the button is specifically in the guiCalls[buttonInt]
       isPos = button.isPos --for +- buttons in int passes.
     end
     local selected = pageMult * listPageNumber + userList.selectedItem
