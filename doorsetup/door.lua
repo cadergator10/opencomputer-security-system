@@ -52,18 +52,20 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         local isHere = true
         local quikMessage = false
         for i=1,#doors,1 do
-            if #doors[i].cardRead.normal > 0
+            if #doors[i].cardRead.normal > 0 then
                 for j=1,#doors[i].cardRead.normal,1 do
                     local noooo = false
-                    if not doors[i].cardRead.normal[j].call == "checkstaff" then
+                    if not (doors[i].cardRead.normal[j].call == "checkstaff") then
                         for key,value in pairs(userTable.passSettings.calls) do
                             if value == doors[i].cardRead.normal[j].call then
                                 noooo = true
                                 break
                             end
                         end
+                    else
+                        noooo = true
                     end
-                    if noooo then
+                    if not noooo then
                         isHere = false
                         break
                     end
