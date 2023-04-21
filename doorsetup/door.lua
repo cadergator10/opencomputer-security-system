@@ -8,7 +8,7 @@ local userTable -- Holds userTable stuff.
 local workspace, window, loc, database, style, compat = table.unpack({...}) --Sets up necessary variables: workspace is workspace, window is area to work in, loc is localization file, database are database commands, and style is the selected style file.
 local system, fs
 if compat == nil then
-  system = require("System") --Set it to the MineOS 
+  system = require("System") --Set it to the MineOS
   fs = require("Filesystem")
 else
   system = compat.system --Set it to the compatability stuff (in the compat file)
@@ -50,9 +50,41 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
 
     local finishLink = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/doorsetup/finish.lua"
 
-    local doors = database.dataBackup("doorCreation") --TODO: Make sure this is correct thing
+    local doors = database.dataBackup("doorCreation") --TODO: Make sure this wipes the right door's passes in order to prevent errors
     if (doors == nil) then
         doors = {}
+    else --Check to ensure passes linked in doors are not MISSING
+        local isHere = true
+        local quikMessage = false
+        for i=1,#doors,1 do
+            if #doors[i].cardRead.normal > 0 then
+                for j=1,#doors[i].cardRead.normal,1 do
+                    local noooo = false
+                    if not (doors[i].cardRead.normal[j].call == "checkstaff") then
+                        for key,value in pairs(userTable.passSettings.calls) do
+                            if value == doors[i].cardRead.normal[j].call then
+                                noooo = true
+                                break
+                            end
+                        end
+                    else
+                        noooo = true
+                    end
+                    if not noooo then
+                        isHere = false
+                        break
+                    end
+                end
+            end
+            if not isHere then
+                quikMessage = true
+                doors[i].cardRead.normal = {}
+                doors[i].cardRead.add = {}
+            end
+        end
+        if quikMessage then
+            GUI.alert(loc.doorbadmessage)
+        end
     end
 
     local editPage = 1
