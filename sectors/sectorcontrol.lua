@@ -281,7 +281,7 @@ else
         term.clear()
     end
 
-    saveTable({["cryptKey"]={1,2,3,4,5},["port"]=modemPort,"redstonelinks.txt"})
+    saveTable({["cryptKey"]={1,2,3,4,5},["port"]=modemPort},"redstonelinks.txt")
     print("Crypt key is set to default (1,2,3,4,5)")
 end
 
