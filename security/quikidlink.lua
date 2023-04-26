@@ -11,7 +11,7 @@ local api = require("serpAPI.lua")
 term.clear()
 if api == nil then
     print("No API installed. Downloading")
-    os.execute("wget -f " .. apiCode .. " " .. "serpAPI.lua")
+    os.execute("wget -f " .. apiCode .. " " .. "serpAPI")
     api = require("serpAPI.lua") --Attempt to get again. Experimental (dont know if it will work)
 end
 
@@ -29,18 +29,20 @@ while true do
     print("Please swipe the card you want to link your ID to")
     local ev, address, _, str = event.pull("magData")
     component.proxy(address).setLightState(2) --2 is yellow, meaning waiting. Doing stuff
-    local data = ser.unserialize(api.crypt(str, true))
+    local _, data = api.crypt(str, true)
+    data = ser.unserialize(data) --error
     if ev and data ~= nil then
-        print("Welcome " + data.name)
+        print("Welcome " .. data.name)
         print("Please click the biometric reader to link player")
         component.proxy(address).setLightState(6) --6 is green and yellow, meaning click bioreader
         local e, ad, msg = event.pull(7,"bioReader")
         component.proxy(address).setLightState(2) --2 is yellow. Waiting for message back
         if e then
             print("Waiting for response from server...")
-            e, msg = api.send(true,"linkMCID",api.crypt(ser.serialize({["uuid"]=data.uuid,["mcid"]=msg})))
+            data = api.crypt(ser.serialize({["uuid"]=data.uuid,["mcid"]=msg}))
+            e, msg = api.send(true,"linkMCID",data)
             if e then
-                msg = api.crypt(msg,true)
+                _, msg = api.crypt(msg,true)
                 if msg == "true" then
                     print("Link success! All biometric reader doors should work for you now")
                     component.proxy(address).setLightState(4) --4 is green, meaning success
