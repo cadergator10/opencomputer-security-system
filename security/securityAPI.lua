@@ -10,6 +10,7 @@ local adminCard = "admincard"
 local modemPort = 1000
 local syncPort = 199
 local diagPort = 180
+local dbPort = 144
 
 local component = require("component")
 local gpu = component.gpu
