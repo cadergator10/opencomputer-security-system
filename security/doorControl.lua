@@ -519,6 +519,8 @@ extraConfig.version = doorVersion
 if extraConfig.port == nil then
   extraConfig.port = 1000
 end
+extraConfig.type = "doorsystem"
+extraConfig.num = 3
 saveTable(extraConfig,"extraConfig.txt")
 modemPort = extraConfig.port
 
@@ -544,6 +546,10 @@ if e ~= nil then
     end
     if settingData[key].doorType == 0 then
       settingData[key].doorType = 3
+      checkBool = true
+    end
+    if type(settingData[key].reader) == "string" then
+      settingData[key].reader = {settingData[key].reader}
       checkBool = true
     end
     if type(settingData[key].reader[1]) == "string" then
