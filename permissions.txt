@@ -11,6 +11,7 @@ security.block (block user)
 security.staff (staff pass)
 security.doorsetup (create a door with doorsetup module)
 security.mcid (link and clear a user's minecraft id)
+security.keypad (Manage global keypad passwords)
 security.(any var added by user)
 
 dev.* (all developer module features)

@@ -1,14 +1,19 @@
 local module = {}
 local GUI = require("GUI")
 local ser = require("serialization")
-local internet = require("Internet")
 local uuid = require("uuid")
-local fs = require("Filesystem")
-local system = require("System")
 
 local userTable -- Holds userTable stuff.
 
-local workspace, window, loc, database, style, permissions = table.unpack({...}) --Sets up necessary variables: workspace is workspace, window is area to work in, loc is localization file, database are database commands, and style is the selected style file.
+local workspace, window, loc, database, style, compat = table.unpack({...}) --Sets up necessary variables: workspace is workspace, window is area to work in, loc is localization file, database are database commands, and style is the selected style file.
+local system, fs
+if compat == nil then
+  system = require("System") --Set it to the MineOS
+  fs = require("Filesystem")
+else
+  system = compat.system --Set it to the compatability stuff (in the compat file)
+  fs = compat.fs
+end
 
 module.name = "Door Setup" --The name that shows up on the module's button.
 module.table = {} --Set to the keys you want pulled from the userlist on the server
@@ -37,7 +42,7 @@ end
 --Issues: export door incorrectly named: only 4 changes visible above passes: combo boxes are not disabled but 1: line 94 error with index: all add buttons are incorrectly named and placed but 1: security system has hello button
 
 module.onTouch = function() --Runs when the module's button is clicked. Set up the workspace here.
-    local doorList, listPageLabel, listUpButton, listDownButton, doorName, doorType, doorDelay, doorToggle, doorSector
+    local doorList, listPageLabel, listUpButton, listDownButton, doorName, doorType, doorDelay, doorToggle, doorSector, doorPad, doorPadPass --TODO: Add buttons for doorPad (undefined, local, or global) or doorPadPass (depending on doorPad, local (input for 4 char pin) or global (combo based on keypad global stuff))
     local doorPassList, listPageLabel2, listUpButton2, listDownButton2, doorPassSelf, doorPassData, doorPassAddSelector, doorPassCreate, doorPassDelete, doorPassEdit, doorPassType, doorPassAddHave
     local doorPassAddAdd, doorPassAddDel
     local newDoor, delDoor, exportDoor, doorPathSelector, finishPath, cancelPath, roller

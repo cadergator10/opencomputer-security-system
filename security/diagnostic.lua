@@ -28,7 +28,7 @@ local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","
 local forceOpenTypes = {"False","True"}
 local passTypes = {["string"]="Regular String",["-string"]="Multi String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"4.0.0"}
+local supportedVersions = {"4.0.2"}
 
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
 
@@ -305,7 +305,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
     end
 end
 
-local function scanner(multi,grab)
+local function scanner(multi,reader)
     local e, text
     if multi then
         local wait = true
@@ -357,7 +357,7 @@ local function accsetup()
                 computer.beep()
             elseif msg == "analyzer" then
                 print("Scan the device with your tablet")
-                sendit(from,port,false,scanner(false,nil))
+                sendit(from,port,false,scanner(false))
             elseif msg == "advanalyzer" then
                 local wait = true
                 local distable = {}
@@ -590,7 +590,7 @@ local function doorediting()
         setGui(10,"3. Change toggle and delay")
         setGui(11,hassector == false and "4. Unavailable: Sectors disabled" or "4. Change Sector")
         setGui(12,"5. Change passes")
-        setGui(13,"6. Change card readers") --LEFTOFF
+        setGui(13,"6. Change card readers (disabled)") --LEFTOFF
         setGui(14,"")
         setGui(15,"Door type: " .. newDoorTypes[editTable[pageNum].doorType])
         setGui(18,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
@@ -618,7 +618,7 @@ local function doorediting()
                 setGui(i,"")
             end
         end
-        lengthNum = 6
+        lengthNum = 5
         local ev, p1, p2, p3 = event.pullMultiple("touch","key_down","numInput")
         if ev == "touch" then
             pig = false
@@ -933,7 +933,7 @@ local function doorediting()
                 setGui(22,"What is the address for the readers?")
                 if canScan then
                     setGui(23,"Scan all the readers you want to add. Click screen to stop")
-                    distable = scanner(true)
+                    distable = scanner(true,true)
                 else
                     setGui(23,"Enter uuid as text. Press enter with nothing in it to stop")
                     while wait do

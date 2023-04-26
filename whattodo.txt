@@ -3,10 +3,12 @@ Instructions on what I gotta check out and maybe add
 Definitely Servertine (this):
 2. DoorSetup allow runtime door editing on currently running doors. (maybe an added perk of choosing door systems through naming multidoors)
 5. SectorControl module for Servertine (an optional manual changing utility)
-7. Possible KeyPad, RFID Reader, and Biometric Reader.
 8. Database remote control module
-10. Open Linking and User ID string values
 
+Debug and Test
+RFID Reader
+Linking and User ID
+KeyPad, RFID Reader, and Biometric Reader.
 
 done
 groups (-int) get dropdown rather than int changer with +- (DONE)
@@ -16,6 +18,5 @@ Save changes done on DoorSetup to prevent data loss upon leaving the module (DON
 Make SectorControl utilize runtime changes (3 wires per sector: 1 to turn off lockdown, another to enable, and another to lock open) (DONE)
 
 
-remember
-dataBackup()
-checkConfig()
+DO:
+4. Update workspace when pressing the two buttons (update gui)

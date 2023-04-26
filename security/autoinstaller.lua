@@ -13,10 +13,12 @@ local modemPort = 1000
 local syncPort = 199
 local diagPort = 180
 
+local midPoint = "main"
+
 local program = "ctrl.lua"
 local settingFileName = "doorSettings.txt"
 local configFileName = "extraConfig.txt"
-local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/security/doorControl.lua"
+local doorCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/" .. midPoint .. "/security/doorControl.lua"
 --local versionHolderCode = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/src/versionHolder.txt"
 
 local settingData = {}
@@ -181,6 +183,7 @@ local function runInstall()
             end
             text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet." or "Enter the uuid of the device in TEXT. When finished, don't type anything and just press enter",5)
             loopArray["reader"] = {}
+            local hasPad = false
             for _, value in pairs(text) do
                 local thisType = component.type(value)
                 if thisType == "os_magreader" then
@@ -189,19 +192,59 @@ local function runInstall()
                     table.insert(loopArray["reader"],{["uuid"]=value,["type"]="biometric"})
                 elseif thisType == "os_rfidreader" then
                     table.insert(loopArray["reader"],{["uuid"]=value,["type"]="rfid"})
+                elseif thisType == "os_keypad" then
+                    hasPad = true
+                    component.proxy(value).setDisplay("inactive", 6)
+                    table.insert(loopArray["reader"],{["uuid"]=value,["type"]="keypad",["global"]=false,["pass"]="1111"})
+                end
+            end
+            if hasPad then
+                text = sendMsg("Keypads detected: Would you like to use a global or local password?","global passwords are set by the database. local are set and saved on this door computer","1 for global, 2 for local",1)
+                if text == "1" then
+                    text = sendMsg("What is the key for that keypad variable?",1)
+                else
+                    hasPad = false
+                    text = sendMsg("What is the pin for the keypad to need to allow you in?","4 or less numbers (4 recommended)",1)
+                end
+                for key, value in pairs(loopArray["reader"]) do
+                    if value.type == "keypad" then
+                        loopArray["reader"][key].global = hasPad
+                        loopArray["reader"][key].pass = text
+                    end
                 end
             end
         else
             j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
             local distable = {}
+            local hasPad = false
             for key,_ in pairs(component.list("os_magreader")) do
-                table.insert(distable,{["uuid"]=key,type="swipe"})
+                table.insert(distable,{["uuid"]=key,["type"]="swipe"})
             end
             for key,_ in pairs(component.list("os_biometric")) do
-                table.insert(distable,{["uuid"]=key,type="biometric"})
+                table.insert(distable,{["uuid"]=key,["type"]="biometric"})
             end
             for key,_ in pairs(component.list("os_rfidreader")) do
-                table.insert(distable,{["uuid"]=key,type="rfid"})
+                table.insert(distable,{["uuid"]=key,["type"]="rfid"})
+            end
+            for key,_ in pairs(component.list("os_keypad")) do
+                hasPad = true
+                component.proxy(key).setDisplay("inactive", 6)
+                table.insert(distable,{["uuid"]=key,["type"]="keypad",["global"]=false,["pass"]="1111"})
+            end
+            if hasPad then
+                text = sendMsg("Keypads detected: Would you like to use a global or local password?","global passwords are set by the database. local are set and saved on this door computer","1 for global, 2 for local",1)
+                if text == "1" then
+                    text = sendMsg("What is the key for that keypad variable?",1)
+                else
+                    hasPad = false
+                    text = sendMsg("What is the pin for the keypad to need to allow you in?","4 or less numbers (4 recommended)",1)
+                end
+                for key, value in pairs(distable) do
+                    if value.type == "keypad" then
+                        distable[key].global = hasPad
+                        distable[key].pass = text
+                    end
+                end
             end
             loopArray["reader"] = distable
         end

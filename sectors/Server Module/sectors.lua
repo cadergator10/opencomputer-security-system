@@ -10,13 +10,22 @@ local uuid = require("uuid")
 
 local module = {}
 module.name = "sectors"
-module.commands = {"sectorupdate","doorsector","doorsecupdate"}
+module.commands = {"sectorupdate","doorsecupdate"} --removed doorSector so it isn't received from outside of the server via modems
 module.skipcrypt = {}
 module.table = {["sectors"] = {{["name"]="Placeholder Sector",["uuid"]=uuid.next(),["type"]=1,["pass"]={}}}}
 module.table.sectorStatus = {[module.table.sectors[1].uuid]=1}
 module.debug = false
-module.version = "4.0.0"
+module.version = "4.0.2"
 module.id = 1112
+
+local function checkMCID(id) --Pulled from Security module
+  for _, value in pairs(userTable.passes) do
+    if value.mcid == id then
+      return true, value.uuid, value.name
+    end
+  end
+  return false
+end
 
 function module.init(setit ,doors, serverCommands) --Called when server is first started. Passes userTable and doorTable.
   userTable = setit
@@ -70,6 +79,15 @@ function module.message(command,datar) --Called when a command goes past all def
 
     end
   elseif command == "doorsector" then
+    if data.isBio then
+      local e,good,nome = checkMCID(data.uuid)
+      if e then
+        data.uuid = good
+        data.name = nome
+      else
+        return true,{{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User" .. data.uuid .. " not linked to biometrics",["color"]=0x994049}},false,true,server.crypt("false")
+      end
+    end
     for i=1,#userTable.sectors,1 do
       if userTable.sectors[i].uuid == data.sector then
         if userTable.sectorStatus[userTable.sectors[i].uuid] == 1 then
@@ -78,13 +96,13 @@ function module.message(command,datar) --Called when a command goes past all def
           local passed = false
           local user = false
           for j=1,#userTable.passes,1 do
-            if userTable.passes[j].uuid == data.uuid then
+            if string.sub(userTable.passes[j].uuid,1,-14) == data.uuid or userTable.passes[j].uuid == data.uuid then
               user = j
               break
             end
           end
           if user == false then
-            return false, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector check failed: User Not Found",["color"]=nil,["line"]=false}}
+            return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="Sector check failed: User Not Found",["color"]=nil,["line"]=false}}, false, true, "false"
           end
           local printText = "User " .. data.name .. " failed sector check of " .. userTable.sectors[i].name
           for p=1,5,1 do
@@ -129,7 +147,11 @@ function module.message(command,datar) --Called when a command goes past all def
                   if value.lock == 1 then
                     return true,nil,nil,true,"openbypass"
                   else
-                    return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " requested a bypass of " .. userTable.sectors[i].name,["color"]=0xFF0000,["line"]=false}},false,true,"lockbypass"
+                    if data.isRFID then
+                      return true, nil, nil, true, "false"
+                    else
+                      return true, {{["text"]="Sectors: ",["color"]=0x9924C0},{["text"]="User " .. data.name .. " requested a bypass of " .. userTable.sectors[i].name,["color"]=0xFF0000,["line"]=false}},false,true,"lockbypass"
+                    end
                   end
                 end
               end
