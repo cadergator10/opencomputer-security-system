@@ -99,7 +99,7 @@ end
 
 local function update(_, localAddress, remoteAddress, port, distance, msg, data)
   if msg == "deviceCheck" then
-    send(modemPort,true,"true")
+    send(nil, modemPort,true,"true")
   end
 end
 
