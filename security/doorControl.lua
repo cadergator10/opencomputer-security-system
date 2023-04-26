@@ -552,6 +552,10 @@ if e ~= nil then
       settingData[key].reader = {settingData[key].reader}
       checkBool = true
     end
+    if settingData[key].redSide == nil then
+      settingData[key].redSide = 2
+      checkBool = true
+    end
     if type(settingData[key].reader[1]) == "string" then
       for key2, value in pairs(settingData[key].reader) do
         settingData[key].reader[key2] = {["type"]="swipe",["uuid"]=value}
