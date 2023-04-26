@@ -13,7 +13,7 @@ local modemPort = 1000
 local syncPort = 199
 local diagPort = 180
 
-local midPoint = "4.0.1"
+local midPoint = "main"
 
 local program = "ctrl.lua"
 local settingFileName = "doorSettings.txt"

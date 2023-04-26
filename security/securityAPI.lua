@@ -1,4 +1,4 @@
-local version = "4.0.0"
+local version = "4.0.2"
 --testR = true
 
 local security = {}

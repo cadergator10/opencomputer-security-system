@@ -1,7 +1,7 @@
 --Experimental door control. This is way more different than the simple one and is a bit less responsive, less reliable, and uses more memory, but supports RFID readers and keypads.
 --Why 2 different files? I don't want people to use this when they don't absolutely need it and have a glitchy system.
 
-local doorVersion = "4.0.0"
+local doorVersion = "4.0.2"
 local testR = true
 local saveRefresh = true
 

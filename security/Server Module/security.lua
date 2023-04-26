@@ -13,7 +13,7 @@ module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules","linkM
 module.skipcrypt = {}
 module.table = {["passes"]={},["passSettings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}},["securityKeypads"] = {["testone"]={["pass"]="1234",["label"]="Test One"}}}
 module.debug = false
-module.version = "4.0.0"
+module.version = "4.0.2"
 module.id = 1111
 
 local function getPassID(command,rules)
