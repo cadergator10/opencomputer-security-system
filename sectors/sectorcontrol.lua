@@ -398,10 +398,10 @@ while true do
                     color, side = colorSearch(color,side)
                     if color ~= -1 and side ~= -1 then
                         redlinkcheck(color,side)
-                        if (listNum)%3 == 1 then
+                        if (listNum)%3 == 2 then
                             sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.color = color
                             sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.side = side
-                        elseif (listNum)%3 == 0 then
+                        elseif (listNum)%3 == 1 then
                             sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.color = color
                             sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.side = side
                         else
