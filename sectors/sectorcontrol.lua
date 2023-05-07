@@ -109,7 +109,7 @@ local function pageChange(dir,pos,length,call,...)
     if dir == "hor" then
         if type(pos) == "boolean" then
             if pos then
-                if pageNum < length then
+                if pageNum < length + 1 then
                     pageNum = pageNum + 1
                 end
             else
