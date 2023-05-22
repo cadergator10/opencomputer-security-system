@@ -389,6 +389,7 @@ lik.onTouch = checkTypeCallback
 lik = varTypeSelect:addItem("Pass (true/false)")
 lik.onTouch = checkTypeCallback
 varTypeSelect.selectedItem = 5
+varTypeSelect.disabled = true
 extraVar = window:addChild(GUI.label(36,19,3,3,style.passNameLabel,"NAN"))
 updateVarButton = window:addChild(GUI.button(36,21,20,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, loc.update))
 updateVarButton.onTouch = updateVarF
