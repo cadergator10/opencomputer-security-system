@@ -98,22 +98,6 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     local previousPagePass = 0
     local prevPass = "string"
 
-    local function saveTable(  tbl,filename )
-        local tableFile = fs.open(filename, "w")
-        tableFile:write(ser.serialize(tbl))
-        tableFile:close()
-    end
-
-    --// The Load Function
-    local function loadTable( sfile )
-        local tableFile = fs.open(sfile, "r")
-        if tableFile ~= nil then
-            return ser.unserialize(tableFile:readAll())
-        else
-            return nil
-        end
-    end
-
     local function grabName(where,call)
         if call ~= "checkstaff" then
             for i=1,#userTable.passSettings.calls,1 do
@@ -665,7 +649,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     tmpTable[i].sector = seem(false,doors[i].sector)
                     tmpTable[i].cardRead = seem(false,#doors[i].cardRead.normal == 0 and -1 or doors[i].cardRead.normal)
                 end
-                local meep = loadTable(fs.path(system.getCurrentScript()) .. "dbsettings.txt")
+                local meep = compat.loadTable(fs.path(system.getCurrentScript()) .. "dbsettings.txt")
                 tmpTable["config"]={["port"]=meep.port,["cryptKey"]=meep.cryptKey}
                 roller:roll()
                 local mep = fs.open(doorPathSelector.path .. "finishSettings.txt","w")
