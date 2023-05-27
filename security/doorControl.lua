@@ -236,12 +236,14 @@ end
   local function colorLink(key, var, check) --{["color"]=0,["delay"]=1} or just a number
     local chech = function(key)
       if component.proxy(key) ~= nil then
-        if readerLights[key] == nil then
-          component.proxy(key).swipeIndicator(false)
-          readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
+        if(component.proxy(key).swipeIndicator ~= nil) then
+          if readerLights[key] == nil then
+            component.proxy(key).swipeIndicator(false)
+            readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
+          end
+          readerLights[key].new = deepcopy(var)
+          if check then readerLights[key].check = check end
         end
-        readerLights[key].new = deepcopy(var)
-        if check then readerLights[key].check = check end
       end
     end
     if type(key) == "table" then
@@ -584,9 +586,11 @@ got = nil
 
 readerLights = {}
 for key,_ in pairs(component.list("os_magreader")) do
-  component.proxy(key).swipeIndicator(false)
-  colorLink(key,-1)
-  readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
+  if(component.proxy(key).swipeIndicator ~= nil) then
+    component.proxy(key).swipeIndicator(false)
+    colorLink(key,-1)
+    readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
+  end
 end
 thread.create(colorupdate)
 osVersion = true --Forcing the lights to work now (latest opensecurity mod required)
@@ -631,7 +635,9 @@ process.info().data.signal = function(...)
   end
   if osVersion then
     for key,_ in pairs(component.list("os_magreader")) do
-      component.proxy(key).setLightState(7) --to show system is off
+      if(component.proxy(key).setLightState ~= nil) then
+        component.proxy(key).setLightState(7) --to show system is off
+      end
     end
   end
   event.ignore("modem_message", update)
