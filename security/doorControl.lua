@@ -390,11 +390,11 @@ end
                 end
               else
                 if value.doorType == 3 then
-                  for _,value2 in pairs(value.doorAddress) do
+                  for _,value3 in pairs(value.doorAddress) do
                     if value2 ~= 3 then
-                      component.proxy(value2).close()
+                      component.proxy(value3).close()
                     else
-                      component.proxy(value2).open()
+                      component.proxy(value3).open()
                     end
                   end
                 elseif value.doorType == 2 then
