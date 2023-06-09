@@ -313,19 +313,19 @@ while true do
                 if char == "left" then
                     term.clear()
                     pageChange("hor",false,#sector, sectorGui, editmode)
-                    os.sleep(0.5)
+                    os.sleep(0.1)
                 elseif char == "right" then
                     term.clear()
                     pageChange("hor",true,#sector, sectorGui, editmode)
-                    os.sleep(0.5)
+                    os.sleep(0.1)
                 elseif char == "up" then
                     term.clear()
                     pageChange("ver",false,(#sector[pageNum]*3), sectorGui, editmode)
-                    os.sleep(0.5)
+                    os.sleep(0.1)
                 elseif char == "down" then
                     term.clear()
                     pageChange("ver",true,(#sector[pageNum]*3), sectorGui, editmode)
-                    os.sleep(0.5)
+                    os.sleep(0.1)
                 elseif char == "enter" then
                 if listNum == 3 or listNum == 6 or listNum == 9 then state = 3 elseif listNum == 1 or listNum == 4 or listNum == 7 then state = 2 else state = 1 end
                 if listNum <= 3 then
@@ -348,6 +348,7 @@ while true do
                     end
                 end
                 modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({secid.uuid,state}),sectorSettings.cryptKey))
+                os.sleep(0.1)
             end
         end
       end
