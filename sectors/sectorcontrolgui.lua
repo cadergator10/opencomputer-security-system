@@ -239,8 +239,8 @@ local function sectorGui(editmode)
             pre = "  "
         end
         for i=1,#sector[pageNum],1 do
-            local secKeys = {["disable"] = "Clear",["lock"] = "Lockdown",["open"] = "Open"}
-            for key,value in pairs(secKeys) do
+            local secKeys = {[2] = "Clear",[1] = "Lockdown",[3] = "Open"}
+            for key,value in ipairs(secKeys) do
                 if listNum == count then
                     pre = "> "
                 else
