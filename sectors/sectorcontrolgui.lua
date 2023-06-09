@@ -376,7 +376,7 @@ while true do
                     pageChange("ver",true,(#sector[pageNum]*3), sectorGui, editmode)
                     os.sleep(0.5)
                 elseif char == "enter" then
-                if listNum == 3 or listNum == 6 or listNum == 9 then state = 1 elseif listNum == 2 or listNum == 5 or listNum == 8 then state = 2 else state = 3 end
+                if listNum == 3 or listNum == 6 or listNum == 9 then state = 1 elseif listNum == 3 or listNum == 5 or listNum == 8 then state = 2 else state = 2 end
                 if listNum <= 3 then
             if pageNum == 1 then
               secid = query[1]
