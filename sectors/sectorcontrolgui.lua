@@ -77,13 +77,6 @@ local function crypt(str,k,inv)
     return enc;
 end
 
-local function splitString(str, sep)
-    local sep, fields = sep or ":", {}
-    local pattern = string.format("([^%s]+)", sep)
-    str:gsub(pattern, function(c) fields[#fields+1] = c end)
-    return fields
-end
-
 local function deepcopy(orig)
     local orig_type = type(orig)
     local copy
@@ -137,48 +130,6 @@ end
 -- removed AutoUpdate function due to being unnecessary to the checking of if a change was detected
 
 --------Called Functions
-
-local function colorSearch(color,side)
-    local c,s = -1,-1
-    if type(color) == "number" then
-        c = color
-    else
-        for i=1,#redColorTypes,1 do
-            if redColorTypes[i] == color then
-                c = i - 1
-            end
-        end
-    end
-    for i=1,#redSideTypes,1 do
-        if type(side) == "number" then
-            s = side
-        else
-            if redSideTypes[i] == side then
-                s = i - 1
-            end
-        end
-    end
-    return c,s
-end
-
-local function redlinkcheck(color,side)
-    for key,value in pairs(sectorSettings) do
-        if key ~= "cryptKey" and key ~= "port" then --We don't want cryptKey or port being used
-            if value.open.color == color and value.open.side == side then
-                sectorSettings[key].open.color = -1
-                sectorSettings[key].open.side = -1
-            end
-            if value.lock.color == color and value.lock.side == side then
-                sectorSettings[key].lock.side = -1
-                sectorSettings[key].lock.color = -1
-            end
-            if value.disable.color == color and value.disable.side == side then
-                sectorSettings[key].disable.side = -1
-                sectorSettings[key].disable.color = -1
-            end
-        end
-    end
-end
 
 local function arrangeSectors(query)
     sector = {}
@@ -378,64 +329,29 @@ while true do
                 elseif char == "enter" then
                 if listNum == 3 or listNum == 6 or listNum == 9 then state = 3 elseif listNum == 1 or listNum == 4 or listNum == 7 then state = 2 else state = 1 end
                 if listNum <= 3 then
-            if pageNum == 1 then
-              secid = query[1]
-            else
-              secid = query[1+((pageNum-1)*3)]
+                    if pageNum == 1 then
+                        secid = query[1]
+                    else
+                        secid = query[1+((pageNum-1)*3)]
+                    end
+                elseif listNum <= 6 then
+                    if pageNum == 1 then
+                        secid = query[2]
+                    else
+                        secid = query[2+((pageNum-1)*3)]
+                    end
+                else
+                    if pageNum == 1 then
+                        secid = query[3]
+                    else
+                        secid = query[3+((pageNum-1)*3)]
+                    end
+                end
+                modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({secid.uuid,state}),sectorSettings.cryptKey))
             end
-          elseif listNum <= 6 then
-            if pageNum == 1 then
-              secid = query[2]
-            else
-              secid = query[2+((pageNum-1)*3)]
-            end
-          else
-            if pageNum == 1 then
-              secid = query[3]
-            else
-              secid = query[3+((pageNum-1)*3)]
-            end
-          end
-          modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({secid.uuid,state}),sectorSettings.cryptKey))
         end
       end
-        elseif ev == "redstone_changed" then
-            local officialChange = {false} --If the change in redstone is something saved to redstonelinks.txtr
-            if key == 0 and value > 0 then
-                for i=1,#query,1 do
-                    if sectorSettings[query[i].uuid].open.side == side and sectorSettings[query[i].uuid].open.color == command then
-                        officialChange[1] = true
-                        officialChange[2] = query[i].uuid
-                        officialChange[3] = side
-                        officialChange[4] = command
-                        officialChange[5] = 3
-                        break
-                    end
-                    if sectorSettings[query[i].uuid].lock.side == side and sectorSettings[query[i].uuid].lock.color == command then
-                        officialChange[1] = true
-                        officialChange[2] = query[i].uuid
-                        officialChange[3] = side
-                        officialChange[4] = command
-                        officialChange[5] = 2
-                        break
-                    end
-                    if sectorSettings[query[i].uuid].disable.side == side and sectorSettings[query[i].uuid].disable.color == command then
-                        officialChange[1] = true
-                        officialChange[2] = query[i].uuid
-                        officialChange[3] = side
-                        officialChange[4] = command
-                        officialChange[5] = 1
-                        break
-                    end
-                    --[[if sectorStatus[query[i].uuid] ~= current then --a change was detected
-                        officialChange = true
-                    end]]
-                end
-            end
-            if officialChange[1] then
-                modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({officialChange[2],officialChange[5]}),sectorSettings.cryptKey))
-            end
-        end
+        
     else
         os.sleep(1)
     end
