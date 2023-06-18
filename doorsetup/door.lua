@@ -61,7 +61,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 for j=1,#doors[i].cardRead.normal,1 do
                     local noooo = false
                     if not (doors[i].cardRead.normal[j].call == "checkstaff") then
-                        for key,value in pairs(userTable.passSettings.calls) do
+                        for key,value in ipairs(userTable.passSettings.calls) do
                             if value == doors[i].cardRead.normal[j].call then
                                 noooo = true
                                 break
@@ -197,7 +197,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 doorPassAddSelector:clear()
                 doorPassAddHave:clear()
                 doorPassAddAdd.disabled = true
-                for key,value in pairs(doors[selected].cardRead.add) do
+                for key,value in ipairs(doors[selected].cardRead.add) do
                     local thisType = grabName("type",value.call)
                     doorPassAddAdd.disabled = false
                     local disName = grabName("label",value.call) .. " | " .. (thisType == "bool" and "0" or thisType == "-int" and grabName("data",value.call)[value.param] or tostring(value.param))
@@ -266,7 +266,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 else
                     doorPassData:clear()
                 end
-                for _,value in pairs(userTable.passSettings.data[uuid]) do
+                for _,value in ipairs(userTable.passSettings.data[uuid]) do
                     doorPassData:addItem(value)
                 end
                 doorPassData.selectedItem = 1

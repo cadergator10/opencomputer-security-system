@@ -36,7 +36,7 @@ local function getPassID(command,rules)
 end
 
 local function getVar(var,user)
-    for key, value in pairs(userTable.passes) do
+    for key, value in ipairs(userTable.passes) do
         if string.sub(value.uuid,1,-14) == user or value.uuid == user then
             return value[var]
         end
@@ -73,7 +73,7 @@ end
 local function checkAdvVar(user,rules) --{["uuid"]=uuid.next()["call"]=t1,["param"]=t2,["request"]="supreme",["data"]=false}
     local label,color = "will be set",0x000000
     local foundOne = false
-    for key, value in pairs(userTable.passes) do
+    for key, value in ipairs(userTable.passes) do
         if string.sub(value.uuid,1,-14) == user or value.uuid == user then
             foundOne = true
             local skipBase = false
@@ -161,7 +161,7 @@ local function getDoorInfo(type,id,key)
 end
 
 local function checkLink(user)
-    for _, value in pairs(userTable.passes) do
+    for _, value in ipairs(userTable.passes) do
         if value.link == user then
             return true, not value.blocked, value.name
         end
@@ -170,7 +170,7 @@ local function checkLink(user)
 end
 
 local function checkMCID(id)
-    for _, value in pairs(userTable.passes) do
+    for _, value in ipairs(userTable.passes) do
         if value.mcid == id then
             return true, value.uuid, value.name
         end
@@ -184,7 +184,7 @@ function module.init(setit ,doors, serverCommands) --Called when server is first
     server = serverCommands
     if module.debug then server.print("Received Stuff for passes!") end
     if userTable.passes ~= nil and userTable.passes[1] ~= nil and userTable.passes[1].mcid == nil then --make sure old systems migrate successfully
-        for _,value in pairs(userTable.passes) do
+        for _,value in ipairs(userTable.passes) do
             value.mcid = "nil"
         end
     end
@@ -205,11 +205,11 @@ function module.message(command,datar,from) --Called when a command goes past al
     end
     if command == "rcdoors" then
         local sendTable = {}
-        for _,value in pairs(doorTable) do
+        for _,value in ipairs(doorTable) do
             local datar
             if value.type == "doorsystem" then
                 datar = {}
-                for key,pal in pairs(value.data) do
+                for key,pal in ipairs(value.data) do
                     datar[key] = {["name"]=pal.name}
                 end
             end
@@ -240,7 +240,7 @@ function module.message(command,datar,from) --Called when a command goes past al
     elseif command == "getvar" then
         if (server.configCheck("secAPI")) then
             local worked = false
-            for _, value in pairs(userTable.passes) do
+            for _, value in ipairs(userTable.passes) do
                 if string.sub(value.uuid,1,-14) == data.uuid or value.uuid == data.uuid then
                     worked = true
                     local mee = type(value[data.var]) == "table" and ser.serialize(value[data.var]) or value[data.var]
@@ -254,7 +254,7 @@ function module.message(command,datar,from) --Called when a command goes past al
         if (server.configCheck("secAPI")) then
             local worked = false
             local counter = 1
-            for _, value in pairs(userTable.passes) do
+            for _, value in ipairs(userTable.passes) do
                 if string.sub(value.uuid,1,-14) == data.uuid or value.uuid == data.uuid then
                     worked = true
                     if type(userTable.passes[counter][data.var]) == type(data.data) then
@@ -272,7 +272,7 @@ function module.message(command,datar,from) --Called when a command goes past al
         if (server.configCheck("quickMCLink")) then
             local worked = false
             local counter = 1
-            for _, value in pairs(userTable.passes) do
+            for _, value in ipairs(userTable.passes) do
                 if string.sub(value.uuid,1,-14) == data.uuid or value.uuid == data.uuid then
                     worked = true
                     if value.mcid == "nil" and not value.blocked then --make sure an account isn't linked AND they are not blocked.
@@ -289,9 +289,9 @@ function module.message(command,datar,from) --Called when a command goes past al
             return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Quick Linking MCID's has been disabled by database",["color"]=0xFF0000}}, false, true, server.crypt("false")
         end
     elseif command == "checkKeypad" then --theoretically should be goody goody two shoes :D (maybe)
-        for key, value in pairs(doorTable) do
+        for key, value in ipairs(doorTable) do
             if value.id == from then
-                for _, value2 in pairs(value.data[data.key].reader) do
+                for _, value2 in ipairs(value.data[data.key].reader) do
                     if value2.uuid == data.uuid then
                         if value2.global == false then --Local pass
                             if value2.pass == data.pass then

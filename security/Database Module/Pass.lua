@@ -41,7 +41,7 @@ local function updateKeyList()
     if padBox:count() > 0 then
         padBox:clear()
     end
-    for  key,value in pairs(userTable.securityKeypads) do
+    for  key,value in ipairs(userTable.securityKeypads) do
         local meh = padBox:addItem(key)
         meh.key = key
         meh.onTouch = keypadCallback
@@ -257,14 +257,14 @@ local function updateVarF() --Either add or change (depending on add or edit mod
     if varMode == "add" then
         if addVarArray.var ~= "" and addVarArray.label ~= "" then
             local skipAll = false
-            for _, value in pairs(searchBase) do
+            for _, value in ipairs(searchBase) do
                 if value == addVarArray.var then
                     skipAll = true
                     break
                 end
             end
             if not skipAll then
-                for _, value in pairs(userTable.passSettings.var) do
+                for _, value in ipairs(userTable.passSettings.var) do
                     if value == addVarArray.var then
                         skipAll = true
                         break
@@ -304,7 +304,7 @@ local function updateVarF() --Either add or change (depending on add or edit mod
         end
     elseif varMode == "edit" then
         local selected = 1
-        for _,value in pairs(userTable.passSettings.var) do
+        for _,value in ipairs(userTable.passSettings.var) do
             if value == addVarArray.var then
                 break
             else

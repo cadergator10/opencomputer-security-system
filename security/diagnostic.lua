@@ -37,6 +37,7 @@ local config
 
 local lengthNum = 0
 
+local listNum = 1
 local pageNum = 1
 
 local versionNum = 1
@@ -150,6 +151,34 @@ local function getPassID(command,rules)
     return command == "checkstaff" and true or false, command == "checkstaff" and 0 or false
   end
 
+local function advancedPageChange(dir,pos,length,call,...)
+    if dir == "hor" then
+        if pos then
+            if pageNum < length then
+                pageNum = pageNum + 1
+            end
+        else
+            if pageNum > 1 then
+                pageNum = pageNum - 1
+            end
+        end
+    elseif dir == "ver" then
+        if pos then
+            if listNum < length + 1 then
+                listNum = listNum + 1
+            end
+        else
+            if listNum > 1 then
+                listNum = listNum - 1
+            end
+        end
+    elseif dir == "setup" then
+        pageNum = pos
+        listNum = 1
+    end
+    call(...)
+end
+
 local function pageChange(pos,length,call,...)
     if type(pos) == "boolean" then
         if pos then
@@ -221,7 +250,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
                     print("No Sector")
                 else
                     local it = false
-                    for _,value in pairs(settings.data.sectors) do
+                    for _,value in ipairs(settings.data.sectors) do
                         if value.uuid == diagInfo2.sector then
                             print("Sector: " .. value.name)
                             it = true
@@ -290,7 +319,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
                 print("No Sector")
             else
                 local it = false
-                for _,value in pairs(settings.data.sectors) do
+                for _,value in ipairs(settings.data.sectors) do
                     if value.uuid == diagInfo2.sector then
                         print("Sector: " .. value.name)
                         it = true
@@ -418,7 +447,7 @@ local function diagThr(num,diagInfo)
     ::allInfo::
     do
         local indexed = {}
-        for key, _ in pairs(diagInfo["entireDoor"]) do
+        for key, _ in ipairs(diagInfo["entireDoor"]) do
             table.insert(indexed,key)
         end
         term.clear()
@@ -553,7 +582,7 @@ local function doorediting()
         editTable[1] = deepcopy(diagInfo.entireDoor[diagInfo.key])
         editTable[1].key = diagInfo.key
     end
-    for key,value in pairs(diagInfo.entireDoor) do
+    for key,value in ipairs(diagInfo.entireDoor) do
         if key ~= diagInfo.key then
             editTable[num] = deepcopy(diagInfo.entireDoor[key])
             editTable[num].key = key
@@ -597,7 +626,7 @@ local function doorediting()
         local pee = "Error: incorrect uuid"
         if hassector then
             if editTable[pageNum].sector ~= false then
-                for _,value in pairs(settings.data.sectors) do
+                for _,value in ipairs(settings.data.sectors) do
                     if value.uuid == editTable[pageNum].sector then
                         pee = value.name
                     end
@@ -639,7 +668,7 @@ local function doorediting()
                 while keepLoop do
                 j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
                     keepLoop = false
-                    for key,value in pairs(editTable) do
+                    for key,value in ipairs(editTable) do
                         if value.key == j then
                             keepLoop = true
                         end
@@ -949,7 +978,7 @@ local function doorediting()
                     end
                 end
                 editTable[pageNum].reader = {}
-                for _, value in pairs(distable) do
+                for _, value in ipairs(distable) do
                     local thisType = component.type(value)
                     if thisType == "os_magreader" then
                         table.insert(editTable[pageNum].reader,{["uuid"]=value,["type"]="swipe"})
@@ -993,8 +1022,8 @@ local function remotecontrol()
     msg = crypt(msg,config.cryptKey,true)
     local tempPasses = ser.unserialize(msg)
     local passTable = {}
-    for key,value in pairs(tempPasses) do
-        for keym,valuem in pairs(value.data) do
+    for key,value in ipairs(tempPasses) do
+        for keym,valuem in ipairs(value.data) do
             table.insert(passTable,{["call"]=value.id,["type"]=value.type,["data"]=valuem,["key"]=keym})
         end
     end
@@ -1092,6 +1121,162 @@ local function remotecontrol()
     os.exit()
 end
 
+local function sectorcontrol()
+    local sectorSettings, query, secid
+    local sector = {}
+    local function arrangeSectors(query)
+        sector = {}
+        local amt = (#query) * 3
+        local count = 1
+        local save = false
+        for i=1,math.ceil(amt/9),1 do
+            sector[i] = {}
+            for j=1,3,1 do
+                if query[count] ~= nil then
+                    sector[i][j] = deepcopy(query[count])
+                    if sectorSettings[query[count].uuid] == nil then
+                        sectorSettings[query[count].uuid] = {status=1}
+                        save = true
+                    end
+                    count = count + 1
+                end
+            end
+        end
+        for key,value in ipairs(sectorSettings) do
+            local here = false
+            for i=1,#query,1 do
+                if query[i].uuid == key then
+                    here = true
+                    break
+                end
+            end
+            if here == false then
+                sectorSettings[key] = nil
+                save = true
+            end
+        end
+        if save then
+            saveTable(sectorSettings,"sectorconfig.txt")
+        end
+    end
+    local function sectorGui()
+        setGui(1,"Sector Control Program")
+        local aft = " "
+        if #sector == 0 then
+            setGui(2,"Create a sector to begin")
+        else
+            setGui(2,"Page " .. pageNum .. "/" .. #sector)
+            setGui(3,"")
+            setGui(4,"------------------------------")
+            local pre, count = "> ",1
+            if (#sector[pageNum] * 3) < listNum then
+                listNum = (#sector[pageNum] * 3)
+            end
+            if listNum == count then
+                pre = "> "
+            else
+                pre = "  "
+            end
+            for i=1,#sector[pageNum],1 do
+                local secKeys = {[2] = "Clear",[1] = "Lockdown",[3] = "Open"}
+                for key,value in ipairs(secKeys) do
+                    if listNum == count then
+                        pre = "> "
+                    else
+                        pre = "  "
+                    end
+                    setGui(count + 4, pre .. sector[pageNum][i].name .. " : " .. value)
+                    count = count + 1
+                end
+            end
+            count = count + 4
+            setGui(count,"------------------------------")
+        end
+    end
+    --prep file loading
+    term.clear()
+    local fill = io.open("sectorconfig.txt", "r")
+    if fill~=nil then
+        io.close(fill)
+    else
+        saveTable({},"sectorconfig.txt")
+    end
+    sectorSettings = loadTable("sectorconfig.txt")
+    --Get query and setup sectors
+    print("Sending query to server...")
+    modem.open(modemPort)
+    modem.broadcast(modemPort,"getquery",ser.serialize({"sectors"})) --TODO: Remove all sectorStatus calls
+    local e,_,_,_,_,msg = event.pull(3,"modem_message")
+    modem.close(modemPort)
+    if e == nil then
+        print("No query received. Is server online?")
+        os.exit()
+    else
+        print("Query received")
+        msg = crypt(msg,config.cryptKey,true)
+        query = ser.unserialize(msg).data.sectors
+    end
+    modem.open(modemPort)
+    arrangeSectors(query)
+    --Main program running
+    advancedPageChange("setup",1,#sector, sectorGui)
+    while true do
+        local ev,num,side,key,value,command,msg = event.pullMultiple("modem_message","redstone_changed","key_down")
+        local state = 1
+        if #sector ~= 0 then
+            if ev == "modem_message" then
+                if command == "getSectorList" then
+                    query = ser.unserialize(msg).sectors
+                    arrangeSectors(query)
+                end
+            elseif ev == "key_down" then
+                local char = keyboard.keys[key]
+                if char == "left" then
+                    term.clear()
+                    advancedPageChange("hor",false,#sector, sectorGui)
+                    os.sleep(0.1)
+                elseif char == "right" then
+                    term.clear()
+                    advancedPageChange("hor",true,#sector, sectorGui)
+                    os.sleep(0.1)
+                elseif char == "up" then
+                    term.clear()
+                    advancedPageChange("ver",false,(#sector[pageNum]*3), sectorGui)
+                    os.sleep(0.1)
+                elseif char == "down" then
+                    term.clear()
+                    advancedPageChange("ver",true,(#sector[pageNum]*3), sectorGui)
+                    os.sleep(0.1)
+                elseif char == "enter" then
+                    if listNum == 3 or listNum == 6 or listNum == 9 then state = 3 elseif listNum == 1 or listNum == 4 or listNum == 7 then state = 2 else state = 1 end
+                    if listNum <= 3 then
+                        if pageNum == 1 then
+                            secid = query[1]
+                        else
+                            secid = query[1+((pageNum-1)*3)]
+                        end
+                    elseif listNum <= 6 then
+                        if pageNum == 1 then
+                            secid = query[2]
+                        else
+                            secid = query[2+((pageNum-1)*3)]
+                        end
+                    else
+                        if pageNum == 1 then
+                            secid = query[3]
+                        else
+                            secid = query[3+((pageNum-1)*3)]
+                        end
+                    end
+                    modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({secid.uuid,state}),sectorSettings.cryptKey))
+                    os.sleep(0.1)
+                end
+            end
+        else
+            os.sleep(1)
+        end
+    end
+end
 --------Startup Code
 
 term.clear()
@@ -1124,6 +1309,11 @@ if config == nil then
         config.port = tonumber(text:sub(1,-2))
         term.clear()
     end
+    config.forceprogram = 0
+    saveTable(config,"extraConfig.txt")
+end
+if(config.forceprogram == nil) then
+    config.forceprogram = 0
     saveTable(config,"extraConfig.txt")
 end
 modemPort = config.port
@@ -1154,7 +1344,7 @@ else
         print("Server is not Servertine")
         os.exit()
     end
-    for _,value in pairs(supportedVersions) do
+    for _,value in ipairs(supportedVersions) do
         if value == settings.version then
             break
         end
@@ -1182,13 +1372,20 @@ thread.create(function()
 end)
 term.clear()
 local nextVar = 0
-print("Which app would you like to run?")
-print("1. Diagnostics")
-print("2. Accelerated door setup")
-print("3. Door Editing")
-print("4. Remote Control")
-lengthNum = 4
-_, nextVar = event.pull("numInput")
+if(config.forceprogram == 0 or config.forceprogram < 1 or ((hassector and config.forceprogram > 5) or (not hassector and config.forceprogram > 4))) then
+    print("Which app would you like to run?")
+    print("1. Diagnostics")
+    print("2. Accelerated door setup")
+    print("3. Door Editing")
+    print("4. Remote Control")
+    if hassector then
+        print("5: Sector Control")
+    end
+    lengthNum = hassector and 5 or 4
+    _, nextVar = event.pull("numInput")
+else
+    nextVar = config.forceprogram --If forceprogram is set, it will always and only run that program. In case you build the program in a computer only for one reason.
+end
 if nextVar == 1 then
     diagnostics()
 elseif nextVar == 2 then
@@ -1197,4 +1394,6 @@ elseif nextVar == 3 then
     doorediting()
 elseif nextVar == 4 then
     remotecontrol()
+elseif nextVar == 5 then
+    sectorcontrol()
 end

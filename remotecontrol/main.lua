@@ -38,8 +38,8 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     if(worked) then --got doors
         local tempPasses = ser.unserialize(database.crypt(doors,true)) --decrypt and make table
         doors = {}
-        for key,value in pairs(tempPasses) do --Perform loop to sort in a way which will be sent to the doors to activate them
-            for keym,valuem in pairs(value.data) do
+        for key,value in ipairs(tempPasses) do --Perform loop to sort in a way which will be sent to the doors to activate them
+            for keym,valuem in ipairs(value.data) do
                 table.insert(doors,{["call"]=value.id,["type"]=value.type,["data"]=valuem,["key"]=keym})
             end
         end

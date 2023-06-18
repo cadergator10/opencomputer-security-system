@@ -18,7 +18,7 @@ local uuid = require("uuid")
 local computer = component.computer
 local keyboard = require("keyboard")
 
-local redstone = component.redstone
+--local redstone = component.redstone
 local modem = component.modem
 
 local query
@@ -27,6 +27,7 @@ local testR = true
 local lengthNum = 0
 local pageNum = 1
 local listNum = 1
+local secid
 
 local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}
 local redSideTypes = {"bottom","top","back","front","right","left"}
@@ -76,13 +77,6 @@ local function crypt(str,k,inv)
     return enc;
 end
 
-local function splitString(str, sep)
-    local sep, fields = sep or ":", {}
-    local pattern = string.format("([^%s]+)", sep)
-    str:gsub(pattern, function(c) fields[#fields+1] = c end)
-    return fields
-end
-
 local function deepcopy(orig)
     local orig_type = type(orig)
     local copy
@@ -107,32 +101,24 @@ end
 
 local function pageChange(dir,pos,length,call,...)
     if dir == "hor" then
-        if type(pos) == "boolean" then
-            if pos then
-                if pageNum < length then
-                    pageNum = pageNum + 1
-                end
-            else
-                if pageNum > 1 then
-                    pageNum = pageNum - 1
-                end
+        if pos then
+            if pageNum < length then
+                pageNum = pageNum + 1
             end
         else
-            pageNum = pos
+            if pageNum > 1 then
+                pageNum = pageNum - 1
+            end
         end
     elseif dir == "ver" then
-        if type(pos) == "boolean" then
-            if pos then
-                if listNum < length + 1 then
-                    listNum = listNum + 1
-                end
-            else
-                if listNum > 1 then
-                    listNum = listNum - 1
-                end
+        if pos then
+            if listNum < length + 1 then
+                listNum = listNum + 1
             end
         else
-            listNum = pos
+            if listNum > 1 then
+                listNum = listNum - 1
+            end
         end
     elseif dir == "setup" then
         pageNum = pos
@@ -145,48 +131,6 @@ end
 
 --------Called Functions
 
-local function colorSearch(color,side)
-    local c,s = -1,-1
-    if type(color) == "number" then
-        c = color
-    else
-        for i=1,#redColorTypes,1 do
-            if redColorTypes[i] == color then
-                c = i - 1
-            end
-        end
-    end
-    for i=1,#redSideTypes,1 do
-        if type(side) == "number" then
-            s = side
-        else
-            if redSideTypes[i] == side then
-                s = i - 1
-            end
-        end
-    end
-    return c,s
-end
-
-local function redlinkcheck(color,side)
-    for key,value in ipairs(sectorSettings) do
-        if key ~= "cryptKey" and key ~= "port" then --We don't want cryptKey or port being used
-            if value.open.color == color and value.open.side == side then
-                sectorSettings[key].open.color = -1
-                sectorSettings[key].open.side = -1
-            end
-            if value.lock.color == color and value.lock.side == side then
-                sectorSettings[key].lock.side = -1
-                sectorSettings[key].lock.color = -1
-            end
-            if value.disable.color == color and value.disable.side == side then
-                sectorSettings[key].disable.side = -1
-                sectorSettings[key].disable.color = -1
-            end
-        end
-    end
-end
-
 local function arrangeSectors(query)
     sector = {}
     local amt = (#query) * 3
@@ -198,7 +142,7 @@ local function arrangeSectors(query)
             if query[count] ~= nil then
                 sector[i][j] = deepcopy(query[count])
                 if sectorSettings[query[count].uuid] == nil then
-                    sectorSettings[query[count].uuid] = {["open"]={["side"]=-1,["color"]=-1},["lock"]={["side"]=-1,["color"]=-1},["disable"]={["side"]=-1,["color"]=-1}}
+                    sectorSettings[query[count].uuid] = {status=1}
                     save = true
                 end
                 count = count + 1
@@ -229,6 +173,7 @@ end
 
 local function sectorGui(editmode)
     setGui(1,"Sector Control Program")
+    local aft = " "
     if #sector == 0 then
         setGui(2,"Create a sector to begin")
     else
@@ -245,14 +190,14 @@ local function sectorGui(editmode)
             pre = "  "
         end
         for i=1,#sector[pageNum],1 do
-            local secKeys = {["disable"] = "Clear sector ",["lock"] = "Lockdown sector ",["open"] = "Open sector "}
+            local secKeys = {[2] = "Clear",[1] = "Lockdown",[3] = "Open"}
             for key,value in ipairs(secKeys) do
                 if listNum == count then
                     pre = "> "
                 else
                     pre = "  "
                 end
-                setGui(count + 4,sectorSettings[sector[pageNum][i].uuid][key].side ~= -1 and pre .. value .. sector[pageNum][i].name .. ": " .. redSideTypes[sectorSettings[sector[pageNum][i].uuid][key].side + 1]  .. " : " .. redColorTypes[sectorSettings[sector[pageNum][i].uuid][key].color + 1] or pre .. value .. sector[pageNum][i].name .. ": " .. "unlinked : unlinked")
+                setGui(count + 4, pre .. sector[pageNum][i].name .. " : " .. value)
                 count = count + 1
             end
         end
@@ -354,12 +299,13 @@ pageChange("setup",1,#sector, sectorGui, editmode)
 
 while true do
     local ev,num,side,key,value,command,msg = event.pullMultiple("modem_message","redstone_changed","key_down")
+    local state = 1
+    editmode = false
     if #sector ~= 0 then
         if ev == "modem_message" then
             if command == "getSectorList" then
                 query = ser.unserialize(msg).sectors
                 arrangeSectors(query)
-                pageChange("setup",1,#sector, sectorGui, editmode)
             end
         elseif ev == "key_down" then
             if editmode == false then
@@ -367,103 +313,46 @@ while true do
                 if char == "left" then
                     term.clear()
                     pageChange("hor",false,#sector, sectorGui, editmode)
-                    os.sleep(0.5)
+                    os.sleep(0.1)
                 elseif char == "right" then
                     term.clear()
                     pageChange("hor",true,#sector, sectorGui, editmode)
-                    os.sleep(0.5)
+                    os.sleep(0.1)
                 elseif char == "up" then
                     term.clear()
-                    pageChange("ver",false,(#sector[pageNum]*2) + 1, sectorGui, editmode)
-                    os.sleep(0.5)
+                    pageChange("ver",false,(#sector[pageNum]*3), sectorGui, editmode)
+                    os.sleep(0.1)
                 elseif char == "down" then
                     term.clear()
-                    pageChange("ver",true,(#sector[pageNum]*2) + 1, sectorGui, editmode)
-                    os.sleep(0.5)
+                    pageChange("ver",true,(#sector[pageNum]*3), sectorGui, editmode)
+                    os.sleep(0.1)
                 elseif char == "enter" then
-                    setGui(20,"Which side should redstone input from?")
-                    term.setCursor(1,21)
-                    term.clearLine()
-                    local side = term.read():sub(1,-2)
-                    if tonumber(side) ~= nil then
-                    side = tonumber(side)
-                    end
-                    setGui(20,"Which color should be checked?")
-                    term.setCursor(1,21)
-                    term.clearLine()
-                    local color = term.read():sub(1,-2)
-                    if tonumber(color) ~= nil then
-                        color = tonumber(color)
-                    end
-                    color, side = colorSearch(color,side)
-                    if color ~= -1 and side ~= -1 then
-                        redlinkcheck(color,side)
-                        if (listNum)%3 == 0 then
-                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.color = color
-                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.side = side
-                        elseif (listNum)%3 == 2 then
-                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.color = color
-                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.side = side
+                    if listNum == 3 or listNum == 6 or listNum == 9 then state = 3 elseif listNum == 1 or listNum == 4 or listNum == 7 then state = 2 else state = 1 end
+                    if listNum <= 3 then
+                        if pageNum == 1 then
+                            secid = query[1]
                         else
-                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.color = color
-                            sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.side = side
+                            secid = query[1+((pageNum-1)*3)]
+                        end
+                    elseif listNum <= 6 then
+                        if pageNum == 1 then
+                            secid = query[2]
+                        else
+                            secid = query[2+((pageNum-1)*3)]
+                        end
+                    else
+                        if pageNum == 1 then
+                            secid = query[3]
+                        else
+                            secid = query[3+((pageNum-1)*3)]
                         end
                     end
-                    saveTable(sectorSettings,"redstonelinks.txt")
-                    pageChange("hor",pageNum,#sector, sectorGui, editmode)
-                    os.sleep(0.5)
-                elseif char == "back" then
-                    if (listNum)%3 == 0 then
-                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.color = -1
-                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].disable.side = -1
-                    elseif (listNum)%3 == 2 then
-                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.color = -1
-                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].lock.side = -1
-                    else
-                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.color = -1
-                        sectorSettings[sector[pageNum][math.ceil((listNum)/3)].uuid].open.side = -1
-                    end
-                    pageChange("hor",pageNum,#sector, sectorGui, editmode)
-                    os.sleep(0.5)
+                    modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({secid.uuid,state}),sectorSettings.cryptKey))
+                    os.sleep(0.1)
                 end
-            end
-        elseif ev == "redstone_changed" then
-            local officialChange = {false} --If the change in redstone is something saved to redstonelinks.txtr
-            if key == 0 and value > 0 then
-                for i=1,#query,1 do
-                    if sectorSettings[query[i].uuid].open.side == side and sectorSettings[query[i].uuid].open.color == command then
-                        officialChange[1] = true
-                        officialChange[2] = query[i].uuid
-                        officialChange[3] = side
-                        officialChange[4] = command
-                        officialChange[5] = 3
-                        break
-                    end
-                    if sectorSettings[query[i].uuid].lock.side == side and sectorSettings[query[i].uuid].lock.color == command then
-                        officialChange[1] = true
-                        officialChange[2] = query[i].uuid
-                        officialChange[3] = side
-                        officialChange[4] = command
-                        officialChange[5] = 2
-                        break
-                    end
-                    if sectorSettings[query[i].uuid].disable.side == side and sectorSettings[query[i].uuid].disable.color == command then
-                        officialChange[1] = true
-                        officialChange[2] = query[i].uuid
-                        officialChange[3] = side
-                        officialChange[4] = command
-                        officialChange[5] = 1
-                        break
-                    end
-                    --[[if sectorStatus[query[i].uuid] ~= current then --a change was detected
-                        officialChange = true
-                    end]]
-                end
-            end
-            if officialChange[1] then
-                modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({officialChange[2],officialChange[5]}),sectorSettings.cryptKey))
             end
         end
+
     else
         os.sleep(1)
     end

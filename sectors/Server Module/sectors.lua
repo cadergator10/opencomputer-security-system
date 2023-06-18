@@ -19,7 +19,7 @@ module.version = "4.0.2"
 module.id = 1112
 
 local function checkMCID(id) --Pulled from Security module
-  for _, value in pairs(userTable.passes) do
+  for _, value in ipairs(userTable.passes) do
     if value.mcid == id then
       return true, value.uuid, value.name
     end
@@ -36,7 +36,7 @@ end
 
 function module.setup() --Called when userlist is updated or server is first started
   if module.debug then server.print("Received " .. #userTable.sectors .. " Sectors\n") end
-  for key,_ in pairs(userTable.sectorStatus) do
+  for key,_ in ipairs(userTable.sectorStatus) do
     local good = false
     for i=1,#userTable.sectors,1 do
       if userTable.sectors[i].uuid == key then
@@ -64,7 +64,7 @@ function module.message(command,datar) --Called when a command goes past all def
   if command == "sectorupdate" then
     local st, name = false, "ERROR"
     if data[2] > 0 and data[2] <= 3 then
-      for _,value in pairs(userTable.sectors) do
+      for _,value in ipairs(userTable.sectors) do
         if value.uuid == data[1] then
           st = true
           name = value.name
@@ -106,7 +106,7 @@ function module.message(command,datar) --Called when a command goes past all def
           end
           local printText = "User " .. data.name .. " failed sector check of " .. userTable.sectors[i].name
           for p=1,5,1 do
-            for _,value in pairs(userTable.sectors[i].pass) do
+            for _,value in ipairs(userTable.sectors[i].pass) do
               if value.priority == p then
                 if value.uuid ~= "checkstaff" then
                   for j=1,#userTable.passSettings.calls,1 do

@@ -17,7 +17,7 @@ end
 
 api.setup({["type"]="quikidlink"},{}) --Prepare table to submit to server. Setting the type in case I want to do something on the server and such
 
-for key,_ in pairs(component.list("os_magreader")) do --Prepare light on magreader to signal stuff
+for key,_ in ipairs(component.list("os_magreader")) do --Prepare light on magreader to signal stuff
     component.proxy(key).swipeIndicator(false)
     component.proxy(key).setLightState(3) --3 is red and yellow, meaning swipe card
   end

@@ -61,7 +61,7 @@ module.onTouch = function()
         else
           userPassDataSelector:clear()
         end
-        for _,value in pairs(userTable.passSettings.data[uuid]) do
+        for _,value in ipairs(userTable.passSettings.data[uuid]) do
           userPassDataSelector:addItem(value)
         end
         userPassDataSelector.selectedItem = 1
