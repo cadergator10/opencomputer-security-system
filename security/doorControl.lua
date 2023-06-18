@@ -1,7 +1,7 @@
 --Experimental door control. This is way more different than the simple one and is a bit less responsive, less reliable, and uses more memory, but supports RFID readers and keypads.
 --Why 2 different files? I don't want people to use this when they don't absolutely need it and have a glitchy system.
 
-local doorVersion = "4.0.2"
+local doorVersion = "4.0.3"
 local testR = true
 local saveRefresh = true
 
@@ -490,6 +490,15 @@ end
         if osVersion then thread.create(lightShow,ser.unserialize(data)) end
       elseif msg == "deviceCheck" then
         send(modemPort,true,"true")
+      elseif msg == "UUIDCheck" then
+        data = ser.unserialize(crypt(data, extraConfig.cryptKey, true))
+        if(data ~= nil) then
+          local tabe = {}
+          for _, value in ipairs(data) do
+            tabe[value] = component.type(value)
+          end
+          modem.send(remoteAddress, diagPort, crypt(ser.serialize(tabe),extraConfig.cryptKey)) --Return type of the devices
+        end
       end
     end
   end

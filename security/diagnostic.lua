@@ -28,7 +28,7 @@ local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","
 local forceOpenTypes = {"False","True"}
 local passTypes = {["string"]="Regular String",["-string"]="Multi String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"4.0.2"}
+local supportedVersions = {"4.0.3"}
 
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
 
@@ -337,7 +337,7 @@ end
 local function scanner(multi,reader)
     local e, text
     if multi then
-        local wait = true
+        local  wait =true
         local distable = {}
         while wait do
             e, text = event.pullMultiple("tablet_use","touch")
@@ -619,7 +619,7 @@ local function doorediting()
         setGui(10,"3. Change toggle and delay")
         setGui(11,hassector == false and "4. Unavailable: Sectors disabled" or "4. Change Sector")
         setGui(12,"5. Change passes")
-        setGui(13,"6. Change card readers (disabled)") --LEFTOFF
+        setGui(13,"6. Change card readers")
         setGui(14,"")
         setGui(15,"Door type: " .. newDoorTypes[editTable[pageNum].doorType])
         setGui(18,toggleTypes[editTable[pageNum].toggle + 1] .. " | Delay: " .. editTable[pageNum].delay)
@@ -647,7 +647,7 @@ local function doorediting()
                 setGui(i,"")
             end
         end
-        lengthNum = 5
+        lengthNum = 6
         local ev, p1, p2, p3 = event.pullMultiple("touch","key_down","numInput")
         if ev == "touch" then
             pig = false
@@ -744,6 +744,7 @@ local function doorediting()
                         distable = scanner(true)
                     else
                         setGui(23,"Enter uuid as text. Press enter with nothing in it to stop")
+                        local wait = true
                         while wait do
                             term.setCursor(1,24)
                             term.clearLine()
@@ -977,16 +978,44 @@ local function doorediting()
                         end
                     end
                 end
-                editTable[pageNum].reader = {}
-                for _, value in ipairs(distable) do
-                    local thisType = component.type(value)
-                    if thisType == "os_magreader" then
-                        table.insert(editTable[pageNum].reader,{["uuid"]=value,["type"]="swipe"})
-                    elseif thisType == "os_biometric" then
-                        table.insert(editTable[pageNum].reader,{["uuid"]=value,["type"]="biometric"})
-                    elseif thisType == "os_rfidreader" then
-                        table.insert(editTable[pageNum].reader,{["uuid"]=value,["type"]="rfid"})
+                flush()
+                setGui(22,"Sending request to doorcontrol for uuid verification...")
+                sendit(from, diagPort, false, "UUIDCheck", crypt(ser.serialize(distable),config.cryptKey))
+                local e,_,_,_,_,msg = event.pull(3,"modem_message")
+                if e then
+                    setGui(22,"Reading through information...")
+                    editTable[pageNum].reader = {}
+                    local hasPad = false
+                    for key, value in ipairs(distable) do
+                        if value == "os_magreader" then
+                            table.insert(editTable[pageNum].reader,{["uuid"]=key,["type"]="swipe"})
+                        elseif value == "os_biometric" then
+                            table.insert(editTable[pageNum].reader,{["uuid"]=key,["type"]="biometric"})
+                        elseif value == "os_rfidreader" then
+                            table.insert(editTable[pageNum].reader,{["uuid"]=key,["type"]="rfid"})
+                        elseif value == "os_keypad" then
+                            hasPad = true
+                            table.insert(editTable["reader"],{["uuid"]=key,["type"]="keypad",["global"]=false,["pass"]="1111"})
+                        end
                     end
+                    if hasPad then
+                        --TODO: Finish the pad setup stuff
+                        text = sendMsg("Keypads detected: Would you like to use a global or local password?","global passwords are set by the database. local are set and saved on this door computer","1 for global, 2 for local",1)
+                        if text == "1" then
+                            text = sendMsg("What is the key for that keypad variable?",1)
+                        else
+                            hasPad = false
+                            text = sendMsg("What is the pin for the keypad to need to allow you in?","4 or less numbers (4 recommended)",1)
+                        end
+                        for key, value in ipairs(loopArray["reader"]) do
+                            if value.type == "keypad" then
+                                loopArray["reader"][key].global = hasPad
+                                loopArray["reader"][key].pass = text
+                            end
+                        end
+                    end
+                else
+                    setGui(22,"Failed to receive message")
                 end
             end
             pageChange(pageNum,#editTable,editChange)

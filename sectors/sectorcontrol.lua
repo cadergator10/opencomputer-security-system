@@ -1,4 +1,4 @@
-local version = "4.0.2"
+local version = "4.0.3"
 
 local sector = {}
 local sectorStatus = {}
