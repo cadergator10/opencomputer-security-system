@@ -7,6 +7,8 @@ local saveRefresh = true
 
 local advanced = false
 
+local lightThread, doorThread
+
 --0 = doorcontrol block. 1 = redstone. 2 = bundled redstone. Always bundled redstone with this version of the code.
 local doorType = 2
 --if door type is 1 or 2, set this to a num between 0 and 5 for which side.
@@ -57,12 +59,11 @@ local magReader = component.os_magreader
 local modem = component.modem
 local link
 
-local baseVariables = {"name","uuid","date","link","blocked","staff"}
-local varSettings = {}
-local enableSectors = true
+local varSettings = {} --No idea what its for and/or unused
+local enableSectors = true --Whether sectors are a module on the server
 
-local settingData = {}
-local extraConfig = {}
+local settingData = {} --All door data
+local extraConfig = {} --Important saved data and stuff
 
 --RFID default delay per scan: 1 second. Can lower, but every tick it should scan
 
@@ -72,7 +73,7 @@ local function convert( chars, dist, inv )
     return string.char( ( string.byte( chars ) - 32 + ( inv and -dist or dist ) ) % 95 + 32 )
   end
 
-  local function crypt(str,k,inv)
+  local function crypt(str,k,inv) --(en/de)crypt data sent or received
     local enc= "";
     for i=1,#str do
       if(#str-k[5] >= i or not inv)then
@@ -92,7 +93,7 @@ local function convert( chars, dist, inv )
     return enc;
   end
 
-  local function deepcopy(orig)
+  local function deepcopy(orig) --copy table completely with no references to the original
     local orig_type = type(orig)
     local copy
     if orig_type == 'table' then
@@ -107,13 +108,13 @@ local function convert( chars, dist, inv )
     return copy
   end
 
-local function saveTable(  tbl,filename )
+local function saveTable(  tbl,filename ) --duh
   local tableFile = assert(io.open(filename, "w"))
   tableFile:write(ser.serialize(tbl))
   tableFile:close()
 end
 
-local function loadTable( sfile )
+local function loadTable( sfile ) --DUH
   local tableFile = io.open(sfile)
   if tableFile ~= nil then
     return ser.unserialize(tableFile:read("*all"))
@@ -122,14 +123,15 @@ local function loadTable( sfile )
   end
 end
 
-local function send(port,linker,...)
+local function send(port,linker,...) --Sends a message through either the modem or linking card
   if linker and link ~= nil then
     link.send(modem.address,...)
     return
   end
   modem.broadcast(port,...)
 end
-local function modemadd()
+
+local function modemadd() --unused.
   if link then
     return link.address
   else
@@ -140,12 +142,12 @@ end
   local function colorupdate() --A seperate thread that reads a table of readers and can control their lights. ALSO SCANS WITH RFID READER
     while true do --FIXME: Fix delay doors in lockdown mode losing their red light
       --Change reader lights
-      for key,value in ipairs(readerLights) do
-        if type(value.new) == "table" then
-          if #value.new == 0 then
+      for key,value in ipairs(readerLights) do --checks through every light saved in readerLights to double check values
+        if type(value.new) == "table" then --tables mean there is a sequence of lights needed (such as start with red light, 3 seconds later turn off)
+          if #value.new == 0 then --no more lights to change, so it reverts the reader to a regular static one
             readerLights[key].new = readerLights[key].old
           else
-            if value.new[1].status == nil then
+            if value.new[1].status == nil then --It hasn't been prepped yet
               readerLights[key].new[1].status = true
               component.proxy(key).setLightState(value.new[1].color)
               readerLights[key].old = readerLights[key].new[1].color
@@ -414,6 +416,42 @@ end
     end
   end
 
+local function runSetup()
+  readerLights = {}
+  for key,_ in ipairs(component.list("os_magreader")) do
+    component.proxy(key).swipeIndicator(false)
+    colorLink(key,-1)
+    readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
+  end
+  lightThread = thread.create(colorupdate)
+  osVersion = true --Forcing the lights to work now (latest opensecurity mod required)
+
+  for key,_ in ipairs(component.list("os_keypad")) do
+    local customButtons = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "#"}
+    local customButtonColor = {7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 7, 10}
+    component.proxy(key).setDisplay("locked", 14)
+    component.proxy(key).setKey(customButtons, customButtonColor)
+    keypadHolder[key] = ""
+  end
+
+  for key,value in ipairs(settingData) do
+    doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
+    for _,value2 in ipairs(value.reader) do
+      if value2.type == "rfid" then
+        advanced = true
+        table.insert(rfidReaders,{["uuid"]=value2.uuid,["buffer"]={},["key"]=key,["size"]=5})
+      end
+    end
+  end
+  if advanced then doorThread = thread.create(doorupdate) end --If an RFID reader exists, migrate to new version
+  for key,_ in ipairs(component.list("os_doorcontroller")) do
+    component.proxy(key).close()
+  end
+  for key,_ in ipairs(component.list("os_rolldoorcontroller")) do
+    component.proxy(key).close()
+  end
+end
+
   local function update(_, localAddress, remoteAddress, port, distance, msg, data)
     if (testR == true) then
       if msg == "checkSector" then --Making forceopen obselete.
@@ -465,12 +503,15 @@ end
           local got, _, _, _, _, fill = event.pull(2, "modem_message")
           if got then
             varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
+            lightThread:kill()
             if advanced then
+              doorThread:kill()
               doorControls = {}
               for key,_ in ipairs(settingData) do
                 doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
               end
             end
+            runSetup()
             --sectorfresh(query.data.sectorStatus)
           else
             print("Failed to receive confirmation from server")
@@ -591,39 +632,7 @@ else
 end
 got = nil
 
-readerLights = {}
-for key,_ in ipairs(component.list("os_magreader")) do
-  component.proxy(key).swipeIndicator(false)
-  colorLink(key,-1)
-  readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
-end
-thread.create(colorupdate)
-osVersion = true --Forcing the lights to work now (latest opensecurity mod required)
-
-for key,_ in ipairs(component.list("os_keypad")) do
-  local customButtons = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "#"}
-  local customButtonColor = {7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 7, 10}
-  component.proxy(key).setDisplay("locked", 14)
-  component.proxy(key).setKey(customButtons, customButtonColor)
-  keypadHolder[key] = ""
-end
-
-for key,value in ipairs(settingData) do
-  doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
-  for _,value2 in ipairs(value.reader) do
-    if value2.type == "rfid" then
-      advanced = true
-      table.insert(rfidReaders,{["uuid"]=value2.uuid,["buffer"]={},["key"]=key,["size"]=5})
-    end
-  end
-end
-if advanced then thread.create(doorupdate) end --If an RFID reader exists, migrate to new version
-for key,_ in ipairs(component.list("os_doorcontroller")) do
-  component.proxy(key).close()
-end
-for key,_ in ipairs(component.list("os_rolldoorcontroller")) do
-  component.proxy(key).close()
-end
+runSetup()
 if query.data.sectorStatus == nil then
   enableSectors = false
 end

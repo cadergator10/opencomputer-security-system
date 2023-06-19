@@ -957,6 +957,11 @@ local function doorediting()
                 end
                 editTable[pageNum].cardRead = savedRead
             elseif p1 == 6 then
+                local readCursor = function()
+                    term.setCursor(1,24)
+                    term.clearLine()
+                    return term.read()
+                end
                 flush()
                 local wait = true
                 local distable = {}
@@ -995,22 +1000,28 @@ local function doorediting()
                             table.insert(editTable[pageNum].reader,{["uuid"]=key,["type"]="rfid"})
                         elseif value == "os_keypad" then
                             hasPad = true
-                            table.insert(editTable["reader"],{["uuid"]=key,["type"]="keypad",["global"]=false,["pass"]="1111"})
+                            table.insert(ditTable[pageNum].reader,{["uuid"]=key,["type"]="keypad",["global"]=false,["pass"]="1111"})
                         end
                     end
                     if hasPad then
-                        --TODO: Finish the pad setup stuff
-                        text = sendMsg("Keypads detected: Would you like to use a global or local password?","global passwords are set by the database. local are set and saved on this door computer","1 for global, 2 for local",1)
-                        if text == "1" then
-                            text = sendMsg("What is the key for that keypad variable?",1)
+                        flush()
+                        setGui(22,"Keypads detected: Would you like to use a global or local password?")
+                        setGui(23,"1 for global, 2 for local")
+                        text = tonumber(readCursor())
+                        flush()
+                        if text == 1 then
+                            setGui(22,"What is the key for that keypad variable?")
+                            text = readCursor():sub(1,-2)
                         else
                             hasPad = false
-                            text = sendMsg("What is the pin for the keypad to need to allow you in?","4 or less numbers (4 recommended)",1)
+                            setGui(22,"What is the pin for the keypad to need to allow you in?")
+                            setGui(23,"4 or less numbers (4 recommended)")
+                            text = readCursor():sub(1,-2)
                         end
-                        for key, value in ipairs(loopArray["reader"]) do
+                        for key, value in ipairs(editTable[pageNum]["reader"]) do
                             if value.type == "keypad" then
-                                loopArray["reader"][key].global = hasPad
-                                loopArray["reader"][key].pass = text
+                                editTable[pageNum]["reader"][key].global = hasPad
+                                editTable[pageNum]["reader"][key].pass = text
                             end
                         end
                     end
