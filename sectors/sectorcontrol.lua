@@ -169,7 +169,7 @@ local function colorSearch(color,side)
 end
 
 local function redlinkcheck(color,side)
-    for key,value in ipairs(sectorSettings) do
+    for key,value in pairs(sectorSettings) do
         if key ~= "cryptKey" and key ~= "port" then --We don't want cryptKey or port being used
             if value.open.color == color and value.open.side == side then
                 sectorSettings[key].open.color = -1
@@ -205,7 +205,7 @@ local function arrangeSectors(query)
             end
         end
     end
-    for key,value in ipairs(sectorSettings) do
+    for key,value in pairs(sectorSettings) do
         local here = false
         if key == "cryptKey" or key == "port" then
             here = true
@@ -307,7 +307,7 @@ if sectorSettings.cryptKey == nil then
 end
 if sectorSettings.default ~= nil then
     sectorSettings.default = nil
-    for key, value in ipairs(sectorSettings) do
+    for key, value in pairs(sectorSettings) do
         if key ~= "cryptKey" and key ~= "port" then
             value.disable = {["side"]=-1,["color"]=-1}
         end

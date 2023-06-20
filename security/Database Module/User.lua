@@ -492,7 +492,7 @@ local function passSetup(deleteprev) --This sets up all the pass buttons into a 
         local cur = guiCalls[i][1]:addItem("none")
         cur.buttonInt = i
         cur.onTouch = buttonCallback
-        for _,vas in ipairs(userTable.passSettings.data[i]) do
+        for _,vas in pairs(userTable.passSettings.data[i]) do
             cur = guiCalls[i][1]:addItem(vas)
             cur.buttonInt = i
             cur.onTouch = buttonCallback

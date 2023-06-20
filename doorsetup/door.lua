@@ -61,7 +61,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 for j=1,#doors[i].cardRead.normal,1 do
                     local noooo = false
                     if not (doors[i].cardRead.normal[j].call == "checkstaff") then
-                        for key,value in ipairs(userTable.passSettings.calls) do
+                        for key,value in pairs(userTable.passSettings.calls) do
                             if value == doors[i].cardRead.normal[j].call then
                                 noooo = true
                                 break
@@ -97,22 +97,6 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     local listPageNumberPass = 0
     local previousPagePass = 0
     local prevPass = "string"
-
-    local function saveTable(  tbl,filename )
-        local tableFile = fs.open(filename, "w")
-        tableFile:write(ser.serialize(tbl))
-        tableFile:close()
-    end
-
-    --// The Load Function
-    local function loadTable( sfile )
-        local tableFile = fs.open(sfile, "r")
-        if tableFile ~= nil then
-            return ser.unserialize(tableFile:readAll())
-        else
-            return nil
-        end
-    end
 
     local function grabName(where,call)
         if call ~= "checkstaff" then
@@ -197,7 +181,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 doorPassAddSelector:clear()
                 doorPassAddHave:clear()
                 doorPassAddAdd.disabled = true
-                for key,value in ipairs(doors[selected].cardRead.add) do
+                for key,value in pairs(doors[selected].cardRead.add) do
                     local thisType = grabName("type",value.call)
                     doorPassAddAdd.disabled = false
                     local disName = grabName("label",value.call) .. " | " .. (thisType == "bool" and "0" or thisType == "-int" and grabName("data",value.call)[value.param] or tostring(value.param))
@@ -266,7 +250,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 else
                     doorPassData:clear()
                 end
-                for _,value in ipairs(userTable.passSettings.data[uuid]) do
+                for _,value in pairs(userTable.passSettings.data[uuid]) do
                     doorPassData:addItem(value)
                 end
                 doorPassData.selectedItem = 1
@@ -450,10 +434,10 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             delDoor = window:addChild(GUI.button(100,12,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "del door"))
             delDoor.onTouch = removeDoorCall
             delDoor.disabled = true
-            exportDoor = window:addChild(GUI.button(115,12,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "export door"))
+            exportDoor = window:addChild(GUI.button(115,12,8,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "export door"))
             exportDoor.onTouch = exportDoorCall
             exportDoor.disabled = #doors == 0
-            resetDoorSave = varEditWindow:addChild(GUI.button(115,14,7,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "reset"))
+            resetDoorSave = varEditWindow:addChild(GUI.button(124,12,7,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "reset"))
             resetDoorSave.onTouch = resetDoorCall
             doorType = varEditWindow:addChild(GUI.comboBox(64,14,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             doorType.disabled = true
@@ -674,7 +658,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     tmpTable[i].sector = seem(false,doors[i].sector)
                     tmpTable[i].cardRead = seem(false,#doors[i].cardRead.normal == 0 and -1 or doors[i].cardRead.normal)
                 end
-                local meep = loadTable(fs.path(system.getCurrentScript()) .. "dbsettings.txt")
+                local meep = compat.loadTable(fs.path(system.getCurrentScript()) .. "dbsettings.txt")
                 tmpTable["config"]={["port"]=meep.port,["cryptKey"]=meep.cryptKey}
                 roller:roll()
                 local mep = fs.open(doorPathSelector.path .. "finishSettings.txt","w")
@@ -683,7 +667,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 roller:roll()
                 mep = fs.open(fs.path(system.getCurrentScript()) .. "Modules/modid" .. tostring(module.id) .. "/finish.lua","r")
                 local nw = fs.open(doorPathSelector.path .. "finish.lua","w")
-                nw:write(mep:readAll())
+                nw:write(compat.fs.readFile(mep))
                 nw:close()
                 mep:close()
                 roller.active = false

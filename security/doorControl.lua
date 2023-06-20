@@ -142,7 +142,7 @@ end
   local function colorupdate() --A seperate thread that reads a table of readers and can control their lights. ALSO SCANS WITH RFID READER
     while true do --FIXME: Fix delay doors in lockdown mode losing their red light
       --Change reader lights
-      for key,value in ipairs(readerLights) do --checks through every light saved in readerLights to double check values
+      for key,value in pairs(readerLights) do --checks through every light saved in readerLights to double check values
         if type(value.new) == "table" then --tables mean there is a sequence of lights needed (such as start with red light, 3 seconds later turn off)
           if #value.new == 0 then --no more lights to change, so it reverts the reader to a regular static one
             readerLights[key].new = readerLights[key].old
@@ -175,7 +175,7 @@ end
           if rfidTimer <= 0 then --if delay isn't still going
 
             local reader = component.proxy(rfidReaders[rfidInt].uuid).scan(rfidReaders[rfidInt].size) --scan and perform checks on new cards found
-            for _,value in ipairs(reader) do
+            for _,value in pairs(reader) do
               local data = value.data ~= nil and ser.unserialize(crypt(value.data,extraConfig.cryptKey,true)) or nil --get data off card
               if data ~= nil then
                 if rfidReaders[rfidInt].buffer[data.uuid] == nil then --if there is data and crypt is correct
@@ -191,7 +191,7 @@ end
             local doorList = {} --This part goes through all readers listed and checks users in buffer if their timers ran out. Also checks if door should be opened or not
             for i=1, #rfidReaders, 1 do --go through all readers
               doorList[rfidReaders[i].key] = doorList[rfidReaders[i].key] ~= nil and doorList[rfidReaders[i].key] or false --Set the current key to false
-              for key, value in ipairs(rfidReaders[i].buffer) do --go through every card in buffer
+              for key, value in pairs(rfidReaders[i].buffer) do --go through every card in buffer
                 rfidReaders[i].buffer[key].timer = rfidReaders[i].buffer[key].timer - 0.05
                 if value.timer <= 0 and i == rfidInt then --remove cards if they run out of time and the current door that just scanned didn't see them
                   rfidReaders[i].buffer[key] = nil
@@ -202,7 +202,7 @@ end
             end
 
             local doorChange = false --If true, it pushes an event causing the doorcontrol thread to perform checks and changes
-            for key,value in ipairs(doorList) do --This goes through the list made in the last section to see if any changes were made (need to open or close again)
+            for key,value in pairs(doorList) do --This goes through the list made in the last section to see if any changes were made (need to open or close again)
               if value ~= rfidDoorList[key] then --there was a change in a door
                 doorChange = true
                 rfidDoorList[key] = value
@@ -219,7 +219,7 @@ end
             end
           else --rfidTimer is still not at 0, so just decrement and wait
             for i=1, #rfidReaders, 1 do --go through all readers
-              for key, _ in ipairs(rfidReaders[i].buffer) do --go through every card in buffer
+              for key, _ in pairs(rfidReaders[i].buffer) do --go through every card in buffer
                 rfidReaders[i].buffer[key].timer = rfidReaders[i].buffer[key].timer - 0.05
               end
             end
@@ -272,7 +272,7 @@ end
   local function doorupdate() --A seperate thread that reads a table of door addresses and redstone stuff and can control them.
     while true do
       local shouldContinue = false
-      for key, value in ipairs(doorControls) do
+      for key, value in pairs(doorControls) do
         local isOpen = false
         if value.lock == 0 then
           if type(value.swipe) == "number" then
@@ -295,7 +295,7 @@ end
         if isOpen ~= value.memory then
           doorControls[key].memory = isOpen
           if settingData[key].doorType == 3 then
-            for _, value2 in ipairs(settingData[key].doorAddress) do
+            for _, value2 in pairs(settingData[key].doorAddress) do
               if component.proxy(value2) ~= nil then
                 if isOpen then
                   component.proxy(value2).open()
@@ -328,11 +328,11 @@ end
     if(toggleH == 0) then
       if osVersion then colorLink(key,4) end
       if(doorTypeH == 3)then
-        for _,value in ipairs(doorAddressH) do
+        for _,value in pairs(doorAddressH) do
           component.proxy(value).open()
         end
         os.sleep(delayH)
-        for _,value in ipairs(doorAddressH) do
+        for _,value in pairs(doorAddressH) do
           component.proxy(value).close()
         end
       elseif(doorTypeH == 1)then
@@ -350,7 +350,7 @@ end
     else
       if osVersion then colorLink(key,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}}) end
       if(doorTypeH == 3)then
-        for _,value in ipairs(doorAddressH) do
+        for _,value in pairs(doorAddressH) do
           component.proxy(value).toggle()
         end
       elseif(doorTypeH == 1)then
@@ -373,9 +373,9 @@ end
 
   local function sectorfresh(data)
     if enableSectors then
-      for dk,value in ipairs(settingData) do
+      for dk,value in pairs(settingData) do
         if value.sector ~= false then
-          for key,value2 in ipairs(data) do
+          for key,value2 in pairs(data) do
             if key == value.sector then
               if advanced then
                 doorControls[dk].lock = value2 - 1
@@ -390,7 +390,7 @@ end
                 end
               else
                 if value.doorType == 3 then
-                  for _,value2 in ipairs(value.doorAddress) do
+                  for _,value2 in pairs(value.doorAddress) do
                     if value2 ~= 3 then
                       component.proxy(value2).close()
                     else
@@ -418,7 +418,7 @@ end
 
 local function runSetup()
   readerLights = {}
-  for key,_ in ipairs(component.list("os_magreader")) do
+  for key,_ in pairs(component.list("os_magreader")) do
     component.proxy(key).swipeIndicator(false)
     colorLink(key,-1)
     readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
@@ -426,7 +426,7 @@ local function runSetup()
   lightThread = thread.create(colorupdate)
   osVersion = true --Forcing the lights to work now (latest opensecurity mod required)
 
-  for key,_ in ipairs(component.list("os_keypad")) do
+  for key,_ in pairs(component.list("os_keypad")) do
     local customButtons = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "#"}
     local customButtonColor = {7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 7, 10}
     component.proxy(key).setDisplay("locked", 14)
@@ -434,9 +434,9 @@ local function runSetup()
     keypadHolder[key] = ""
   end
 
-  for key,value in ipairs(settingData) do
+  for key,value in pairs(settingData) do
     doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
-    for _,value2 in ipairs(value.reader) do
+    for _,value2 in pairs(value.reader) do
       if value2.type == "rfid" then
         advanced = true
         table.insert(rfidReaders,{["uuid"]=value2.uuid,["buffer"]={},["key"]=key,["size"]=5})
@@ -444,10 +444,10 @@ local function runSetup()
     end
   end
   if advanced then doorThread = thread.create(doorupdate) end --If an RFID reader exists, migrate to new version
-  for key,_ in ipairs(component.list("os_doorcontroller")) do
+  for key,_ in pairs(component.list("os_doorcontroller")) do
     component.proxy(key).close()
   end
-  for key,_ in ipairs(component.list("os_rolldoorcontroller")) do
+  for key,_ in pairs(component.list("os_rolldoorcontroller")) do
     component.proxy(key).close()
   end
 end
@@ -507,7 +507,7 @@ end
             if advanced then
               doorThread:kill()
               doorControls = {}
-              for key,_ in ipairs(settingData) do
+              for key,_ in pairs(settingData) do
                 doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
               end
             end
@@ -535,7 +535,7 @@ end
         data = ser.unserialize(crypt(data, extraConfig.cryptKey, true))
         if(data ~= nil) then
           local tabe = {}
-          for _, value in ipairs(data) do
+          for _, value in pairs(data) do
             tabe[value] = component.type(value)
           end
           modem.send(remoteAddress, diagPort, crypt(ser.serialize(tabe),extraConfig.cryptKey)) --Return type of the devices
@@ -589,7 +589,7 @@ local e,_,_,_,_,query = event.pull(3,"modem_message")
 query = crypt(query,extraConfig.cryptKey,true)
 query = ser.unserialize(query)
 if e ~= nil then
-  for key,_ in ipairs(settingData) do
+  for key,_ in pairs(settingData) do
     if type(settingData[key].doorAddress) == "string" then
       settingData[key].doorAddress = {settingData[key].doorAddress}
       checkBool = true
@@ -607,7 +607,7 @@ if e ~= nil then
       checkBool = true
     end
     if type(settingData[key].reader[1]) == "string" then
-      for key2, value in ipairs(settingData[key].reader) do
+      for key2, value in pairs(settingData[key].reader) do
         settingData[key].reader[key2] = {["type"]="swipe",["uuid"]=value}
       end
       checkBool = true
@@ -644,11 +644,11 @@ print("-------------------------------------------------------------------------
 event.listen("modem_message", update)
 process.info().data.signal = function(...)
   print("caught hard interrupt")
-  for key,_ in ipairs(component.list("os_keypad")) do
+  for key,_ in pairs(component.list("os_keypad")) do
     component.proxy(key).setDisplay("inactive", 6)
   end
   if osVersion then
-    for key,_ in ipairs(component.list("os_magreader")) do
+    for key,_ in pairs(component.list("os_magreader")) do
       component.proxy(key).setLightState(7) --to show system is off
     end
   end
@@ -667,7 +667,7 @@ while true do
     end
     local isOk = "ok"
     local keyed = nil
-    for key, valuedd in ipairs(settingData) do
+    for key, valuedd in pairs(settingData) do
       for i=1,#valuedd.reader,1 do
         if(valuedd.reader[i].uuid == address) then
           keyed = key
@@ -721,7 +721,7 @@ while true do
         diagData["num"] = 3
         diagData["entireDoor"] = deepcopy(settingData)
         local counter = 0
-        for index in ipairs(settingData) do
+        for index in pairs(settingData) do
           counter = counter + 1
         end
         diagData["entries"] = counter

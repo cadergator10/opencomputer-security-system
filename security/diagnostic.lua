@@ -28,7 +28,7 @@ local redColorTypes = {"white","orange","magenta","light blue","yellow","lime","
 local forceOpenTypes = {"False","True"}
 local passTypes = {["string"]="Regular String",["-string"]="Multi String",["int"]="Level",["-int"]="Group",["bool"]="Bool"}
 
-local supportedVersions = {"4.0.3"}
+local supportedVersions = {"4.0.2","4.0.3"}
 
 local randomNameArray = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"}
 
@@ -250,7 +250,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
                     print("No Sector")
                 else
                     local it = false
-                    for _,value in ipairs(settings.data.sectors) do
+                    for _,value in pairs(settings.data.sectors) do
                         if value.uuid == diagInfo2.sector then
                             print("Sector: " .. value.name)
                             it = true
@@ -319,7 +319,7 @@ local function doorDiag(isMain,diagInfo2, diagInfo)
                 print("No Sector")
             else
                 local it = false
-                for _,value in ipairs(settings.data.sectors) do
+                for _,value in pairs(settings.data.sectors) do
                     if value.uuid == diagInfo2.sector then
                         print("Sector: " .. value.name)
                         it = true
@@ -447,7 +447,7 @@ local function diagThr(num,diagInfo)
     ::allInfo::
     do
         local indexed = {}
-        for key, _ in ipairs(diagInfo["entireDoor"]) do
+        for key, _ in pairs(diagInfo["entireDoor"]) do
             table.insert(indexed,key)
         end
         term.clear()
@@ -582,7 +582,7 @@ local function doorediting()
         editTable[1] = deepcopy(diagInfo.entireDoor[diagInfo.key])
         editTable[1].key = diagInfo.key
     end
-    for key,value in ipairs(diagInfo.entireDoor) do
+    for key,value in pairs(diagInfo.entireDoor) do
         if key ~= diagInfo.key then
             editTable[num] = deepcopy(diagInfo.entireDoor[key])
             editTable[num].key = key
@@ -626,7 +626,7 @@ local function doorediting()
         local pee = "Error: incorrect uuid"
         if hassector then
             if editTable[pageNum].sector ~= false then
-                for _,value in ipairs(settings.data.sectors) do
+                for _,value in pairs(settings.data.sectors) do
                     if value.uuid == editTable[pageNum].sector then
                         pee = value.name
                     end
@@ -668,7 +668,7 @@ local function doorediting()
                 while keepLoop do
                 j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
                     keepLoop = false
-                    for key,value in ipairs(editTable) do
+                    for key,value in pairs(editTable) do
                         if value.key == j then
                             keepLoop = true
                         end
@@ -991,7 +991,7 @@ local function doorediting()
                     setGui(22,"Reading through information...")
                     editTable[pageNum].reader = {}
                     local hasPad = false
-                    for key, value in ipairs(distable) do
+                    for key, value in pairs(distable) do
                         if value == "os_magreader" then
                             table.insert(editTable[pageNum].reader,{["uuid"]=key,["type"]="swipe"})
                         elseif value == "os_biometric" then
@@ -1018,7 +1018,7 @@ local function doorediting()
                             setGui(23,"4 or less numbers (4 recommended)")
                             text = readCursor():sub(1,-2)
                         end
-                        for key, value in ipairs(editTable[pageNum]["reader"]) do
+                        for key, value in pairs(editTable[pageNum]["reader"]) do
                             if value.type == "keypad" then
                                 editTable[pageNum]["reader"][key].global = hasPad
                                 editTable[pageNum]["reader"][key].pass = text
@@ -1062,8 +1062,8 @@ local function remotecontrol()
     msg = crypt(msg,config.cryptKey,true)
     local tempPasses = ser.unserialize(msg)
     local passTable = {}
-    for key,value in ipairs(tempPasses) do
-        for keym,valuem in ipairs(value.data) do
+    for key,value in pairs(tempPasses) do
+        for keym,valuem in pairs(value.data) do
             table.insert(passTable,{["call"]=value.id,["type"]=value.type,["data"]=valuem,["key"]=keym})
         end
     end
@@ -1182,7 +1182,7 @@ local function sectorcontrol()
                 end
             end
         end
-        for key,value in ipairs(sectorSettings) do
+        for key,value in pairs(sectorSettings) do
             local here = false
             for i=1,#query,1 do
                 if query[i].uuid == key then
@@ -1219,7 +1219,7 @@ local function sectorcontrol()
             end
             for i=1,#sector[pageNum],1 do
                 local secKeys = {[2] = "Clear",[1] = "Lockdown",[3] = "Open"}
-                for key,value in ipairs(secKeys) do
+                for key,value in pairs(secKeys) do
                     if listNum == count then
                         pre = "> "
                     else
@@ -1384,7 +1384,7 @@ else
         print("Server is not Servertine")
         os.exit()
     end
-    for _,value in ipairs(supportedVersions) do
+    for _,value in pairs(supportedVersions) do
         if value == settings.version then
             break
         end

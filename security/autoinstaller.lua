@@ -172,7 +172,7 @@ local function runInstall()
                 while keepLoop do
                 j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
                     keepLoop = false
-                    for key,value in ipairs(tmpTable) do
+                    for key,value in pairs(tmpTable) do
                         if key == j then
                             keepLoop = true
                         end
@@ -184,7 +184,7 @@ local function runInstall()
             text = sendMsg("Magnetic card reader?",editorSettings.scanner and "Scan the magnetic card reader with your tablet." or "Enter the uuid of the device in TEXT. When finished, don't type anything and just press enter",5)
             loopArray["reader"] = {}
             local hasPad = false
-            for _, value in ipairs(text) do
+            for _, value in pairs(text) do
                 local thisType = component.type(value)
                 if thisType == "os_magreader" then
                     table.insert(loopArray["reader"],{["uuid"]=value,["type"]="swipe"})
@@ -206,7 +206,7 @@ local function runInstall()
                     hasPad = false
                     text = sendMsg("What is the pin for the keypad to need to allow you in?","4 or less numbers (4 recommended)",1)
                 end
-                for key, value in ipairs(loopArray["reader"]) do
+                for key, value in pairs(loopArray["reader"]) do
                     if value.type == "keypad" then
                         loopArray["reader"][key].global = hasPad
                         loopArray["reader"][key].pass = text
@@ -217,16 +217,16 @@ local function runInstall()
             j = randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]..randomNameArray[math.floor(math.random(1,26))]
             local distable = {}
             local hasPad = false
-            for key,_ in ipairs(component.list("os_magreader")) do
+            for key,_ in pairs(component.list("os_magreader")) do
                 table.insert(distable,{["uuid"]=key,["type"]="swipe"})
             end
-            for key,_ in ipairs(component.list("os_biometric")) do
+            for key,_ in pairs(component.list("os_biometric")) do
                 table.insert(distable,{["uuid"]=key,["type"]="biometric"})
             end
-            for key,_ in ipairs(component.list("os_rfidreader")) do
+            for key,_ in pairs(component.list("os_rfidreader")) do
                 table.insert(distable,{["uuid"]=key,["type"]="rfid"})
             end
-            for key,_ in ipairs(component.list("os_keypad")) do
+            for key,_ in pairs(component.list("os_keypad")) do
                 hasPad = true
                 component.proxy(key).setDisplay("inactive", 6)
                 table.insert(distable,{["uuid"]=key,["type"]="keypad",["global"]=false,["pass"]="1111"})
@@ -239,7 +239,7 @@ local function runInstall()
                     hasPad = false
                     text = sendMsg("What is the pin for the keypad to need to allow you in?","4 or less numbers (4 recommended)",1)
                 end
-                for key, value in ipairs(distable) do
+                for key, value in pairs(distable) do
                     if value.type == "keypad" then
                         distable[key].global = hasPad
                         distable[key].pass = text
@@ -278,10 +278,10 @@ local function runInstall()
                 loopArray["doorAddress"] = text
             else
                 loopArray["doorAddress"] = {}
-                for key,_ in ipairs(component.list("os_doorcontroller")) do
+                for key,_ in pairs(component.list("os_doorcontroller")) do
                     table.insert(loopArray["doorAddress"],key)
                 end
-                for key,_ in ipairs(component.list("os_rolldoorcontroller")) do
+                for key,_ in pairs(component.list("os_rolldoorcontroller")) do
                     table.insert(loopArray["doorAddress"],key)
                 end
             end
