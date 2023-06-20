@@ -89,7 +89,7 @@ Security:
    <li>Minor bug fix for callback int on certain buttons</li>
    <li>Split module into multiple files and such (exact same as version 4.0.2)</li>
    <li>Accidental duplication of previous update (whoops)</li>
-   <li>Fixed rcdoors command sending every device even if not a doorsystem</li>
+   <li>Fixed rcdoors command sending every device even if not a doorsystem. Added sector control program to the diagnostic tablet. Readded the ability to change readers using runtime door editing</li>
 </ol>
 Sector:
 <ol>
