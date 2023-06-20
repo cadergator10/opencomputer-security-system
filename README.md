@@ -28,16 +28,16 @@ I will be making a full video tutorial series soon. <a href="https://www.youtube
 
 ----Door Control: Control security door and redstone from these convenient door systems! Easy to set up and easy to change settings with, these really have it all.
 
-   Autoinstaller setup: Run the command "pastebin run cP70MhB0" and follow the prompts. Syncs nicely with the accelerated door setup program on the diagnostic tablet to allow for scanning of the doors and readers instead of copying the uuid with an analyzer.
+Autoinstaller setup: Run the command "pastebin run cP70MhB0" and follow the prompts. Syncs nicely with the accelerated door setup program on the diagnostic tablet to allow for scanning of the doors and readers instead of copying the uuid with an analyzer.
 
-   Door Setup module setup: Setup the passes and simple settings on the database, install the stuff onto a drive, and finish on the computer.
+Door Setup module setup: Setup the passes and simple settings on the database, install the stuff onto a drive, and finish on the computer.
 
 ----Autoinstaller: Install the doors with ths simple autoinstaller! Just follow the prompts
- 
+
     pastebin run cP70MhB0
 
 ----Diagnostic tablet: A program with a whole bunch of programs to make door setup, management, and more easier
-      
+
       Diagnostics: a special program that works with the new admin card to get info about a door and it's settings and if it works. It is best used with a tablet that has a tier 2 gpu, a wireless modem, and an internet card. When the admin card is scanned, it sends all the info of the computer to the tablet. It's most noteable use is with the multidoor computer, as it tells you if that magnetic card reader is connected to a door, what the key of the door is (if you want to edit door settings after first set up) and more.
 
       Accelerated door setup program to put on a tablet. This helps accelerate multi-door setup time, as it is portable compared to moving back and forth between the pc and the door. Also, if your tablet has an analyzer with it, you can scan the blocks with the tablet instead of just entering the uuid manually
@@ -89,7 +89,7 @@ Security:
    <li>Minor bug fix for callback int on certain buttons</li>
    <li>Split module into multiple files and such (exact same as version 4.0.2)</li>
    <li>Accidental duplication of previous update (whoops)</li>
-   <li></li>
+   <li>Fixed rcdoors command sending every device even if not a doorsystem</li>
 </ol>
 Sector:
 <ol>
@@ -97,7 +97,6 @@ Sector:
    <li>Sector control overhaul (Exact same as update version 4.0.0)</li>
    <li>Updated to support latest Security module version (exact same as update version 4.0.2)</li>
    <li>Accidental duplication of previous update (what is wrong with meeee)</li>
-   <li></li>
 </ol>
 Door Editing:
 <ol>
@@ -106,7 +105,7 @@ Door Editing:
    <li>Progress is saved when switching modules from this one, updating finish.lua to work with biometrics, etc. (Exact same as version 4.0.0)</li>
    <li>Updated to support latest Security module version (exact same as update version 4.0.2)</li>
    <li>Hotfixed loadTable function to use compat file rather than built in one (which didn't support OpenOS)</li>
-   <li></li>
+   <li>Added the ability to reset the progress in case you need it. Databackup also resets if you export the door.</li>
 </ol>
 Remote Control:
 <ol>
@@ -124,4 +123,4 @@ Future updates:
 </ol>
 
 Important information:
-   If you have anything you would like to try adding yourself, feel free to add whatever you want to the code and pull request it into the main branch. I can then check if it's a worthwhile update and merge.
+If you have anything you would like to try adding yourself, feel free to add whatever you want to the code and pull request it into the main branch. I can then check if it's a worthwhile update and merge.
