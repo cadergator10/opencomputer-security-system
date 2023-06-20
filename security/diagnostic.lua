@@ -1090,7 +1090,7 @@ local function remotecontrol()
         setGui(3,chosen and "Click screen to go back to door select" or "Click the screen to exit")
         setGui(4,"------------------------------")
         for i=1,listAmt,1 do
-            if passTable[pageNum][i] ~= nil then
+            if passTable[pageNum] ~= nil and passTable[pageNum][i] ~= nil then
                 setGui(i+4,chosen == nil and i .. ". " .. passTable[pageNum][i].data.name or passTable[pageNum][i].data.name, chosen == i and 0x00FF00 or nil)
             else
                 break

@@ -129,6 +129,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                     send.type,send.delay = "delay", tonumber(openNumInput.text)
                 else
                     GUI.alert("No seconds specified")
+                    return
                 end
             end
             modem.send(send.id,diagPort,"remoteControl",ser.serialize(send))
@@ -136,6 +137,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
 
         --Setup GUI
 
+        window:addChild(GUI.panel(1,1,37,33,style.listPanel))
         doorList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
         listPageLabel = window:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
         listUpButton = window:addChild(GUI.button(8,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
@@ -160,9 +162,11 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         toggleOpen.disabled = true
         openNumInput = window:addChild(GUI.input(64,21,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
         openNumInput.onInputFinished = function()
-            local num = tonumber(openNumInput.text)
-            if(num == nil and num > 0) then
-                openNumInput.text = ""
+            if openNumInput.text ~= nil and openNumInput ~= "" then
+                local num = tonumber(openNumInput.text)
+                if(num == nil and num > 0) then
+                    openNumInput.text = ""
+                end
             end
         end
         openNumInput.disabled = true
@@ -170,6 +174,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         openNum.sendIt = 5
         openNum.onTouch = performCommand
         openNum.disabled = true
+        updateList()
     else
         GUI.alert("No connection received")
     end
