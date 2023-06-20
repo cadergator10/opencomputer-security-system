@@ -15,7 +15,7 @@ module.skipcrypt = {}
 module.table = {["sectors"] = {{["name"]="Placeholder Sector",["uuid"]=uuid.next(),["type"]=1,["pass"]={}}}}
 module.table.sectorStatus = {[module.table.sectors[1].uuid]=1}
 module.debug = false
-module.version = "4.0.2"
+module.version = "4.0.3"
 module.id = 1112
 
 local function checkMCID(id) --Pulled from Security module

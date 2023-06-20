@@ -44,7 +44,7 @@ end
 module.onTouch = function() --Runs when the module's button is clicked. Set up the workspace here.
     local doorList, listPageLabel, listUpButton, listDownButton, doorName, doorType, doorDelay, doorToggle, doorSector, doorPad, doorPadPass --TODO: Add buttons for doorPad (undefined, local, or global) or doorPadPass (depending on doorPad, local (input for 4 char pin) or global (combo based on keypad global stuff))
     local doorPassList, listPageLabel2, listUpButton2, listDownButton2, doorPassSelf, doorPassData, doorPassAddSelector, doorPassCreate, doorPassDelete, doorPassEdit, doorPassType, doorPassAddHave
-    local doorPassAddAdd, doorPassAddDel
+    local doorPassAddAdd, doorPassAddDel, resetDoorSave
     local newDoor, delDoor, exportDoor, doorPathSelector, finishPath, cancelPath, roller
     local varEditWindow
 
@@ -320,12 +320,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         exportDoor.disabled = false
         updateList()
     end
-    local function removeDoorCall()
-        local selected = pageMult * listPageNumber + doorList.selectedItem
-        table.remove(doors,selected)
-        if #doors < pageMult * listPageNumber + 1 and listPageNumber ~= 0 then
-            listPageNumber = listPageNumber - 1
-        end
+    local function allDisable()
         doorName.text = ""
         doorName.disabled = true
         doorToggle.disabled = true
@@ -355,9 +350,22 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
         if #doors == 0 then
             exportDoor.disabled = true
         end
+    end
+    local function removeDoorCall()
+        local selected = pageMult * listPageNumber + doorList.selectedItem
+        table.remove(doors,selected)
+        if #doors < pageMult * listPageNumber + 1 and listPageNumber ~= 0 then
+            listPageNumber = listPageNumber - 1
+        end
+        allDisable()
         updateList()
     end
-
+    local function resetDoorCall()
+        doors = {}
+        database.dataBackup("doorCreation",{})
+        allDisable()
+        updateList()
+    end
     local function setDoorType()
         local selected = pageMult * listPageNumber + doorList.selectedItem
         doors[selected].doorType = doorType.selectedItem == 1 and -1 or doorType.selectedItem - 1
@@ -427,9 +435,11 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
             delDoor = window:addChild(GUI.button(100,12,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "del door"))
             delDoor.onTouch = removeDoorCall
             delDoor.disabled = true
-            exportDoor = window:addChild(GUI.button(115,12,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "export door"))
+            exportDoor = window:addChild(GUI.button(115,12,8,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "export door"))
             exportDoor.onTouch = exportDoorCall
             exportDoor.disabled = #doors == 0
+            resetDoorSave = varEditWindow:addChild(GUI.button(124,12,7,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "reset"))
+            resetDoorSave.onTouch = resetDoorCall
             doorType = varEditWindow:addChild(GUI.comboBox(64,14,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
             doorType.disabled = true
             doorType:addItem("Unidentified").onTouch = setDoorType
@@ -663,6 +673,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 mep:close()
                 roller.active = false
                 GUI.alert("Finished exporting door settings and program to selected drive. You can now close out.")
+                database.dataBackup("doorCreation",{})
             end
             cancelPath = varEditWindow:addChild(GUI.button(45,14,14,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "Cancel"))
             cancelPath.onTouch = function()

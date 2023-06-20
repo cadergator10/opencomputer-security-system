@@ -13,7 +13,7 @@ module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules","linkM
 module.skipcrypt = {}
 module.table = {["passes"]={},["passSettings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}},["securityKeypads"] = {["testone"]={["pass"]="1234",["label"]="Test One"}}}
 module.debug = false
-module.version = "4.0.2"
+module.version = "4.0.3"
 module.id = 1111
 
 local function getPassID(command,rules)
@@ -212,8 +212,8 @@ function module.message(command,datar,from) --Called when a command goes past al
                 for key,pal in pairs(value.data) do
                     datar[key] = {["name"]=pal.name}
                 end
+                table.insert(sendTable,{["id"]=value.id,["type"]=value.type,["data"]=datar})
             end
-            table.insert(sendTable,{["id"]=value.id,["type"]=value.type,["data"]=datar})
         end
         return true,{{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Sending remote control table",["color"]=0xFFFFFF}},false,true,server.crypt(ser.serialize(sendTable))
     elseif command == "checkLinked" then

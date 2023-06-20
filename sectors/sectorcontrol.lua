@@ -1,4 +1,4 @@
-local version = "4.0.2"
+local version = "4.0.3"
 
 local sector = {}
 local sectorStatus = {}
@@ -246,7 +246,7 @@ local function sectorGui(editmode)
         end
         for i=1,#sector[pageNum],1 do
             local secKeys = {["disable"] = "Clear sector ",["lock"] = "Lockdown sector ",["open"] = "Open sector "}
-            for key,value in pairs(secKeys) do
+            for key,value in ipairs(secKeys) do
                 if listNum == count then
                     pre = "> "
                 else
