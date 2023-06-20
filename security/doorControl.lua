@@ -381,7 +381,7 @@ end
                 doorControls[dk].lock = value2 - 1
                 if osVersion then
                   if value2 == 1 then
-                    colorLink(value.reader,0,0) --crashing it
+                    colorLink(value.reader,0,0)
                   elseif value2 == 2 then
                     colorLink(value.reader,1,1)
                   elseif value2 == 3 then
@@ -501,15 +501,15 @@ end
           fill["data"] = settingData
           send(modemPort,true,"setdevice",crypt(ser.serialize(fill),extraConfig.cryptKey))
           local got, _, _, _, _, fill = event.pull(2, "modem_message")
-          if got then
+          if got then --Gotta kill all threads and reinitialize in order to stop issues
             varSettings = ser.unserialize(crypt(fill,extraConfig.cryptKey,true))
             lightThread:kill()
             if advanced then
               doorThread:kill()
               doorControls = {}
-              for key,_ in pairs(settingData) do
-                doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
-              end
+              rfidReaders = {}
+              rfidDoorList = {}
+              rfidBuffer = {}
             end
             runSetup()
             --sectorfresh(query.data.sectorStatus)

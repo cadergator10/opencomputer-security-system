@@ -991,6 +991,7 @@ local function doorediting()
                     setGui(22,"Reading through information...")
                     editTable[pageNum].reader = {}
                     local hasPad = false
+                    distable = ser.unserialize(crypt(msg,config.cryptKey,true))
                     for key, value in pairs(distable) do
                         if value == "os_magreader" then
                             table.insert(editTable[pageNum].reader,{["uuid"]=key,["type"]="swipe"})
@@ -1000,7 +1001,7 @@ local function doorediting()
                             table.insert(editTable[pageNum].reader,{["uuid"]=key,["type"]="rfid"})
                         elseif value == "os_keypad" then
                             hasPad = true
-                            table.insert(ditTable[pageNum].reader,{["uuid"]=key,["type"]="keypad",["global"]=false,["pass"]="1111"})
+                            table.insert(editTable[pageNum].reader,{["uuid"]=key,["type"]="keypad",["global"]=false,["pass"]="1111"})
                         end
                     end
                     if hasPad then
@@ -1308,7 +1309,7 @@ local function sectorcontrol()
                             secid = query[3+((pageNum-1)*3)]
                         end
                     end
-                    modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({secid.uuid,state}),sectorSettings.cryptKey))
+                    modem.broadcast(modemPort,"sectorupdate",crypt(ser.serialize({secid.uuid,state}),config.cryptKey))
                     os.sleep(0.1)
                 end
             end

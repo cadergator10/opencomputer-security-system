@@ -362,6 +362,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
     end
     local function resetDoorCall()
         doors = {}
+        database.dataBackup("doorCreation",{})
         allDisable()
         updateList()
     end
@@ -672,6 +673,7 @@ module.onTouch = function() --Runs when the module's button is clicked. Set up t
                 mep:close()
                 roller.active = false
                 GUI.alert("Finished exporting door settings and program to selected drive. You can now close out.")
+                database.dataBackup("doorCreation",{})
             end
             cancelPath = varEditWindow:addChild(GUI.button(45,14,14,1, style.passButton, style.passText, style.passSelectButton, style.passSelectText, "Cancel"))
             cancelPath.onTouch = function()
