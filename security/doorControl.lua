@@ -238,12 +238,14 @@ end
   local function colorLink(key, var, check) --{["color"]=0,["delay"]=1} or just a number
     local chech = function(key)
       if component.proxy(key) ~= nil then
-        if readerLights[key] == nil then
-          component.proxy(key).swipeIndicator(false)
-          readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
+        if(component.proxy(key).swipeIndicator ~= nil) then
+          if readerLights[key] == nil then
+            component.proxy(key).swipeIndicator(false)
+            readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
+          end
+          readerLights[key].new = deepcopy(var)
+          if check then readerLights[key].check = check end
         end
-        readerLights[key].new = deepcopy(var)
-        if check then readerLights[key].check = check end
       end
     end
     if type(key) == "table" then
@@ -390,11 +392,11 @@ end
                 end
               else
                 if value.doorType == 3 then
-                  for _,value2 in pairs(value.doorAddress) do
+                  for _,value3 in pairs(value.doorAddress) do
                     if value2 ~= 3 then
-                      component.proxy(value2).close()
+                      component.proxy(value3).close()
                     else
-                      component.proxy(value2).open()
+                      component.proxy(value3).open()
                     end
                   end
                 elseif value.doorType == 2 then
@@ -633,6 +635,7 @@ end
 got = nil
 
 runSetup()
+
 if query.data.sectorStatus == nil then
   enableSectors = false
 end
@@ -649,7 +652,9 @@ process.info().data.signal = function(...)
   end
   if osVersion then
     for key,_ in pairs(component.list("os_magreader")) do
-      component.proxy(key).setLightState(7) --to show system is off
+      if(component.proxy(key).setLightState ~= nil) then
+        component.proxy(key).setLightState(7) --to show system is off
+      end
     end
   end
   event.ignore("modem_message", update)
