@@ -60,7 +60,7 @@ If you have any questions, don't hesitate to ask!
 ![2022-03-31_18 17 25](https://user-images.githubusercontent.com/75097681/161160580-5213b4f9-2f69-4f06-ae74-f48a20d6c1c4.png)
 ![image](https://user-images.githubusercontent.com/75097681/153966774-ddea0e15-01ef-47db-a975-8f0b3b63fed0.png)
 
-Changelog:
+Changelog: Before splitting off
 <ul>
    <li>2.1.0: Completely from scratch work for door now out with full modular support! 3/15</li>
    <li>2.1.1: Bug fixes I believe... 3/23</li>
@@ -79,6 +79,39 @@ Changelog:
    <li>4.0.0 Servertine movement & QOL: Lots of bug fixes and stuff. Added crypting support to lots of stuff which didn't have it for extra security. Changed groups to use dropdown and ints (level) to have a text box input as well. DoorSetup now saves progress if you leave that module and go back. Major sectorcontrol changes. Added support for Biometric Reader. MOOORE</li>
    <li>4.0.2 (yes I skipped one) Major refinement update: Security module now has 2 tabs in it, which split up setting up the users and pass management. Keypad and RFID Reader support. TONS MORE</li>
 </ul>
+
+Seperate Changelogs (Using format on website of incrementing it by a digit)
+
+Security:
+<ol>
+   <li>Setup module on website (right before version 4.0.0 on above changelog)</li>
+   <li>Biometrics, unblocked some extra features, pretty much update 4.0.0</li>
+   <li>Minor bug fix for callback int on certain buttons</li>
+   <li>Split module into multiple files and such (exact same as version 4.0.2)</li>
+   <li>Accidental duplication of previous update (whoops)</li>
+   <li></li>
+</ol>
+Sector:
+<ol>
+   <li>Setup module on website (right before version 4.0.0 on above changelog)</li>
+   <li>Sector control overhaul (Exact same as update version 4.0.0)</li>
+   <li>Updated to support latest Security module version (exact same as update version 4.0.2)</li>
+   <li>Accidental duplication of previous update (what is wrong with meeee)</li>
+   <li></li>
+</ol>
+Door Editing:
+<ol>
+   <li>Setup module on website (right before version 4.0.0 on above changelog)</li>
+   <li>Fixed a bug with path towards the finish.lua (finishing program) file</li>
+   <li>Progress is saved when switching modules from this one, updating finish.lua to work with biometrics, etc. (Exact same as version 4.0.0)</li>
+   <li>Updated to support latest Security module version (exact same as update version 4.0.2)</li>
+   <li>Hotfixed loadTable function to use compat file rather than built in one (which didn't support OpenOS)</li>
+   <li></li>
+</ol>
+Remote Control:
+<ol>
+   <li>Released Remote Control!</li>
+</ol>
 
 Queued updates:
 <ol>

@@ -8,7 +8,7 @@ local userTable -- Holds userTable stuff.
 
 local workspace, window, loc, database, style, compat = table.unpack({...}) --Sets up necessary variables: workspace is workspace, window is area to work in, loc is localization file, database are database commands, and style is the selected style file.
 
-module.name = "Remote Control" --The name that shows up on the module's button.
+module.name = "R.C." --The name that shows up on the module's button.
 module.table = {} --Set to the keys you want pulled from the userlist on the server,
 module.debug = false --The database will set to true if debug mode on database is enabled. If you want to enable certain functions in debug mode.
 module.config = {} --optional. Lets you add config settings which can be pulled by database.checkConfig("name").
