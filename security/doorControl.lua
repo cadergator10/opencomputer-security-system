@@ -55,7 +55,7 @@ local process = require("process")
 local fs = require("filesystem")
 local computer = component.computer
 
-local magReader = component.os_magreader
+local magReader
 local modem = component.modem
 local link
 
@@ -149,14 +149,14 @@ end
           else
             if value.new[1].status == nil then --It hasn't been prepped yet
               readerLights[key].new[1].status = true
-              component.proxy(key).setLightState(value.new[1].color)
+              if component.proxy(key).setLightState ~= nil then component.proxy(key).setLightState(value.new[1].color) end
               readerLights[key].old = readerLights[key].new[1].color
             else
               readerLights[key].new[1].delay = readerLights[key].new[1].delay - 0.05
               if readerLights[key].new[1].delay <= 0 then
                 table.remove(readerLights[key].new,1)
                 if #value.new == 0 then
-                  component.proxy(key).setLightState(value.check)
+                  if component.proxy(key).setLightState ~= nil then component.proxy(key).setLightState(value.check) end
                 end
               end
             end
@@ -165,7 +165,7 @@ end
           if value.new == -1 then
             value.new = value.check
           end
-          component.proxy(key).setLightState(value.new)
+          if component.proxy(key).setLightState ~= nil then component.proxy(key).setLightState(value.new) end
           readerLights[key].old = readerLights[key].new
         end
       end
@@ -421,7 +421,7 @@ end
 local function runSetup()
   readerLights = {}
   for key,_ in pairs(component.list("os_magreader")) do
-    component.proxy(key).swipeIndicator(false)
+    if component.proxy(key).swipeIndicator ~= nil then component.proxy(key).swipeIndicator(false) end
     colorLink(key,-1)
     readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
   end
@@ -581,8 +581,11 @@ if modem.isOpen(modemPort) == false and link == nil then
 elseif link ~= nil then
   modem.close(modemPort)
 end
-if magReader.swipeIndicator ~= nil then
-  osVersion = true
+if component.isAvailable("os_magreader") then
+  magReader = component.os_magreader
+  if magReader.swipeIndicator ~= nil then
+    osVersion = true
+  end
 end
 
 local checkBool = false
