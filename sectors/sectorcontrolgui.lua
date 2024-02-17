@@ -167,7 +167,7 @@ local function arrangeSectors(query)
         end
     end
     if save then
-        saveTable(sectorSettings,"sectorsetup.txt")
+        saveTable(sectorSettings,"redstonelinks.txt")
     end
 end
 
@@ -199,7 +199,7 @@ local function sectorGui(editmode)
                 end
                 setGui(count + 4, pre .. sector[pageNum][i].name .. " : " .. value)
                 count = count + 1
- end
+             end
         end
         count = count + 4
         setGui(count,"------------------------------")
