@@ -223,7 +223,7 @@ local function arrangeSectors(query)
         end
     end
     if save then
-        saveTable(sectorSettings,"redstonelinks.txt")
+        saveTable(sectorSettings,"sectorsetup.txt")
     end
 end
 
@@ -246,7 +246,7 @@ local function sectorGui(editmode)
         end
         for i=1,#sector[pageNum],1 do
             local secKeys = {["disable"] = "Clear sector ",["lock"] = "Lockdown sector ",["open"] = "Open sector "}
-            for key,value in ipairs(secKeys) do
+            for key,value in pairs(secKeys) do
                 if listNum == count then
                     pre = "> "
                 else
