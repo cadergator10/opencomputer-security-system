@@ -246,7 +246,15 @@ local function sectorGui(editmode)
         end
         for i=1,#sector[pageNum],1 do
             local secKeys = {["disable"] = "Clear sector ",["lock"] = "Lockdown sector ",["open"] = "Open sector "}
-            for key,value in pairs(secKeys) do
+            for j=1,3,1 do
+                local key = ""
+                if j == 1 then
+                    key = "open"
+                elseif j == 2 then
+                    key = "lock"
+                else
+                    key = "disable"
+                end
                 if listNum == count then
                     pre = "> "
                 else
