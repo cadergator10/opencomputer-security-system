@@ -272,14 +272,17 @@ end
   end
 
   local function doorupdate() --A seperate thread that reads a table of door addresses and redstone stuff and can control them.
+    local extraDelay = 0.05 --To fix the doors staying open longer if more are in the system.
     while true do
+      local thisDelay = extraDelay
+      extraDelay = 0.05
       local shouldContinue = false
       for key, value in pairs(doorControls) do
         local isOpen = false
         if value.lock == 0 then
           if type(value.swipe) == "number" then
             shouldContinue = true
-            doorControls[key].swipe = value.swipe - 0.05
+            doorControls[key].swipe = value.swipe - thisDelay
             if value.swipe <= 0 then
               doorControls[key].swipe = false
             else
@@ -304,12 +307,15 @@ end
                 else
                   component.proxy(value2).close()
                 end
+                extraDelay = extraDelay + 0.05
               end
             end
           elseif settingData[key].doorType == 2 then
             component.redstone.setBundledOutput(settingData[key].redSide, { [settingData[key].redColor] = isOpen and 255 or 0 } )
+            extraDelay = extraDelay + 0.05
           elseif settingData[key].doorType == 1 then
             component.redstone.setOutput(settingData[key].redSide,isOpen and 15 or 0)
+            extraDelay = extraDelay + 0.05
           end
           if isOpen then
             colorLink(settingData[key].reader,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}})
