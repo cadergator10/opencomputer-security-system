@@ -284,6 +284,13 @@ local function runInstall()
                 for key,_ in pairs(component.list("os_rolldoorcontroller")) do
                     table.insert(loopArray["doorAddress"],key)
                 end
+                --For older versions of OpenSecurity
+                for key,_ in pairs(component.list("os_doorcontrol")) do
+                    table.insert(loopArray["doorAddress"],key)
+                end
+                for key,_ in pairs(component.list("os_rolldoorcontrol")) do
+                    table.insert(loopArray["doorAddress"],key)
+                end
             end
         end
         text = sendMsg("Should the door be toggleable, or not? 0 for autoclose and 1 for toggleable",1)

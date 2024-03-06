@@ -206,6 +206,7 @@ else
 end
 editorSettings.type = "doorsystem"
 os.execute("wget -f " .. doorCode .. " " .. program)
+--TODO: Check if file managed to download, otherwise cancel setup
 editorSettings.x = tonumber(sendMsg("Would you like to use the simple pass setup or new advanced one?","1 for simple, 2 for advanced",1))
 
 local config = {}
@@ -341,6 +342,13 @@ for i=1,#finishTable,1 do
                 table.insert(loopArray["doorAddress"],key)
             end
             for key,_ in pairs(component.list("os_doorcontroller")) do
+                table.insert(loopArray["doorAddress"],key)
+            end
+            --For older versions of OpenSecurity
+            for key,_ in pairs(component.list("os_rolldoorcontrol")) do
+                table.insert(loopArray["doorAddress"],key)
+            end
+            for key,_ in pairs(component.list("os_doorcontrol")) do
                 table.insert(loopArray["doorAddress"],key)
             end
         end
