@@ -22,8 +22,6 @@ local rfidWait = 2 --Amount of time to hold a door open after a rfid card leaves
 
 local doorControls = {} --Holds data about states all doors should be in. {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false} memory is current state & lock is sector lockdown state.
 
-local sector --sector stuff
-
 local adminCard = "admincard"
 
 local modemPort = 1000 --Ports: 180 = diagPort, 199 = sync port, 198 = reserved, 1000-9999 = valid ports
@@ -239,7 +237,7 @@ local function doorupdate() --A seperate thread that handles the doors & RFID Re
                     if rfidReaders[rfidInt].buffer[data.uuid] == nil then --if there is data and crypt is correct
                         event.push("rfidSuccess",rfidReaders[rfidInt].uuid,nil,data) --push to main thread to check if allowed or not
                         local e, status = event.pull(5,"rfidRequest") --receive results
-                        rfidReaders[rfidInt].buffer[data.uuid] = {["timer"]=rfidWait,["allowed"]=status} --add new user to buffer
+                        rfidReaders[rfidInt].buffer[data.uuid] = {["timer"]=rfidWait,["allowed"]=status ~= nil and status or false} --add new user to buffer
                     else
                         rfidReaders[rfidInt].buffer[data.uuid].timer = rfidWait --Update timer back to max as they are still in range
                     end
@@ -283,6 +281,9 @@ local function doorupdate() --A seperate thread that handles the doors & RFID Re
                     end
                 else
                     isOpen = value.swipe
+                end
+                if value.rfid and value.lock == 0 then
+                    isOpen = true
                 end
             elseif value.lock == 2 then --sector lockdown is open
                 isOpen = true --TODO: Check if this still works if lockdown is on and user has lockdown bypass. May have to remove check if lock is 0 (if used)
@@ -345,7 +346,7 @@ local function sectorfresh(data)
                     if key == value.sector then --This is the sector it was sent to.
                         doorControls[dk].lock = value2 - 1 --Set lock mode to the sector status
                         local openFunc = {doorControls[dk].swipe, false, true}
-                        doorLink(dk, openFunc[value2])
+                        doorControls[dk].swipe = openFunc[value2]
                         if osVersion then --Reader lights can be changed
                             if value2 == 1 then --clear
                                 colorLink(value.reader,0,0)
@@ -670,7 +671,7 @@ local function keypadProgram(_, address, user, str, uuid, data)
         local tmpTable = {["uuid"]=address,["pass"]=keypadHolder[address]}
         tmpTable["type"] = extraConfig.type
         tmpTable["key"] = keyed
-        tmpTable["sector"] = sector
+        tmpTable["sector"] = settingData[keyed].sector
         local data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
         send(modemPort,true,"checkKeypad",data)
         keypadHolder[address] = ""
@@ -708,7 +709,7 @@ local function miscReaderProgram(ev, address, user, str, uuid, data)
         end
         tmpTable["type"] = extraConfig.type
         tmpTable["key"] = keyed
-        tmpTable["sector"] = sector
+        tmpTable["sector"] = settingData[keyed].sector
         data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
         enterCheck(data, "checkRules", ev, keyed)
         return
@@ -757,7 +758,7 @@ local function  magReaderProgram(ev, address, user, str, uuid, data)
         term.write(tmpTable["name"] .. ":")
         tmpTable["type"] = extraConfig.type
         tmpTable["key"] = keyed
-        tmpTable["sector"] = sector
+        tmpTable["sector"] = settingData[keyed].sector
         data = crypt(ser.serialize(tmpTable), extraConfig.cryptKey)
         enterCheck(data, "checkRules", ev, keyed)
     end

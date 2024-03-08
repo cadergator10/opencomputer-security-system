@@ -1220,7 +1220,7 @@ local function sectorcontrol()
             end
             for i=1,#sector[pageNum],1 do
                 local secKeys = {[2] = "Clear",[1] = "Lockdown",[3] = "Open"}
-                for key,value in pairs(secKeys) do
+                for key,value in ipairs(secKeys) do
                     if listNum == count then
                         pre = "> "
                     else
