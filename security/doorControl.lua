@@ -122,13 +122,6 @@ local function colorupdate() --Runs the color logic behind the magreaders as wel
             if component.proxy(key).swipeIndicator ~= nil then component.proxy(key).swipeIndicator(false) end
             readerLights[key] = {["new"]=0,["old"]=-1,["check"]=0}
         end
-        for key,_ in pairs(component.list("os_keypad")) do --Set up the Keypad display.
-            local customButtons = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "#"}
-            local customButtonColor = {7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 7, 10}
-            component.proxy(key).setDisplay("locked", 14)
-            component.proxy(key).setKey(customButtons, customButtonColor)
-            keypadHolder[key] = ""
-        end
         while true do
             for key, value in pairs(readerLights) do --Check every reader listed here
                 if type(value.new) == "table" then --Timed door closing
@@ -224,7 +217,13 @@ local function doorupdate() --A seperate thread that handles the doors & RFID Re
     for key,_ in pairs(component.list("os_rolldoorcontrol")) do
         component.proxy(key).close()
     end
-    --TODO: Reset all redstone on doorcontroller so its all false.
+    for key,_ in pairs(component.list("os_keypad")) do --Set up the Keypad display.
+        local customButtons = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "#"}
+        local customButtonColor = {7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 7, 10}
+        component.proxy(key).setDisplay("locked", 14)
+        component.proxy(key).setKey(customButtons, customButtonColor)
+        keypadHolder[key] = ""
+    end    --TODO: Reset all redstone on doorcontroller so its all false.
     while true do
         local thisDelay = extraDelay
         extraDelay = rfidFound and 0.1 or 0.05
@@ -664,17 +663,10 @@ local function enterCheck(data, whereTo, type, keyed)
     end
 end
 
-local function keypadProgram(_, address, user, str, uuid, data)
+local function keypadProgram(_, address, user, str, uuid, data, data2)
     if str == "C" then --clear data
         keypadHolder[address] = ""
         component.proxy(address).setDisplay("locked", 14)
-    elseif string.len(keypadHolder[address]) < 4 then --make sure count is less than 4
-        keypadHolder[address] = keypadHolder[address] .. str
-        str = ""
-        for i=1,string.len(keypadHolder[address]),1 do
-            str = str .. "*"
-        end
-        component.proxy(address).setDisplay(str, 7)
     elseif str == "#" then
         local keyed = readerReturn(address)
         if keyed == nil then
@@ -690,11 +682,18 @@ local function keypadProgram(_, address, user, str, uuid, data)
         send(modemPort,true,"checkKeypad",data)
         keypadHolder[address] = ""
         component.proxy(address).setDisplay("locked", 14)
-        enterCheck(data, "checkKeypad", "keypad")
+        enterCheck(data, "checkKeypad", "keypad", keyed)
+    elseif string.len(keypadHolder[address]) < 4 then --make sure count is less than 4
+        keypadHolder[address] = keypadHolder[address] .. str
+        str = ""
+        for i=1,string.len(keypadHolder[address]),1 do
+            str = str .. "*"
+        end
+        component.proxy(address).setDisplay(str, 7)
     end --TODO: Finish logic for normal door cards
 end
 
-local function miscReaderProgram(ev, address, user, str, uuid, data)
+local function miscReaderProgram(ev, address, user, str, uuid, data, data2)
     local keyed = readerReturn(address)
     if keyed == nil then
         print("READER IS NOT FOUND LINKED TO ANY DOOR! Exiting to safe mode")
@@ -732,7 +731,7 @@ local function miscReaderProgram(ev, address, user, str, uuid, data)
     print("DO NOT HAVE ADMIN CARD AS RFID")
 end
 
-local function  magReaderProgram(ev, address, user, str, uuid, data)
+local function  magReaderProgram(ev, address, user, str, uuid, data, data2)
     if osVersion then colorLink(address,2) end
     local isOk = "incorrect magreader"
     local keyed = readerReturn(address)
