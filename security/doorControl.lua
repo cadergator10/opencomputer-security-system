@@ -198,7 +198,7 @@ local function doorupdate() --A seperate thread that handles the doors & RFID Re
     for key,value in pairs(settingData) do --Go through all currently setup doors.
         doorControls[key] = {["swipe"]=false,["rfid"]=false,["lock"]=0,["memory"]=false}
         for _,value2 in pairs(value.reader) do
-            if(component.proxy(value2) ~= nil) then --make sure it exists.
+            if(component.proxy(value2.uuid) ~= nil) then --make sure it exists.
                 if rfidBlock == false then
                     if value2.type == "rfid" then --Set up its RFID Data.
                         if(rfidFound == false) then
@@ -568,6 +568,8 @@ local function modemMessage(_, localAddress, remoteAddress, port, distance, msg,
             end
             modem.send(remoteAddress, diagPort, crypt(ser.serialize(tabe),extraConfig.cryptKey)) --Return type of the devices
         end
+    elseif msg == "threadUpdate" then
+        modem.send(remoteAddress, diagPort, "door: " .. doorThread:status() .. " light: " .. lightThread:status())
     end
 end
 
@@ -769,15 +771,15 @@ while true do
         setup() --Start the setup for the base system.
         doorContinue = true --if changes have been made, set to false.
         while doorContinue do
-            local ev, address, user, str, uuid, data = event.pullMultiple("magData","bioReader","rfidSuccess","keypad","modem_message") --for keypad, address is its address, user is button id, str is button label.
+            local ev, address, user, str, uuid, data, data2 = event.pullMultiple("magData","bioReader","rfidSuccess","keypad","modem_message") --for keypad, address is its address, user is button id, str is button label.
             if ev == "modem_message" then
-                modemMessage(ev, address, user, str, uuid, data)
+                modemMessage(ev, address, user, str, uuid, data, data2)
             elseif ev == "keypad" then
-                keypadProgram(ev, address, user, str, uuid, data)
+                keypadProgram(ev, address, user, str, uuid, data, data2)
             elseif ev == "rfidSuccess" or ev == "bioReader" then
-                miscReaderProgram(ev, address, user, str, uuid, data)
+                miscReaderProgram(ev, address, user, str, uuid, data, data2)
             elseif ev == "magData" then
-                magReaderProgram(ev, address, user, str, uuid, data)
+                magReaderProgram(ev, address, user, str, uuid, data, data2)
             end
         end
 
