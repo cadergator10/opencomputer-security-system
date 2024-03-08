@@ -371,10 +371,14 @@ local function resetProgram()
     if doorThread ~= nil and doorThread:status() == "running" then --kill thread if exists
         doorThread:kill()
         doorThread = nil
+    else
+        print("Door thread is already dead")
     end
     if lightThread ~= nil and lightThread:status() == "running" then --kill thread if exists
         lightThread:kill()
         lightThread = nil
+    else
+        print("Light thread is already dead")
     end
     for key,_ in pairs(component.list("os_keypad")) do
         component.proxy(key).setDisplay("inactive", 6)
@@ -485,6 +489,11 @@ local function setup()
     if query.data.sectorStatus == nil then --enable/disable sectors
         enableSectors = false
     end
+
+    --Starting threads
+    lightThread = thread.create(colorupdate)
+    doorThread = thread.create(doorupdate)
+
     sectorfresh(query.data.sectorStatus) --
 
     process.info().data.signal = function(...) --making sure stuff is done after system is stopped.

@@ -74,6 +74,7 @@ function module.message(command,data) --Called when a command goes past all defa
             for key, value in pairs(broadTable) do
                 server.advsend(key, value["repeat"] ~= false and value["repeat"] or nil, nil, ser.serialize(value))
             end
+            return true, nil, false, true, server.crypt("true")
         end
     end
     return false

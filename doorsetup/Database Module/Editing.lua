@@ -296,40 +296,52 @@ if worked then
         allDisable()
         updateList()
     end
+
+    local function exportDoorCall()
+        if #doors ~= 0 then
+            local expList = {} --format it how the server wants it
+            for key, value in pairs(doors) do
+                for key2, value2 in pairs(value) do
+                    table.insert(expList,{["id"]=key, ["key"]=key2, ["data"]=value2})
+                end
+            end
+            local worked,_,_,_,_, woo = database.send(true,"setdoordata",database.crypt(ser.serialize(expList)))
+            if worked and database.crypt(woo,true) == "true" then
+                GUI.alert("Success!")
+                resetDoorCall()
+            else
+                GUI.alert("Failed to broadcast door settings.")
+            end
+        end
+    end
+
     local function setDoorType()
-        local selected = pageMult * listPageNumber + doorList.selectedItem
-        doors[selected].doorType = doorType.selectedItem == 1 and -1 or doorType.selectedItem - 1
+        currentDoor.doorType = doorType.selectedItem
         updateList()
         doorListCallback()
     end
     local function setDoorToggle()
-        local selected = pageMult * listPageNumber + doorList.selectedItem
-        doors[selected].toggle = doorToggle.selectedItem - 2
-        doors[selected].delay = -1
+        currentDoor.toggle = doorToggle.selectedItem - 1
+        currentDoor.delay = currentDoor.toggle == 0 and 5 or 0
         updateList()
         doorListCallback()
     end
     local function setDoorName()
-        local selected = pageMult * listPageNumber + doorList.selectedItem
-        doors[selected].name = doorName.text
+        currentDoor.name = doorName.text
         updateList()
         doorListCallback()
     end
     local function setDoorDelay()
-        local selected = pageMult * listPageNumber + doorList.selectedItem
-        doors[selected].delay = doorDelay.text == "" and -1 or tonumber(doorDelay.text) or -1
+        currentDoor.delay = doorDelay.text == "" and 5 or tonumber(doorDelay.text) or currentDoor.delay
         updateList()
         doorListCallback()
     end
     local function setDoorSector()
-        local selected = pageMult * listPageNumber + doorList.selectedItem
-        local disBut = doorSector.selectedItem - 2
-        if disBut == -1 then
-            doors[selected].sector = -1
-        elseif disBut == 0 then
-            doors[selected].sector = false
+        local disBut = doorSector.selectedItem - 1
+        if disBut == 0 then
+            currentDoor.sector = false
         else
-            doors[selected].sector = userTable.sectors[disBut].uuid
+            currentDoor.sector = userTable.sectors[disBut].uuid
         end
         updateList()
         doorListCallback()
@@ -354,11 +366,6 @@ if worked then
     doorName = window:addChild(GUI.input(64,12,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
     doorName.onInputFinished = setDoorName
     doorName.disabled = true
-    newDoor = window:addChild(GUI.button(85,12,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "new door"))
-    newDoor.onTouch = addDoorCall
-    delDoor = window:addChild(GUI.button(100,12,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "del door"))
-    delDoor.onTouch = removeDoorCall
-    delDoor.disabled = true
     exportDoor = window:addChild(GUI.button(115,12,8,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "export door"))
     exportDoor.onTouch = exportDoorCall
     exportDoor.disabled = #doors == 0
@@ -469,55 +476,55 @@ if worked then
             return newRules
         end
         local needPass = passFunc(doorPassType.selectedItem,nil,doorPassSelf.selectedItem - 1)
-        local selected = pageMult * listPageNumber + doorList.selectedItem
-        table.insert(doors[selected].cardRead.normal,needPass)
+
+        table.insert(currentDoor.cardRead.normal,needPass)
         if needPass.request == "add" then
-            doors[selected].cardRead.add[needPass.uuid] = needPass
+            currentDoor.cardRead.add[needPass.uuid] = needPass
         end
         doorListCallback()
     end
     doorPassCreate.disabled = true
     doorPassDelete = window:addChild(GUI.button(100,32,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.delvar))
     doorPassDelete.onTouch = function()
-        local selected = pageMult * listPageNumber + doorList.selectedItem
+
         local otSel = pageMultPass * listPageNumberPass + doorPassList.selectedItem
-        if doors[selected].cardRead.normal[otSel].request == "add" then
-            for i=1,#doors[selected].cardRead.normal,1 do
-                if doors[selected].cardRead.normal[i].request == "base" then
-                    for j=1,#doors[selected].cardRead.normal[i].data,1 do
-                        if doors[selected].cardRead.normal[i].data[j] == doors[selected].cardRead.normal[otSel].uuid then
-                            table.remove(doors[selected].cardRead.normal[i].data,j)
+        if currentDoor.cardRead.normal[otSel].request == "add" then
+            for i=1,#currentDoor.cardRead.normal,1 do
+                if currentDoor.cardRead.normal[i].request == "base" then
+                    for j=1,#currentDoor.cardRead.normal[i].data,1 do
+                        if currentDoor.cardRead.normal[i].data[j] == currentDoor.cardRead.normal[otSel].uuid then
+                            table.remove(currentDoor.cardRead.normal[i].data,j)
                             break
                         end
                     end
                 end
             end
-            doors[selected].cardRead.add[doors[selected].cardRead.normal[otSel].uuid] = nil
+            currentDoor.cardRead.add[currentDoor.cardRead.normal[otSel].uuid] = nil
         end
-        table.remove(doors[selected].cardRead.normal,otSel)
+        table.remove(currentDoor.cardRead.normal,otSel)
         doorListCallback()
     end
     doorPassDelete.disabled = true
     doorPassEdit = window:addChild(GUI.button(115,32,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.editvar))
     doorPassEdit.onTouch = function()
-        local selected = pageMult * listPageNumber + doorList.selectedItem
+
         local otSel = pageMultPass * listPageNumberPass + doorPassList.selectedItem
-        if doors[selected].cardRead.normal[otSel].request == "add" then
+        if currentDoor.cardRead.normal[otSel].request == "add" then
             GUI.alert("This is an add pass, meaning any passes with this add pass will have it unlinked to the pass.")
-            for i=1,#doors[selected].cardRead.normal,1 do
-                if doors[selected].cardRead.normal[i].request == "base" then
-                    for j=1,#doors[selected].cardRead.normal[i].data,1 do
-                        if doors[selected].cardRead.normal[i].data[j] == doors[selected].cardRead.normal[otSel].uuid then
-                            table.remove(doors[selected].cardRead.normal[i].data,j)
+            for i=1,#currentDoor.cardRead.normal,1 do
+                if currentDoor.cardRead.normal[i].request == "base" then
+                    for j=1,#currentDoor.cardRead.normal[i].data,1 do
+                        if currentDoor.cardRead.normal[i].data[j] == currentDoor.cardRead.normal[otSel].uuid then
+                            table.remove(currentDoor.cardRead.normal[i].data,j)
                             break
                         end
                     end
                 end
             end
-            doors[selected].cardRead.add[doors[selected].cardRead.normal[otSel].uuid] = nil
+            currentDoor.cardRead.add[currentDoor.cardRead.normal[otSel].uuid] = nil
         end
-        local old = doors[selected].cardRead.normal[otSel]
-        table.remove(doors[selected].cardRead.normal,otSel)
+        local old = currentDoor.cardRead.normal[otSel]
+        table.remove(currentDoor.cardRead.normal,otSel)
         local disType,mep = grabName("type",old.call)
         doorPassSelf.selectedItem = mep + 1
         refreshInput()
