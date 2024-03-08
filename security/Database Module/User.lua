@@ -57,6 +57,7 @@ local function userListCallback() --When a value is changed or new user selected
     userMCIDLabel.text = "MC ID     : " .. userTable.passes[selectedId].mcid --user's minecraft id linked to a card
     userMCIDButton.disabled = database.checkPerms("security",{"passediting","varmanagement","mcid"},true)
     userMCIDClear.disabled = database.checkPerms("security",{"passediting","varmanagement","mcid"},true)
+    userChangeUUIDButton.disabled = database.checkPerms("security",{"varmanagement","resetuuid"},true)
     --end of linking and user id
     if userTable.passes[selectedId].blocked == true then --disallow all use of their account
     cardBlockedYesButton.pressed = true
@@ -232,6 +233,7 @@ local function deleteUserCallback() --delete selected user and disable all butto
     updateList()
     userNameText.text = ""
     userNameText.disabled = true
+    userChangeUUIDButton.disabled = true
     StaffYesButton.disabled = true
     for i=1,#userTable.passSettings.var,1 do
     local tmp = userTable.passSettings.type[i]

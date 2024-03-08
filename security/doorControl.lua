@@ -3,6 +3,7 @@
 local doorVersion = "4.0.3"
 local doorContinue = true --if changes have been made, set to false. Used to reset the door after changes made
 --advanced will be only one used from now on.
+local safeMode = false --if true, in safe mode and disables some stuff
 
 local lightThread, doorThread --threads used to run doorControl and light controls
 
@@ -501,10 +502,10 @@ end
 
 --BEGINNING OF SUB PROGRAMS (split types of stuff into functions)
 local function modemMessage(_, localAddress, remoteAddress, port, distance, msg, data)
-    if msg == "checkSector" then --Changes to Sector
+    if msg == "checkSector" and safeMode == false then --Changes to Sector
         data = ser.unserialize(data)
         sectorfresh(data) --Update doors to sector changes
-    elseif msg == "remoteControl" then --remotely open a door
+    elseif msg == "remoteControl" and safeMode == false then --remotely open a door
         data = ser.unserialize(data)
         if data.id == modem.address then
             term.write("RemoteControl request received for " .. settingData[data.key].name)
@@ -536,7 +537,7 @@ local function modemMessage(_, localAddress, remoteAddress, port, distance, msg,
             print("Failed to receive confirmation from server")
             os.exit()
         end
-    elseif msg == "identifyMag" then --show magreaders that are linked by the lights.
+    elseif msg == "identifyMag" and safeMode == false then --show magreaders that are linked by the lights.
         local lightShow = function(data)
             for i=1,5,1 do
                 for j=1,3,1 do
@@ -775,6 +776,39 @@ while true do
         --do nothing since it worked well.
     else --program crashed. run in safe mode
         resetProgram() --reset any remaining tasks
-
+        doorContinue = true
+        print("An error has occurred, likely with a misconfigured magreader, and has opened in safe mode.")
+        print("Limited features are available (admincard, doorediting, and such.)")
+        print("Click screen or use runtime door editing to exit safe mode")
+        while doorContinue do
+            local ev, address, user, str, uuid, data = event.pullMultiple("magData","modem_message","touch")
+            if ev == "modem_message" then
+                modemMessage(ev, address, user, str, uuid, data)
+            elseif ev == "magData" then --admin card only
+                local data = crypt(str, extraConfig.cryptKey, true)
+                if data == adminCard then
+                    local isOk = "safe mode"
+                    term.write("Admin card swiped. Sending diagnostics\n")
+                    modem.open(diagPort)
+                    local diagData = {}
+                    diagData["status"] = isOk
+                    diagData["version"] = doorVersion
+                    diagData["num"] = 3
+                    diagData["entireDoor"] = deepcopy(settingData)
+                    local counter = 0
+                    for index in pairs(settingData) do
+                        counter = counter + 1
+                    end
+                    diagData["entries"] = counter
+                    data = ser.serialize(diagData)
+                    send(diagPort,false, "diag", data)
+                    if osVersion then
+                        colorLink(address,{{["color"]=1,["delay"]=0.3},{["color"]=2,["delay"]=0.3},{["color"]=4,["delay"]=0.3},{["color"]=0,["delay"]=0}})
+                    end
+                end
+            else
+                doorContinue = false
+            end
+        end
     end
 end
