@@ -3,6 +3,7 @@
 local doorVersion = "4.0.3"
 local doorContinue = true --if changes have been made, set to false. Used to reset the door after changes made
 --advanced will be only one used from now on.
+local interrupted = false --if hard interrupt. No safe mode
 local safeMode = false --if true, in safe mode and disables some stuff
 
 local lightThread, doorThread --threads used to run doorControl and light controls
@@ -229,7 +230,7 @@ local function doorupdate() --A seperate thread that handles the doors & RFID Re
         extraDelay = rfidFound and 0.1 or 0.05
         local shouldContinue = true --If true, it means this should continue to check through array. If false, it waits to be invoked by a card swipe or something of that sort. (has been locked to true due to rfid reader stuff being in here.
         --BEGINNING OF RFID SECTION
-        if rfidFound then
+        if rfidFound and component.proxy(rfidReaders[rfidInt].uuid) ~= nil then
             local reader = component.proxy(rfidReaders[rfidInt].uuid).scan(rfidReaders[rfidInt].size) --scan and perform checks on new cards found
             for _,value in pairs(reader) do --go through all cards found in range
                 local data = value.data ~= nil and ser.unserialize(crypt(value.data,extraConfig.cryptKey,true)) or nil --get data off card
@@ -302,11 +303,19 @@ local function doorupdate() --A seperate thread that handles the doors & RFID Re
                         end
                     end
                 elseif settingData[key].doorType == 2 then --bundled redstone
-                    component.redstone.setBundledOutput(settingData[key].redSide, { [settingData[key].redColor] = isOpen and 255 or 0 } )
-                    extraDelay = extraDelay + 0.05
+                    if component.redstone == nil or component.redstone.setBundledOutput == nil then
+                        print("REDSTONE IS NOT INSTALLED CORRECTLY! IS A CARD INSTALLED?")
+                    else
+                        component.redstone.setBundledOutput(settingData[key].redSide, { [settingData[key].redColor] = isOpen and 255 or 0 } )
+                        extraDelay = extraDelay + 0.05
+                    end
                 elseif settingData[key].doorType == 1 then --Regular redstone
-                    component.redstone.setOutput(settingData[key].redSide,isOpen and 15 or 0)
-                    extraDelay = extraDelay + 0.05
+                    if component.redstone == nil or component.redstone.setOutput == nil then
+                        print("REDSTONE IS NOT INSTALLED CORRECTLY! IS A CARD INSTALLED?")
+                    else
+                        component.redstone.setOutput(settingData[key].redSide,isOpen and 15 or 0)
+                        extraDelay = extraDelay + 0.05
+                    end
                 end
                 if isOpen then --Open door or don't.
                     colorLink(settingData[key].reader,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}})
@@ -345,7 +354,7 @@ local function sectorfresh(data)
                 for key,value2 in pairs(data) do --Go through every sector sent out
                     if key == value.sector then --This is the sector it was sent to.
                         doorControls[dk].lock = value2 - 1 --Set lock mode to the sector status
-                        local openFunc = {doorControls[dk].swipe, false, true}
+                        local openFunc = {false, false, true}
                         doorControls[dk].swipe = openFunc[value2]
                         if osVersion then --Reader lights can be changed
                             if value2 == 1 then --clear
@@ -500,6 +509,7 @@ local function setup()
     process.info().data.signal = function(...) --making sure stuff is done after system is stopped.
         print("caught hard interrupt")
         resetProgram()
+        interrupted = true
         os.exit()
     end
     modem.open(diagPort)
@@ -599,6 +609,9 @@ local function enterCheck(data, whereTo, type, keyed)
         if data == "true" then
             term.write("Access granted\n")
             computer.beep()
+            if osVersion then
+                colorLink(settingData[keyed].reader,{{["color"]=4,["delay"]=1},{["color"]=0,["delay"]=0}})
+            end
             if type == "rfidSuccess" then
                 event.push("rfidRequest",true)
             else
@@ -666,7 +679,8 @@ local function keypadProgram(_, address, user, str, uuid, data)
         local keyed = readerReturn(address)
         if keyed == nil then
             print("KEYPAD IS NOT FOUND LINKED TO ANY DOOR! Exiting to safe mode")
-            error("No keypad found")
+            --[[error("No keypad found")]]
+            return
         end
         local tmpTable = {["uuid"]=address,["pass"]=keypadHolder[address]}
         tmpTable["type"] = extraConfig.type
@@ -684,7 +698,8 @@ local function miscReaderProgram(ev, address, user, str, uuid, data)
     local keyed = readerReturn(address)
     if keyed == nil then
         print("READER IS NOT FOUND LINKED TO ANY DOOR! Exiting to safe mode")
-        error("No reader found")
+        --[[error("No reader found")]]
+        return
     end
     local data
     if ev == "bioReader" then
@@ -723,8 +738,9 @@ local function  magReaderProgram(ev, address, user, str, uuid, data)
     local keyed = readerReturn(address)
     if keyed == nil then
         print("READER IS NOT FOUND LINKED TO ANY DOOR! Exiting to safe mode")
-        if crypt(str, extraConfig.cryptKey, true) ~= adminCard then error("No reader found") end
+        if crypt(str, extraConfig.cryptKey, true) ~= adminCard then --[[error("No reader found")]] return end
     end
+    isOk = "ok"
     local data = crypt(str, extraConfig.cryptKey, true)
     if data == adminCard then
         term.write("Admin card swiped. Sending diagnostics\n")
@@ -787,6 +803,9 @@ while true do
     end) then
         --do nothing since it worked well.
     else --program crashed. run in safe mode
+        if interrupted then
+            os.exit()
+        end
         resetProgram() --reset any remaining tasks
         doorContinue = true
         print("An error has occurred, likely with a misconfigured magreader, and has opened in safe mode.")

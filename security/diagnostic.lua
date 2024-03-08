@@ -575,7 +575,7 @@ local function doorediting()
     local diagInfo = ser.unserialize(msg)
     local editTable = {}
     local num = 2
-    if diagInfo.status == "incorrect magreader" then
+    if diagInfo.status == "incorrect magreader" or diagInfo.status == "safe mode" then
         diagInfo.key = "unreal"
         num = 1
     else
