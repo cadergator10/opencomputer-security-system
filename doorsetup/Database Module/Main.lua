@@ -81,15 +81,15 @@ module.onTouch = function() --pulled from security module mainly.
     local meh = tabs:addItem("Door Setup")
     meh.onTouch = migrateTab
     meh.myId = 1
-    meh.toRun = userEdit
+    meh.toRun = passEdit
     meh = tabs:addItem("Door Editing")
     meh.onTouch = migrateTab
     meh.myId = 2
-    meh.toRun = passEdit
+    meh.toRun = userEdit
     meh.disabled = database.checkPerms("security",{"doorsetup"},true)
 
     tabs.selected = 1
-    migrateTab(nil, {["doTheMove"]=true,["myId"]=1,["toRun"]=userEdit})
+    migrateTab(nil, {["doTheMove"]=true,["myId"]=1,["toRun"]=passEdit})
 end
 
 module.close = function() --when user switches modules

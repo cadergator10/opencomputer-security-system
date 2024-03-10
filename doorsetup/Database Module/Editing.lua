@@ -7,7 +7,7 @@ local uuid = require("uuid")
 local doorList, listPageLabel, listUpButton, listDownButton, doorName, doorType, doorDelay, doorToggle, doorSector, doorPad, doorPadPass --TODO: Add buttons for doorPad (undefined, local, or global) or doorPadPass (depending on doorPad, local (input for 4 char pin) or global (combo based on keypad global stuff))
 local doorPassList, listPageLabel2, listUpButton2, listDownButton2, doorPassSelf, doorPassData, doorPassAddSelector, doorPassCreate, doorPassDelete, doorPassEdit, doorPassType, doorPassAddHave
 local doorPassAddAdd, doorPassAddDel, resetDoorSave
-local newDoor, delDoor, exportDoor, doorPathSelector, finishPath, cancelPath, roller
+local exportDoor, doorPathSelector, finishPath, cancelPath, roller
 local currentDoor, currentKey, currentId, currentName
 
 local doors = database.dataBackup("doorEditing") --TODO: Make sure this wipes the right door's passes in order to prevent errors
@@ -48,6 +48,7 @@ else --Check to ensure passes linked in doors are not MISSING
 end
 local worked,_,_,_,_, doorNames = database.send(true,"getdoornames")
 if worked then
+    doorNames = ser.unserialize(database.crypt(doorNames, true))
 
     local pageMult = 10
     local listPageNumber = 0
@@ -77,6 +78,14 @@ if worked then
         return nil
     end
 
+    local function countDoorNames()
+        local count = 0
+        for key, value in pairs(doorNames) do
+            count = count + 1
+        end
+        return count
+    end
+
     local function allDisable()
         doorName.text = ""
         doorName.disabled = true
@@ -103,7 +112,6 @@ if worked then
             doorSector.disabled = true
             doorSector.selectedItem = 1
         end
-        delDoor.disabled = true
         if #doors == 0 then
             exportDoor.disabled = true
         end
@@ -119,15 +127,46 @@ if worked then
     local function doorListCallback(bypassAdd)
         --TODO: Set all stuff to right value
         local selected = pageMult * listPageNumber + doorList.selectedItem
-        currentName = doorList:getItem(doorList.selectedItem).text
-        currentId = doorNames[currentName].id
-        currentKey = doorNames[currentName].key
+        local item = doorList:getItem(doorList.selectedItem)
+        currentName = item.text
+        currentId = item.id
+        currentKey = item.key
         if doors[currentId] ~= nil then
             currentDoor = doors[currentId].data[currentKey]
         else
-            local worked,_,_,_,_, nee = database.send(true,"getdoordata", database.crypt(ser.serialize(doorNames[currentName])))
+            local worked,_,_,_,_, nee = database.send(true,"getdoordata", database.crypt(ser.serialize({["id"]=item.id, ["key"]=item.key})))
             if worked then
                 currentDoor = nee
+                local isHere = true
+                local quikMessage = false
+                if #currentDoor.cardRead.normal > 0 then
+                    for j=1,#currentDoor.cardRead.normal,1 do
+                        local noooo = false
+                        if not (currentDoor.cardRead.normal[j].call == "checkstaff") then
+                            for key,value in pairs(userTable.passSettings.calls) do
+                                if value == currentDoor.cardRead.normal[j].call then
+                                    noooo = true
+                                    break
+                                end
+                            end
+                        else
+                            noooo = true
+                        end
+                        if not noooo then
+                            isHere = false
+                            break
+                        end
+                    end
+                    if not isHere then
+                        quikMessage = true
+                        currentDoor.cardRead.normal = {}
+                        currentDoor.cardRead.add = {}
+                    end
+                end
+                if quikMessage then
+                    GUI.alert(loc.doorbadmessage)
+                    currentDoorChanges()
+                end
             else
                 GUI.alert("Failed to get data from server. Is it offline?")
             end
@@ -186,7 +225,6 @@ if worked then
         doorPassType.disabled = false
         doorPassAddSelector.disabled = false
         doorPassAddHave.disabled = false
-        delDoor.disabled = false
         if bypassAdd ~= true then
             doorPassAddSelector:clear()
             doorPassAddHave:clear()
@@ -205,20 +243,24 @@ if worked then
 
     local function updateList()
         doorList:removeChildren()
-        if (pageMult * listPageNumber) + 1 > #doors and listPageNumber ~= 0 then
+        local nameCount = countDoorNames()
+        if (pageMult * listPageNumber) + 1 > nameCount and listPageNumber ~= 0 then
             listPageNumber = listPageNumber - 1
         end
         local temp = pageMult * listPageNumber
-        for i = temp + 1, temp + pageMult, 1 do
-            if doorNames[i] == nil then
-
-            else
-                doorList:addItem(doorNames[i].data.name).onTouch = doorListCallback
+        local counter = 1
+        for key, value in pairs(doorNames) do
+            if counter > temp and counter <= temp + pageMult then
+                local yep = doorList:addItem(key)
+                yep.onTouch = doorListCallback
+                yep.key = value.key
+                yep.id = value.id
             end
+            counter = counter + 1
         end
         doorList.selectedItem = 1
         previousPage = listPageNumber
-        if pageMult * listPageNumber + pageMult < #doors then
+        if pageMult * listPageNumber + pageMult < nameCount then
             listUpButton.disabled = false
         else
             listUpButton.disabled = true
@@ -227,7 +269,7 @@ if worked then
             listDownButton.disabled = true
         end
         listDownButton.disabled = listPageNumber == 0
-        listUpButton.disabled = #doors <= temp + pageMult
+        listUpButton.disabled = nameCount <= temp + pageMult
         allDisable()
     end
 
@@ -275,9 +317,10 @@ if worked then
         local function canFresh()
             updateList()
         end
-        if #doorNames ~= 0 then
+        local count = countDoorNames()
+        if count ~= 0 then
             if button.isPos then
-                if listPageNumber < #doors/pageMult - 1 then
+                if listPageNumber < count/pageMult - 1 then
                     listPageNumber = listPageNumber + 1
                     canFresh()
                 end
@@ -317,22 +360,26 @@ if worked then
 
     local function setDoorType()
         currentDoor.doorType = doorType.selectedItem
+        currentDoorChanges()
         updateList()
         doorListCallback()
     end
     local function setDoorToggle()
         currentDoor.toggle = doorToggle.selectedItem - 1
         currentDoor.delay = currentDoor.toggle == 0 and 5 or 0
+        currentDoorChanges()
         updateList()
         doorListCallback()
     end
     local function setDoorName()
         currentDoor.name = doorName.text
+        currentDoorChanges()
         updateList()
         doorListCallback()
     end
     local function setDoorDelay()
         currentDoor.delay = doorDelay.text == "" and 5 or tonumber(doorDelay.text) or currentDoor.delay
+        currentDoorChanges()
         updateList()
         doorListCallback()
     end
@@ -343,20 +390,25 @@ if worked then
         else
             currentDoor.sector = userTable.sectors[disBut].uuid
         end
+        currentDoorChanges()
         updateList()
         doorListCallback()
     end
 
     --Page Setup
-    window:addChild(GUI.panel(1,1,37,30,style.listPanel))
-    doorList = window:addChild(GUI.list(2, 2, 35, 28, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
+    window:addChild(GUI.panel(1,1,37,33,style.listPanel))
+    doorList = window:addChild(GUI.list(2, 2, 35, 31, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
     doorList:addItem("HELLO") --if this shows an error occurred
+    window:addChild(GUI.panel(42,21,37,11,style.listPanel))
+    doorPassList = window:addChild(GUI.list(43, 22, 35, 9, 3, 0, style.listBackground, style.listText, style.listAltBack, style.listAltText, style.listSelectedBack, style.listSelectedText, false))
     listPageNumber = 0
+
     listPageLabel = window:addChild(GUI.label(2,33,3,3,style.listPageLabel,tostring(listPageNumber + 1)))
     listUpButton = window:addChild(GUI.button(8,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
     listUpButton.onTouch, listUpButton.isPos = pageCallback,true
     listDownButton = window:addChild(GUI.button(12,33,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "-"))
     listDownButton.onTouch, listDownButton.isPos = pageCallback,false
+
     listPageLabel2 = window:addChild(GUI.label(43,31,3,3,style.listPageLabel,tostring(listPageNumberPass + 1)))
     listUpButton2 = window:addChild(GUI.button(51,31,3,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "+"))
     listUpButton2.onTouch, listUpButton2.isPos, listUpButton2.isListNum = pageCallback,true,2
@@ -366,25 +418,30 @@ if worked then
     doorName = window:addChild(GUI.input(64,12,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", loc.inputname))
     doorName.onInputFinished = setDoorName
     doorName.disabled = true
-    exportDoor = window:addChild(GUI.button(115,12,8,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "export door"))
+
+    exportDoor = window:addChild(GUI.button(115,12,8,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, "update doors"))
     exportDoor.onTouch = exportDoorCall
     exportDoor.disabled = #doors == 0
     resetDoorSave = window:addChild(GUI.button(124,12,7,1, style.listPageButton, style.listPageText, style.listPageSelectButton, style.listPageSelectText, "reset"))
     resetDoorSave.onTouch = resetDoorCall
+
     doorType = window:addChild(GUI.comboBox(64,14,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
     doorType.disabled = true
     doorType:addItem("Unidentified").onTouch = setDoorType
     doorType:addItem("Redstone").onTouch = setDoorType
     doorType:addItem("Bundled Redstone").onTouch = setDoorType
     doorType:addItem("Door/RollDoor").onTouch = setDoorType
+
     doorToggle = window:addChild(GUI.comboBox(64,16,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
     doorToggle.disabled = true
     doorToggle:addItem("Unidentified").onTouch = setDoorToggle
     doorToggle:addItem("Delay").onTouch = setDoorToggle
     doorToggle:addItem("Toggle").onTouch = setDoorToggle
+
     doorDelay = window:addChild(GUI.input(64,18,16,1, style.passInputBack,style.passInputText,style.passInputPlaceholder,style.passInputFocusBack,style.passInputFocusText, "", "input number"))
     doorDelay.disabled = true
     doorDelay.onInputFinished = setDoorDelay
+
     if userTable.sectors then
         doorSector = window:addChild(GUI.comboBox(64,20,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
         doorSector.disabled = true
@@ -394,6 +451,7 @@ if worked then
             doorSector:addItem(userTable.sectors[i].name).onTouch = setDoorSector
         end
     end
+
     --doorPassSelf, doorPassData, doorPassAddSelector, doorPassCreate, doorPassDelete, doorPassEdit, doorPassType, doorPassAddHave, doorPassAddAdd, doorPassAddDel
     window:addChild(GUI.label(85,21,1,1,style.passNameLabel,"Select Pass : "))
     doorPassSelf = window:addChild(GUI.comboBox(100,21,20,1,style.containerComboBack,style.containerComboText,style.containerComboArrowBack,style.containerComboArrowText))
@@ -481,6 +539,7 @@ if worked then
         if needPass.request == "add" then
             currentDoor.cardRead.add[needPass.uuid] = needPass
         end
+        currentDoorChanges()
         doorListCallback()
     end
     doorPassCreate.disabled = true
@@ -502,6 +561,7 @@ if worked then
             currentDoor.cardRead.add[currentDoor.cardRead.normal[otSel].uuid] = nil
         end
         table.remove(currentDoor.cardRead.normal,otSel)
+        currentDoorChanges()
         doorListCallback()
     end
     doorPassDelete.disabled = true
@@ -555,6 +615,7 @@ if worked then
                 end
             end
         end
+        currentDoorChanges()
         doorListCallback(true)
     end
     doorPassEdit.disabled = true

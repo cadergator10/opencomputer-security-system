@@ -116,6 +116,11 @@ local function sendMsg(...)
 end
 
 term.clear()
+if component.internet == nil then
+    print("No internet card installed!")
+    os.exit()
+end
+
 print("Checking for finishing file...")
 local finishTable = loadTable("finishSettings.txt")
 if finishTable == nil then
