@@ -142,7 +142,7 @@ local function modemadd() --unused.
 end
 
   local function colorupdate() --A seperate thread that reads a table of readers and can control their lights. ALSO SCANS WITH RFID READER
-    while true do --FIXME: Fix delay doors in lockdown mode losing their red light
+    while true do
       --Change reader lights
       for key,value in pairs(readerLights) do --checks through every light saved in readerLights to double check values
         if type(value.new) == "table" then --tables mean there is a sequence of lights needed (such as start with red light, 3 seconds later turn off)
@@ -720,7 +720,7 @@ while true do
       end
     end
     local data
-    if ev == "bioReader" then --TODO: Find all occurances and fix the pull
+    if ev == "bioReader" then
       data = user
     elseif ev == "rfidSuccess" then
       data = str

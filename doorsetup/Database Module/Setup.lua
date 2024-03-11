@@ -12,7 +12,7 @@ local varEditWindow
 
 local finishLink = "https://raw.githubusercontent.com/cadergator10/opencomputer-security-system/main/doorsetup/finish.lua"
 
-local doors = database.dataBackup("doorCreation") --TODO: Make sure this wipes the right door's passes in order to prevent errors
+local doors = database.dataBackup("doorCreation")
 if (doors == nil) then
     doors = {}
 else --Check to ensure passes linked in doors are not MISSING
@@ -192,7 +192,7 @@ local function updateList()
     elseif editPage == 2 then
 
     end
-    database.dataBackup("doorCreation",doors) --TODO: Make sure this is correct thing
+    database.dataBackup("doorCreation",doors)
 end
 
 local function refreshInput()
@@ -473,7 +473,7 @@ local function pageSetup()
                 doorPassAddDel.disabled = true
             end
             doorPassAddAdd.disabled = false
-        end --TODO: Almost everything seems fine. A panel is needed behind the 1st list and some issues with delay (mostly) Next: some hardcore testing. Base passes still don't work with the add passes :(
+        end
         doorPassAddDel.disabled = true
         doorPassCreate = window:addChild(GUI.button(85,32,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
         doorPassCreate.onTouch = function()

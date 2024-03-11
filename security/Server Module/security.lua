@@ -6,10 +6,12 @@ local modemPort = 199
 local component = require("component")
 local modem = component.modem
 local ser = require("serialization")
+local system = require("System") --Set it to the MineOS
+local fs = require("Filesystem")
 
 local module = {}
 module.name = "passes"
-module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules","linkMCID","checkKeypad"}
+module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules","linkMCID","checkKeypad","getSecFile"}
 module.skipcrypt = {}
 module.table = {["passes"]={},["passSettings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}},["securityKeypads"] = {["testone"]={["pass"]="1234",["label"]="Test One"}}}
 module.debug = false
@@ -196,14 +198,21 @@ end
 
 function module.message(command,datar,from) --Called when a command goes past all default commands and into modules.
     local data
-    if datar ~= nil then
+    if datar ~= nil and command ~= "getSecFile" then
         data = ser.unserialize(datar)
     end
     local thisUserName = false
     if command == "setvar" or command == "getvar" or command == "checkRules" then
         thisUserName = getVar("name",data.uuid)
     end
-    if command == "rcdoors" then
+    if command == "getSecFile" then --send file over
+        local result, reason = loadfile(fs.getPath(system.getCurrentScript()) .. "Files/" .. datar)
+        if result then --TODO: Figure out what to use to load file, then send over modem.
+            return true, nil, false, true, result
+        else
+            return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Failed to send " .. datar .. " to device: " .. module.debug == true and reason or "couldn't find file",["color"]=0xFF0000}}, false, false
+        end
+    elseif command == "rcdoors" then
         local sendTable = {}
         for _,value in pairs(doorTable) do
             local datar

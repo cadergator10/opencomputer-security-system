@@ -19,7 +19,6 @@ local computer = require("computer")
 local link
 
 --------Extra Arrays
---TODO: Convert doorType 0 to 3 and table of addresses.
 local toggleTypes = {"not toggleable","toggleable"}
 local doorTypeTypes = {"Door Control","Redstone dust","Bundled Cable","Rolldoor"}
 local newDoorTypes = {"Redstone dust","Bundled Cable","Door/RollDoor Controller"}
@@ -1246,7 +1245,7 @@ local function sectorcontrol()
     --Get query and setup sectors
     print("Sending query to server...")
     modem.open(modemPort)
-    modem.broadcast(modemPort,"getquery",ser.serialize({"sectors"})) --TODO: Remove all sectorStatus calls
+    modem.broadcast(modemPort,"getquery",ser.serialize({"sectors"}))
     local e,_,_,_,_,msg = event.pull(3,"modem_message")
     modem.close(modemPort)
     if e == nil then

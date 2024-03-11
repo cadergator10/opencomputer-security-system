@@ -1,5 +1,5 @@
 --Moved over all pass stuff from security module to another file to save space in main and make some stuff easier to see
-local workspace, window, loc, database, style, permissions, userTable = table.unpack({...}) --main stuff TODO: Check to see if anything is missing
+local workspace, window, loc, database, style, permissions, userTable = table.unpack({...}) --main stuff
 
 local component = require("component")
 local ser = require("serialization")

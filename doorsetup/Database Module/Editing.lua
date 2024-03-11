@@ -500,7 +500,7 @@ if worked then
             doorPassAddDel.disabled = true
         end
         doorPassAddAdd.disabled = false
-    end --TODO: Almost everything seems fine. A panel is needed behind the 1st list and some issues with delay (mostly) Next: some hardcore testing. Base passes still don't work with the add passes :(
+    end
     doorPassAddDel.disabled = true
     doorPassCreate = window:addChild(GUI.button(85,32,14,1, style.sectorButton,style.sectorText,style.sectorSelectButton,style.sectorSelectText, loc.addvar))
     doorPassCreate.onTouch = function()

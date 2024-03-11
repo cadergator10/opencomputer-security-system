@@ -211,7 +211,6 @@ else
 end
 editorSettings.type = "doorsystem"
 os.execute("wget -f " .. doorCode .. " " .. program)
---TODO: Check if file managed to download, otherwise cancel setup
 editorSettings.x = tonumber(sendMsg("Would you like to use the simple pass setup or new advanced one?","1 for simple, 2 for advanced",1))
 
 local config = {}

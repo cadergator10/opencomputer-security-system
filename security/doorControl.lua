@@ -235,6 +235,7 @@ local function doorupdate() --A seperate thread that handles the doors & RFID Re
                 local data = value.data ~= nil and ser.unserialize(crypt(value.data,extraConfig.cryptKey,true)) or nil --get data off card
                 if data ~= nil then
                     if rfidReaders[rfidInt].buffer[data.uuid] == nil then --if there is data and crypt is correct
+                        extraDelay = extraDelay + 0.1 --Account for time it takes for rfid message to be checked (minimum 2 ticks for network messages, or .1 second)
                         event.push("rfidSuccess",rfidReaders[rfidInt].uuid,nil,data) --push to main thread to check if allowed or not
                         local e, status = event.pull(5,"rfidRequest") --receive results
                         rfidReaders[rfidInt].buffer[data.uuid] = {["timer"]=rfidWait,["allowed"]=status ~= nil and status or false} --add new user to buffer
@@ -286,7 +287,7 @@ local function doorupdate() --A seperate thread that handles the doors & RFID Re
                     isOpen = true
                 end
             elseif value.lock == 2 then --sector lockdown is open
-                isOpen = true --TODO: Check if this still works if lockdown is on and user has lockdown bypass. May have to remove check if lock is 0 (if used)
+                isOpen = true
             end --if value.lock == 1 then isOpen is equal to false (already set) sector lockdown is locked.
             if isOpen ~= value.memory then --there has been a door change.
                 doorControls[key].memory = isOpen --Update memory to what the door should now be
@@ -319,7 +320,7 @@ local function doorupdate() --A seperate thread that handles the doors & RFID Re
                 if isOpen then --Open door or don't.
                     colorLink(settingData[key].reader,{{["color"]=4,["delay"]=2},{["color"]=0,["delay"]=0}})
                 else
-                    colorLink(settingData[key].reader,-1) --TODO: Check if -1 works right and resets it to check.
+                    colorLink(settingData[key].reader,-1)
                 end
             end
         end
@@ -690,7 +691,7 @@ local function keypadProgram(_, address, user, str, uuid, data, data2)
             str = str .. "*"
         end
         component.proxy(address).setDisplay(str, 7)
-    end --TODO: Finish logic for normal door cards
+    end
 end
 
 local function miscReaderProgram(ev, address, user, str, uuid, data, data2)
