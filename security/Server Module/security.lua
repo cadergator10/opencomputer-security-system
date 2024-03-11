@@ -12,7 +12,7 @@ local fs = require("Filesystem")
 local module = {}
 module.name = "passes"
 module.commands = {"rcdoors","checkLinked","getvar","setvar","checkRules","linkMCID","checkKeypad","getSecFile"}
-module.skipcrypt = {}
+module.skipcrypt = {"getSecFile"} --getSecFile does not need a crypt since really all these files can be downloaded anyway
 module.table = {["passes"]={},["passSettings"]={["var"]={"level"},["label"]={"Level"},["calls"]={"checkLevel"},["type"]={"int"},["above"]={true},["data"]={false}},["securityKeypads"] = {["testone"]={["pass"]="1234",["label"]="Test One"}}}
 module.debug = false
 module.version = "4.0.3"
@@ -206,11 +206,12 @@ function module.message(command,datar,from) --Called when a command goes past al
         thisUserName = getVar("name",data.uuid)
     end
     if command == "getSecFile" then --send file over
-        local result, reason = loadfile(fs.getPath(system.getCurrentScript()) .. "Files/" .. datar)
-        if result then --TODO: Figure out what to use to load file, then send over modem.
-            return true, nil, false, true, result
+        local result = io.open(fs.getPath(system.getCurrentScript()) .. "Files/" .. datar)
+
+        if result ~= nil then --TODO: Figure out what to use to load file, then send over modem.
+            return true, nil, false, true, result:read("*all")
         else
-            return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Failed to send " .. datar .. " to device: " .. module.debug == true and reason or "couldn't find file",["color"]=0xFF0000}}, false, false
+            return true, {{["text"]="Passes: ",["color"]=0x9924C0},{["text"]="Failed to send " .. datar .. " to device: couldn't find file",["color"]=0xFF0000}}, false, false
         end
     elseif command == "rcdoors" then
         local sendTable = {}
